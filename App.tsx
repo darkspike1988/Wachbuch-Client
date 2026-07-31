@@ -10,13 +10,13 @@ import {
   View,
 } from 'react-native';
 
-import { API_BASE_URL, checkServerHealth, ServerHealth } from './src/api';
+import { API_BASE_URL, getServerStatus, ServerStatus } from './src/api';
 
 type LoadState = 'idle' | 'loading' | 'ok' | 'error';
 
 export default function App() {
   const [state, setState] = useState<LoadState>('idle');
-  const [health, setHealth] = useState<ServerHealth | null>(null);
+  const [status, setStatus] = useState<ServerStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
 
@@ -24,8 +24,8 @@ export default function App() {
     setState('loading');
     setError(null);
     try {
-      const result = await checkServerHealth();
-      setHealth(result);
+      const result = await getServerStatus();
+      setStatus(result);
       setState('ok');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -70,10 +70,16 @@ export default function App() {
             )}
           </View>
 
-          {state === 'ok' && health ? (
-            <Text style={styles.detail}>
-              Antwort des Servers: status = "{health.status}"
-            </Text>
+          {state === 'ok' && status ? (
+            <View style={styles.detailBlock}>
+              <Text style={styles.detail}>API-Version: {status.api_version}</Text>
+              <Text style={styles.detail}>
+                Angemeldet: {status.authenticated ? 'ja' : 'nein'}
+              </Text>
+              {status.station ? (
+                <Text style={styles.detail}>Wache: {status.station}</Text>
+              ) : null}
+            </View>
           ) : null}
           {state === 'error' && error ? (
             <Text style={styles.errorDetail}>{error}</Text>
@@ -166,6 +172,9 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  detailBlock: {
+    gap: 2,
   },
   detail: {
     fontSize: 14,
