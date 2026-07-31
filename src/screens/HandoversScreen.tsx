@@ -33,20 +33,28 @@ export default function HandoversScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.tabs}>
-        {SCOPES.map((entry) => (
-          <Pressable
-            key={entry.key}
-            onPress={() => setScope(entry.key)}
-            style={[styles.tab, scope === entry.key && styles.tabActive]}
-          >
-            <Text
-              style={[styles.tabText, scope === entry.key && styles.tabTextActive]}
+      <View style={styles.toolbar}>
+        <View style={styles.tabs}>
+          {SCOPES.map((entry) => (
+            <Pressable
+              key={entry.key}
+              onPress={() => setScope(entry.key)}
+              style={[styles.tab, scope === entry.key && styles.tabActive]}
             >
-              {entry.label}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[styles.tabText, scope === entry.key && styles.tabTextActive]}
+              >
+                {entry.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.newButton, pressed && styles.newButtonPressed]}
+          onPress={() => navigation.navigate('HandoverCreate')}
+        >
+          <Text style={styles.newButtonText}>+ Neu</Text>
+        </Pressable>
       </View>
 
       <QueryState
@@ -101,14 +109,27 @@ export default function HandoversScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  tabs: {
+  toolbar: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  newButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  newButtonPressed: { opacity: 0.85 },
+  newButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   tab: {
     paddingHorizontal: 14,
     paddingVertical: 7,

@@ -30,17 +30,7 @@ function HandoverStackScreen() {
       <HandoverStack.Screen
         name="HandoverList"
         component={HandoversScreen}
-        options={({ navigation }) => ({
-          title: 'Übergaben',
-          headerRight: () => (
-            <Pressable
-              onPress={() => navigation.navigate('HandoverCreate')}
-              hitSlop={8}
-            >
-              <Text style={styles.headerAction}>+ Neu</Text>
-            </Pressable>
-          ),
-        })}
+        options={{ title: 'Übergaben' }}
       />
       <HandoverStack.Screen
         name="HandoverDetail"
@@ -121,12 +111,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 14,
-    marginRight: 12,
-  },
-  headerAction: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
     marginRight: 12,
   },
 });
