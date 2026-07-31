@@ -40,6 +40,14 @@ testing on this Linux VM.
   can be forced with `?design=ios|android` or the on-screen pill toggle
   (`DesignSwitcher`, web-only) — this toggle exists purely to preview both looks in
   the browser.
+- **Kalender**: uses the open-source `react-native-calendars` (month grid, multi-dot
+  marking) and shows three overlaid sources: server events (synced via the API +
+  TanStack Query), German public holidays (`date-holidays`, region in
+  `src/holidays.ts`, default NRW `DE/NW`), and a local waste schedule
+  (`src/muell.ts`). The waste schedule is deterministic sample/config data meant to
+  be replaced by a real municipal ICS feed later. A banner announces the next-day
+  waste pickup; on native, `src/reminders.ts` also schedules an evening-before local
+  notification via `expo-notifications` (best-effort, no-op on web / in Expo Go).
 - Known RN-web quirk: list/scroll content on some screens can paint blank for a
   moment right after navigation/creation (it settles on interaction/resize); it is
   a web capture artifact, not present on native. Screenshots taken after the view
