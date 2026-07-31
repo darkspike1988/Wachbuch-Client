@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   FlatList,
   Pressable,
@@ -10,60 +10,35 @@ import {
   View,
 } from 'react-native';
 
-import { getHandovers } from '../api';
+import { getCalendar } from '../api';
 import QueryState from '../components/QueryState';
 import { Design, useDesign } from '../design';
-import { HandoverStackParamList } from '../navigation';
-import { formatDateTime, priorityColor } from '../theme';
+import { CalendarStackParamList } from '../navigation';
+import { formatDateTime } from '../theme';
 
-type Scope = 'aktiv' | 'dringend' | 'archiv';
-const SCOPES: { key: Scope; label: string }[] = [
-  { key: 'aktiv', label: 'Aktiv' },
-  { key: 'dringend', label: 'Dringend' },
-  { key: 'archiv', label: 'Archiv' },
-];
+type Props = NativeStackScreenProps<CalendarStackParamList, 'CalendarList'>;
 
-type Props = NativeStackScreenProps<HandoverStackParamList, 'HandoverList'>;
-
-export default function HandoversScreen({ navigation }: Props) {
+export default function CalendarScreen({ navigation }: Props) {
   const design = useDesign();
   const styles = useMemo(() => makeStyles(design), [design]);
   const { colors } = design;
-  const [scope, setScope] = useState<Scope>('aktiv');
-  const query = useQuery({
-    queryKey: ['handovers', scope],
-    queryFn: () => getHandovers(scope),
-  });
+  const query = useQuery({ queryKey: ['calendar'], queryFn: getCalendar });
 
-  const openCreate = () => navigation.navigate('HandoverCreate');
+  const openCreate = () => navigation.navigate('CalendarCreate');
 
   return (
     <View style={styles.screen}>
-      <View style={styles.toolbar}>
-        <View style={styles.tabs}>
-          {SCOPES.map((entry) => (
-            <Pressable
-              key={entry.key}
-              onPress={() => setScope(entry.key)}
-              style={[styles.tab, scope === entry.key && styles.tabActive]}
-            >
-              <Text
-                style={[styles.tabText, scope === entry.key && styles.tabTextActive]}
-              >
-                {entry.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        {!design.fab ? (
+      {!design.fab ? (
+        <View style={styles.toolbar}>
+          <Text style={styles.toolbarTitle}>Kommende Termine</Text>
           <Pressable
             style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}
             onPress={openCreate}
           >
             <Text style={styles.newButtonText}>+ Neu</Text>
           </Pressable>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
       <QueryState
         isLoading={query.isLoading}
@@ -83,33 +58,19 @@ export default function HandoversScreen({ navigation }: Props) {
             />
           }
           ListEmptyComponent={
-            <Text style={styles.empty}>Keine Einträge in dieser Ansicht.</Text>
+            <Text style={styles.empty}>Keine kommenden Termine.</Text>
           }
           renderItem={({ item }) => (
-            <Pressable
-              style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-              android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
-              onPress={() =>
-                navigation.navigate('HandoverDetail', {
-                  id: item.id,
-                  title: item.title,
-                })
-              }
-            >
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: priorityColor(colors, item.priority) },
-                ]}
-              >
-                <Text style={styles.badgeText}>{item.priority_label}</Text>
-              </View>
+            <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardMeta}>
-                {item.category_label} · {item.status_label} ·{' '}
-                {formatDateTime(item.updated_at)}
+              <Text style={styles.cardTime}>
+                {formatDateTime(item.starts_at)} – {formatDateTime(item.ends_at)}
               </Text>
-            </Pressable>
+              {item.description ? (
+                <Text style={styles.cardDesc}>{item.description}</Text>
+              ) : null}
+              <Text style={styles.cardMeta}>angelegt von {item.created_by}</Text>
+            </View>
           )}
         />
       </QueryState>
@@ -140,18 +101,7 @@ function makeStyles(design: Design) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    tabs: { flexDirection: 'row', gap: 8 },
-    tab: {
-      paddingHorizontal: 14,
-      paddingVertical: 7,
-      borderRadius: design.chipRadius,
-      backgroundColor: design.name === 'android' ? colors.surfaceGlass : colors.background,
-      borderWidth: design.name === 'android' ? 1 : 0,
-      borderColor: colors.border,
-    },
-    tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    tabText: { color: colors.muted, fontWeight: '600', fontSize: 13, fontFamily },
-    tabTextActive: { color: colors.onPrimary, fontFamily },
+    toolbarTitle: { fontSize: 14, fontWeight: '700', color: colors.text, fontFamily },
     newButton: {
       backgroundColor: colors.primary,
       paddingHorizontal: 14,
@@ -166,19 +116,14 @@ function makeStyles(design: Design) {
       backgroundColor: colors.card,
       borderRadius: design.cardRadius,
       padding: 14,
+      gap: 3,
       borderWidth: design.glass ? StyleSheet.hairlineWidth : 0,
       borderColor: colors.border,
       ...design.cardShadow,
     },
-    badge: {
-      alignSelf: 'flex-start',
-      borderRadius: 6,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      marginBottom: 4,
-    },
-    badgeText: { color: '#fff', fontSize: 11, fontWeight: '700', fontFamily },
     cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text, fontFamily },
+    cardTime: { fontSize: 13, color: colors.primary, fontWeight: '600', fontFamily },
+    cardDesc: { fontSize: 13, color: colors.text, fontFamily },
     cardMeta: { fontSize: 12, color: colors.muted, marginTop: 2, fontFamily },
     fab: {
       position: 'absolute',

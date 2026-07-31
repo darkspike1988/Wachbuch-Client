@@ -11,88 +11,112 @@ import {
   View,
 } from 'react-native';
 
-import {
-  ApiError,
-  createHandover,
-  HANDOVER_CATEGORIES,
-  HANDOVER_PRIORITIES,
-} from '../api';
+import { ApiError, createCalendarEvent } from '../api';
 import { Design, useDesign } from '../design';
-import { HandoverStackParamList } from '../navigation';
+import { CalendarStackParamList } from '../navigation';
 
-type Props = NativeStackScreenProps<HandoverStackParamList, 'HandoverCreate'>;
+type Props = NativeStackScreenProps<CalendarStackParamList, 'CalendarCreate'>;
 
-export default function HandoverCreateScreen({ navigation }: Props) {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}$/;
+
+export default function CalendarCreateScreen({ navigation }: Props) {
   const design = useDesign();
   const styles = useMemo(() => makeStyles(design), [design]);
   const { colors } = design;
   const queryClient = useQueryClient();
-  const [category, setCategory] = useState(HANDOVER_CATEGORIES[0].value);
-  const [priority, setPriority] = useState(HANDOVER_PRIORITIES[0].value);
   const [title, setTitle] = useState('');
-  const [details, setDetails] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => createHandover({ category, priority, title, details }),
+    mutationFn: () =>
+      createCalendarEvent({
+        title,
+        description,
+        starts_at: `${date} ${startTime}:00`,
+        ends_at: `${date} ${endTime}:00`,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['handovers'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar'] });
       queryClient.invalidateQueries({ queryKey: ['overview'] });
       navigation.goBack();
     },
   });
 
-  const error = mutation.error instanceof ApiError ? mutation.error.message : null;
-  const canSubmit = title.trim().length > 0 && details.trim().length > 0;
+  const submit = () => {
+    if (!DATE_RE.test(date)) {
+      setLocalError('Datum im Format JJJJ-MM-TT angeben.');
+      return;
+    }
+    if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime)) {
+      setLocalError('Zeiten im Format HH:MM angeben.');
+      return;
+    }
+    setLocalError(null);
+    mutation.mutate();
+  };
 
-  const chips = (
-    options: { value: string; label: string }[],
-    value: string,
-    onChange: (v: string) => void,
-  ) => (
-    <View style={styles.chips}>
-      {options.map((option) => (
-        <Pressable
-          key={option.value}
-          onPress={() => onChange(option.value)}
-          style={[styles.chip, value === option.value && styles.chipActive]}
-        >
-          <Text
-            style={[styles.chipText, value === option.value && styles.chipTextActive]}
-          >
-            {option.label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
+  const apiError = mutation.error instanceof ApiError ? mutation.error.message : null;
+  const error = localError ?? apiError;
+  const canSubmit = title.trim().length > 0 && date && startTime && endTime;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Kategorie</Text>
-      {chips(HANDOVER_CATEGORIES, category, setCategory)}
-
-      <Text style={styles.label}>Priorität</Text>
-      {chips(HANDOVER_PRIORITIES, priority, setPriority)}
-
       <Text style={styles.label}>Titel</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
-        placeholder="Kurzer Titel"
+        placeholder="z. B. Fahrzeugcheck"
         placeholderTextColor={colors.faint}
       />
 
-      <Text style={styles.label}>Information für die nächste Schicht</Text>
+      <Text style={styles.label}>Beschreibung (optional)</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        value={details}
-        onChangeText={setDetails}
-        placeholder="Beschreibung"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Details"
         placeholderTextColor={colors.faint}
         multiline
-        numberOfLines={5}
       />
+
+      <Text style={styles.label}>Datum (JJJJ-MM-TT)</Text>
+      <TextInput
+        style={styles.input}
+        value={date}
+        onChangeText={setDate}
+        placeholder="2026-08-05"
+        placeholderTextColor={colors.faint}
+        autoCapitalize="none"
+      />
+
+      <View style={styles.timeRow}>
+        <View style={styles.timeCol}>
+          <Text style={styles.label}>Beginn (HH:MM)</Text>
+          <TextInput
+            style={styles.input}
+            value={startTime}
+            onChangeText={setStartTime}
+            placeholder="08:00"
+            placeholderTextColor={colors.faint}
+          />
+        </View>
+        <View style={styles.timeCol}>
+          <Text style={styles.label}>Ende (HH:MM)</Text>
+          <TextInput
+            style={styles.input}
+            value={endTime}
+            onChangeText={setEndTime}
+            placeholder="09:00"
+            placeholderTextColor={colors.faint}
+          />
+        </View>
+      </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -102,14 +126,14 @@ export default function HandoverCreateScreen({ navigation }: Props) {
           (!canSubmit || mutation.isPending) && styles.buttonDisabled,
           pressed && styles.pressed,
         ]}
-        onPress={() => mutation.mutate()}
+        onPress={submit}
         disabled={!canSubmit || mutation.isPending}
         android_ripple={{ color: 'rgba(255,255,255,0.24)' }}
       >
         {mutation.isPending ? (
           <ActivityIndicator color={colors.onPrimary} />
         ) : (
-          <Text style={styles.buttonText}>Übergabe anlegen</Text>
+          <Text style={styles.buttonText}>Termin anlegen</Text>
         )}
       </Pressable>
     </ScrollView>
@@ -129,18 +153,6 @@ function makeStyles(design: Design) {
       marginBottom: 6,
       fontFamily,
     },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    chip: {
-      paddingHorizontal: 12,
-      paddingVertical: 7,
-      borderRadius: design.chipRadius,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { color: colors.muted, fontWeight: '600', fontSize: 13, fontFamily },
-    chipTextActive: { color: colors.onPrimary, fontFamily },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
@@ -152,7 +164,9 @@ function makeStyles(design: Design) {
       backgroundColor: colors.surface,
       fontFamily,
     },
-    multiline: { minHeight: 110, textAlignVertical: 'top' },
+    multiline: { minHeight: 80, textAlignVertical: 'top' },
+    timeRow: { flexDirection: 'row', gap: 12 },
+    timeCol: { flex: 1 },
     error: { color: colors.danger, fontSize: 13, marginTop: 12, fontFamily },
     button: {
       marginTop: 20,

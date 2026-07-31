@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getOverview } from '../api';
 import QueryState from '../components/QueryState';
-import { colors, formatDateTime, formatEuro, priorityColor } from '../theme';
+import { Design, useDesign } from '../design';
+import { formatDateTime, formatEuro, priorityColor } from '../theme';
 
 export default function OverviewScreen() {
+  const design = useDesign();
+  const styles = useMemo(() => makeStyles(design), [design]);
+  const { colors } = design;
   const query = useQuery({ queryKey: ['overview'], queryFn: getOverview });
   const data = query.data;
 
@@ -24,6 +29,7 @@ export default function OverviewScreen() {
             <RefreshControl
               refreshing={query.isRefetching}
               onRefresh={query.refetch}
+              tintColor={colors.primary}
             />
           }
         >
@@ -60,7 +66,7 @@ export default function OverviewScreen() {
                 <View
                   style={[
                     styles.badge,
-                    { backgroundColor: priorityColor(item.priority) },
+                    { backgroundColor: priorityColor(colors, item.priority) },
                   ]}
                 >
                   <Text style={styles.badgeText}>{item.priority_label}</Text>
@@ -93,48 +99,55 @@ export default function OverviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, gap: 6 },
-  station: { fontSize: 22, fontWeight: '800', color: colors.text },
-  role: { fontSize: 14, color: colors.muted, marginBottom: 8 },
-  row: { flexDirection: 'row', gap: 10, marginBottom: 8 },
-  stat: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+function makeStyles(design: Design) {
+  const { colors, fontFamily } = design;
+  const card = {
+    backgroundColor: colors.card,
+    borderRadius: design.cardRadius,
     padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: design.glass ? StyleSheet.hairlineWidth : 0,
     borderColor: colors.border,
-  },
-  statValue: { fontSize: 20, fontWeight: '800', color: colors.text },
-  statLabel: { fontSize: 11, color: colors.muted, textAlign: 'center', marginTop: 2 },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: colors.faint,
-    marginTop: 14,
-    marginBottom: 4,
-  },
-  empty: { color: colors.muted, fontSize: 14 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  cardMeta: { fontSize: 12, color: colors.muted },
-});
+    ...design.cardShadow,
+  } as const;
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16, gap: 8, paddingBottom: design.glass ? 96 : 24 },
+    station: { fontSize: 24, fontWeight: design.titleFontWeight, color: colors.text, fontFamily },
+    role: { fontSize: 14, color: colors.muted, marginBottom: 6, fontFamily },
+    row: { flexDirection: 'row', gap: 10, marginBottom: 6 },
+    stat: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: design.cardRadius,
+      padding: 14,
+      alignItems: 'center',
+      borderWidth: design.glass ? StyleSheet.hairlineWidth : 0,
+      borderColor: colors.border,
+      ...design.cardShadow,
+    },
+    statValue: { fontSize: 20, fontWeight: '800', color: colors.text, fontFamily },
+    statLabel: { fontSize: 11, color: colors.muted, textAlign: 'center', marginTop: 2, fontFamily },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      color: colors.faint,
+      marginTop: 14,
+      marginBottom: 4,
+      fontFamily,
+    },
+    empty: { color: colors.muted, fontSize: 14, fontFamily },
+    card,
+    badge: {
+      alignSelf: 'flex-start',
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      marginBottom: 4,
+    },
+    badgeText: { color: '#fff', fontSize: 11, fontWeight: '700', fontFamily },
+    cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text, fontFamily },
+    cardMeta: { fontSize: 12, color: colors.muted, marginTop: 2, fontFamily },
+  });
+}

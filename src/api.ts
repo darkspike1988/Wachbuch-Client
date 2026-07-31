@@ -123,6 +123,22 @@ export type CoffeeEntry = {
   is_correction: boolean;
 };
 
+export type CalendarEvent = {
+  id: number;
+  title: string;
+  description: string;
+  starts_at: string;
+  ends_at: string;
+  created_by: string;
+};
+
+export type NewCalendarEvent = {
+  title: string;
+  description: string;
+  starts_at: string;
+  ends_at: string;
+};
+
 export type Overview = {
   station: { name: string; slug: string };
   role: string;
@@ -221,5 +237,18 @@ export function setHandoverStatus(
   return request<HandoverSummary>(`/api/v1/uebergaben/${id}/status/`, {
     method: 'POST',
     body: { status },
+  });
+}
+
+export function getCalendar(): Promise<Paginated<CalendarEvent>> {
+  return request<Paginated<CalendarEvent>>('/api/v1/kalender/');
+}
+
+export function createCalendarEvent(
+  body: NewCalendarEvent,
+): Promise<CalendarEvent> {
+  return request<CalendarEvent>('/api/v1/kalender/', {
+    method: 'POST',
+    body,
   });
 }

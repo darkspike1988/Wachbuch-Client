@@ -1,17 +1,6 @@
-export const colors = {
-  background: '#f5f7fa',
-  surface: '#ffffff',
-  primary: '#1b6ef3',
-  text: '#1b2733',
-  muted: '#5b6672',
-  faint: '#8a8f98',
-  success: '#1a7f37',
-  danger: '#c0392b',
-  warning: '#b26a00',
-  border: '#e3e7ec',
-};
+import { Palette } from './design';
 
-export function priorityColor(priority: string): string {
+export function priorityColor(colors: Palette, priority: string): string {
   if (priority === 'urgent') return colors.danger;
   if (priority === 'important') return colors.warning;
   return colors.faint;

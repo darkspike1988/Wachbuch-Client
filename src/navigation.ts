@@ -3,3 +3,8 @@ export type HandoverStackParamList = {
   HandoverDetail: { id: number; title: string };
   HandoverCreate: undefined;
 };
+
+export type CalendarStackParamList = {
+  CalendarList: undefined;
+  CalendarCreate: undefined;
+};

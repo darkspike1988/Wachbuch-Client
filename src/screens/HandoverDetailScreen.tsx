@@ -1,15 +1,20 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError, getHandover, HANDOVER_STATUSES, setHandoverStatus } from '../api';
 import QueryState from '../components/QueryState';
+import { Design, useDesign } from '../design';
 import { HandoverStackParamList } from '../navigation';
-import { colors, formatDateTime, priorityColor } from '../theme';
+import { formatDateTime, priorityColor } from '../theme';
 
 type Props = NativeStackScreenProps<HandoverStackParamList, 'HandoverDetail'>;
 
 export default function HandoverDetailScreen({ route }: Props) {
+  const design = useDesign();
+  const styles = useMemo(() => makeStyles(design), [design]);
+  const { colors } = design;
   const { id } = route.params;
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -39,7 +44,7 @@ export default function HandoverDetailScreen({ route }: Props) {
       {data ? (
         <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
           <View
-            style={[styles.badge, { backgroundColor: priorityColor(data.priority) }]}
+            style={[styles.badge, { backgroundColor: priorityColor(colors, data.priority) }]}
           >
             <Text style={styles.badgeText}>{data.priority_label}</Text>
           </View>
@@ -73,6 +78,7 @@ export default function HandoverDetailScreen({ route }: Props) {
                   disabled={active || mutation.isPending}
                   onPress={() => mutation.mutate(option.value)}
                   style={[styles.statusBtn, active && styles.statusBtnActive]}
+                  android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
                 >
                   <Text
                     style={[
@@ -112,61 +118,63 @@ export default function HandoverDetailScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, gap: 6 },
-  badge: {
-    alignSelf: 'flex-start',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 4 },
-  meta: { fontSize: 13, color: colors.muted, marginBottom: 8 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
+function makeStyles(design: Design) {
+  const { colors, fontFamily } = design;
+  const surfaceCard = {
+    backgroundColor: colors.card,
+    borderRadius: design.cardRadius,
+    borderWidth: design.glass ? StyleSheet.hairlineWidth : 0,
     borderColor: colors.border,
-  },
-  details: { fontSize: 15, color: colors.text, lineHeight: 22 },
-  metaBlock: { marginTop: 12, gap: 2 },
-  metaLine: { fontSize: 13, color: colors.muted },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: colors.faint,
-    marginTop: 16,
-    marginBottom: 4,
-  },
-  revision: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 6,
-  },
-  revisionText: { fontSize: 13, color: colors.text, fontWeight: '600' },
-  revisionMeta: { fontSize: 12, color: colors.muted },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  statusBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statusBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  statusText: { color: colors.muted, fontWeight: '600', fontSize: 13 },
-  statusTextActive: { color: '#fff' },
-  spinner: { marginTop: 10, alignSelf: 'flex-start' },
-  error: { color: colors.danger, fontSize: 13, marginTop: 10 },
-});
+    ...design.cardShadow,
+  } as const;
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16, gap: 6, paddingBottom: design.glass ? 96 : 24 },
+    badge: {
+      alignSelf: 'flex-start',
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    badgeText: { color: '#fff', fontSize: 11, fontWeight: '700', fontFamily },
+    title: { fontSize: 22, fontWeight: design.titleFontWeight, color: colors.text, marginTop: 4, fontFamily },
+    meta: { fontSize: 13, color: colors.muted, marginBottom: 8, fontFamily },
+    card: { ...surfaceCard, padding: 16 },
+    details: { fontSize: 15, color: colors.text, lineHeight: 22, fontFamily },
+    metaBlock: { marginTop: 12, gap: 2 },
+    metaLine: { fontSize: 13, color: colors.muted, fontFamily },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      color: colors.faint,
+      marginTop: 16,
+      marginBottom: 6,
+      fontFamily,
+    },
+    statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    statusBtn: {
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: design.chipRadius,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    statusBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    statusText: { color: colors.muted, fontWeight: '600', fontSize: 13, fontFamily },
+    statusTextActive: { color: colors.onPrimary, fontFamily },
+    spinner: { marginTop: 10, alignSelf: 'flex-start' },
+    error: { color: colors.danger, fontSize: 13, marginTop: 10, fontFamily },
+    revision: {
+      ...surfaceCard,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      padding: 12,
+      marginBottom: 6,
+    },
+    revisionText: { fontSize: 13, color: colors.text, fontWeight: '600', fontFamily },
+    revisionMeta: { fontSize: 12, color: colors.muted, fontFamily },
+  });
+}

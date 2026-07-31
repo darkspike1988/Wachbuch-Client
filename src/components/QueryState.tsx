@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../theme';
+import { useDesign } from '../design';
 
 type Props = {
   isLoading: boolean;
@@ -18,11 +18,12 @@ export default function QueryState({
   onRetry,
   children,
 }: Props) {
+  const { colors, buttonRadius } = useDesign();
   if (isLoading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.primary} />
-        <Text style={styles.muted}>Lädt…</Text>
+        <Text style={{ color: colors.muted, fontSize: 14 }}>Lädt…</Text>
       </View>
     );
   }
@@ -30,11 +31,24 @@ export default function QueryState({
     const message =
       error instanceof Error ? error.message : 'Daten konnten nicht geladen werden';
     return (
-      <View style={styles.center}>
-        <Text style={styles.error}>{message}</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.danger, fontSize: 14, textAlign: 'center' }}>
+          {message}
+        </Text>
         {onRetry ? (
-          <Pressable style={styles.retry} onPress={onRetry}>
-            <Text style={styles.retryText}>Erneut versuchen</Text>
+          <Pressable
+            style={{
+              marginTop: 6,
+              backgroundColor: colors.primary,
+              paddingHorizontal: 18,
+              paddingVertical: 10,
+              borderRadius: buttonRadius,
+            }}
+            onPress={onRetry}
+          >
+            <Text style={{ color: colors.onPrimary, fontWeight: '700' }}>
+              Erneut versuchen
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -45,14 +59,4 @@ export default function QueryState({
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 },
-  muted: { color: colors.muted, fontSize: 14 },
-  error: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-  retry: {
-    marginTop: 6,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  retryText: { color: '#fff', fontWeight: '700' },
 });

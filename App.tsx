@@ -1,21 +1,27 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationOptions,
+} from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { setAuthToken } from './src/api';
-import { HandoverStackParamList } from './src/navigation';
+import { Design, DesignProvider, DesignSwitcher, useDesign } from './src/design';
+import { CalendarStackParamList, HandoverStackParamList } from './src/navigation';
+import CalendarCreateScreen from './src/screens/CalendarCreateScreen';
+import CalendarScreen from './src/screens/CalendarScreen';
 import CoffeeScreen from './src/screens/CoffeeScreen';
 import HandoverCreateScreen from './src/screens/HandoverCreateScreen';
 import HandoverDetailScreen from './src/screens/HandoverDetailScreen';
 import HandoversScreen from './src/screens/HandoversScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import OverviewScreen from './src/screens/OverviewScreen';
-import { colors } from './src/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -23,10 +29,22 @@ const queryClient = new QueryClient({
 
 const Tabs = createBottomTabNavigator();
 const HandoverStack = createNativeStackNavigator<HandoverStackParamList>();
+const CalendarStack = createNativeStackNavigator<CalendarStackParamList>();
+
+function stackHeaderOptions(design: Design): NativeStackNavigationOptions {
+  return {
+    headerStyle: { backgroundColor: design.colors.headerBackground },
+    headerTintColor: design.colors.headerTint,
+    headerTitleAlign: design.headerTitleAlign,
+    headerShadowVisible: design.name === 'android',
+    contentStyle: { backgroundColor: design.colors.background },
+  };
+}
 
 function HandoverStackScreen() {
+  const design = useDesign();
   return (
-    <HandoverStack.Navigator screenOptions={headerStyle}>
+    <HandoverStack.Navigator screenOptions={stackHeaderOptions(design)}>
       <HandoverStack.Screen
         name="HandoverList"
         component={HandoversScreen}
@@ -46,13 +64,84 @@ function HandoverStackScreen() {
   );
 }
 
-const headerStyle = {
-  headerStyle: { backgroundColor: colors.primary },
-  headerTintColor: '#fff',
-  headerTitleStyle: { fontWeight: '700' as const },
-};
+function CalendarStackScreen() {
+  const design = useDesign();
+  return (
+    <CalendarStack.Navigator screenOptions={stackHeaderOptions(design)}>
+      <CalendarStack.Screen
+        name="CalendarList"
+        component={CalendarScreen}
+        options={{ title: 'Kalender' }}
+      />
+      <CalendarStack.Screen
+        name="CalendarCreate"
+        component={CalendarCreateScreen}
+        options={{ title: 'Neuer Termin' }}
+      />
+    </CalendarStack.Navigator>
+  );
+}
 
-export default function App() {
+function MainTabs({ onLogout }: { onLogout: () => void }) {
+  const design = useDesign();
+  const { colors } = design;
+
+  const LogoutButton = () => (
+    <Pressable onPress={onLogout} hitSlop={8}>
+      <Text style={[styles.logout, { color: colors.headerTint }]}>Abmelden</Text>
+    </Pressable>
+  );
+
+  return (
+    <Tabs.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.headerBackground },
+        headerTintColor: colors.headerTint,
+        headerTitleAlign: design.headerTitleAlign,
+        headerShadowVisible: design.name === 'android',
+        tabBarActiveTintColor: design.name === 'android' ? colors.primary : colors.primary,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: design.glass
+          ? {
+              position: 'absolute',
+              backgroundColor: 'transparent',
+              borderTopColor: colors.border,
+              borderTopWidth: StyleSheet.hairlineWidth,
+            }
+          : {
+              backgroundColor: colors.tabBackground,
+              borderTopColor: colors.border,
+            },
+        tabBarBackground: design.glass
+          ? () => (
+              <BlurView
+                tint="light"
+                intensity={50}
+                style={StyleSheet.absoluteFill}
+              />
+            )
+          : undefined,
+        headerRight: () => <LogoutButton />,
+      }}
+    >
+      <Tabs.Screen name="Übersicht" component={OverviewScreen} />
+      <Tabs.Screen
+        name="Übergaben"
+        component={HandoverStackScreen}
+        options={{ headerShown: false }}
+      />
+      <Tabs.Screen
+        name="Kalender"
+        component={CalendarStackScreen}
+        options={{ headerShown: false }}
+      />
+      <Tabs.Screen name="Kaffeekasse" component={CoffeeScreen} />
+    </Tabs.Navigator>
+  );
+}
+
+function Root() {
+  const design = useDesign();
   const [token, setToken] = useState<string | null>(null);
 
   const handleLoggedIn = useCallback((newToken: string) => {
@@ -66,51 +155,48 @@ export default function App() {
     queryClient.clear();
   }, []);
 
-  const LogoutButton = () => (
-    <Pressable onPress={handleLogout} hitSlop={8}>
-      <Text style={styles.logout}>Abmelden</Text>
-    </Pressable>
+  const navTheme = useMemo<Theme>(
+    () => ({
+      ...DefaultTheme,
+      colors: {
+        ...DefaultTheme.colors,
+        background: design.colors.background,
+        card: design.colors.headerBackground,
+        primary: design.colors.primary,
+        text: design.colors.text,
+        border: design.colors.border,
+      },
+    }),
+    [design],
   );
 
   return (
+    <>
+      {token ? (
+        <NavigationContainer theme={navTheme}>
+          <MainTabs onLogout={handleLogout} />
+        </NavigationContainer>
+      ) : (
+        <LoginScreen onLoggedIn={handleLoggedIn} />
+      )}
+      <DesignSwitcher />
+      <StatusBar style={design.name === 'android' ? 'light' : 'dark'} />
+    </>
+  );
+}
+
+export default function App() {
+  return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        {token ? (
-          <NavigationContainer>
-            <Tabs.Navigator
-              screenOptions={{
-                ...headerStyle,
-                tabBarActiveTintColor: colors.primary,
-                headerRight: () => <LogoutButton />,
-              }}
-            >
-              <Tabs.Screen
-                name="Übersicht"
-                component={OverviewScreen}
-                options={{ tabBarLabel: 'Übersicht' }}
-              />
-              <Tabs.Screen
-                name="Übergaben"
-                component={HandoverStackScreen}
-                options={{ headerShown: false }}
-              />
-              <Tabs.Screen name="Kaffeekasse" component={CoffeeScreen} />
-            </Tabs.Navigator>
-          </NavigationContainer>
-        ) : (
-          <LoginScreen onLoggedIn={handleLoggedIn} />
-        )}
-        <StatusBar style="light" />
+        <DesignProvider>
+          <Root />
+        </DesignProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  logout: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-    marginRight: 12,
-  },
+  logout: { fontWeight: '700', fontSize: 14, marginRight: 12 },
 });
