@@ -19,7 +19,7 @@ type Rule = { bin: keyof typeof BINS; weekday: number; intervalWeeks: number; an
 export const SCHEDULE: Rule[] = [
   { bin: 'bio', weekday: 3, intervalWeeks: 1, anchor: '2026-01-07' }, // wöchentlich Mittwoch
   { bin: 'rest', weekday: 3, intervalWeeks: 2, anchor: '2026-01-07' }, // 14-tägig Mittwoch
-  { bin: 'gelb', weekday: 5, intervalWeeks: 2, anchor: '2026-01-09' }, // 14-tägig Freitag
+  { bin: 'gelb', weekday: 6, intervalWeeks: 2, anchor: '2026-08-01' }, // 14-tägig Samstag
   { bin: 'papier', weekday: 1, intervalWeeks: 4, anchor: '2026-01-05' }, // 4-wöchentlich Montag
 ];
 
