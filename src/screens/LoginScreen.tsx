@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { API_BASE_URL, login } from '../api';
+import { getApiBaseUrl, login, setApiBaseUrl } from '../api';
 import { Design, useDesign } from '../design';
 
 type Props = {
@@ -21,6 +21,7 @@ export default function LoginScreen({ onLoggedIn }: Props) {
   const design = useDesign();
   const styles = useMemo(() => makeStyles(design), [design]);
   const { colors } = design;
+  const [server, setServer] = useState(getApiBaseUrl());
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,6 +31,7 @@ export default function LoginScreen({ onLoggedIn }: Props) {
     setBusy(true);
     setError(null);
     try {
+      await setApiBaseUrl(server);
       const result = await login(username.trim(), password);
       if (!result.has_membership) {
         setError('Kein Zugang zu einer Wache. Bitte Freigabe abwarten.');
@@ -52,6 +54,18 @@ export default function LoginScreen({ onLoggedIn }: Props) {
         <Text style={styles.kicker}>Rettungswache</Text>
         <Text style={styles.title}>Wachbuch-Client</Text>
         <Text style={styles.subtitle}>Anmeldung</Text>
+
+        <Text style={styles.label}>Server-Adresse</Text>
+        <TextInput
+          style={styles.input}
+          value={server}
+          onChangeText={setServer}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder="http://192.168.0.10:8090"
+          placeholderTextColor={colors.faint}
+        />
 
         <Text style={styles.label}>Benutzername</Text>
         <TextInput
@@ -90,7 +104,9 @@ export default function LoginScreen({ onLoggedIn }: Props) {
           )}
         </Pressable>
 
-        <Text style={styles.meta}>Server: {API_BASE_URL}</Text>
+        <Text style={styles.meta}>
+          Die Server-Adresse wird gespeichert und für alle Aufrufe verwendet.
+        </Text>
       </View>
     </KeyboardAvoidingView>
   );

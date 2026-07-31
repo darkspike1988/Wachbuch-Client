@@ -7,11 +7,11 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useMemo, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { setAuthToken } from './src/api';
+import { initApiBaseUrl, setAuthToken } from './src/api';
 import { Design, DesignProvider, DesignSwitcher, useDesign } from './src/design';
 import { CalendarStackParamList, HandoverStackParamList } from './src/navigation';
 import CalendarCreateScreen from './src/screens/CalendarCreateScreen';
@@ -143,6 +143,11 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
 function Root() {
   const design = useDesign();
   const [token, setToken] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    initApiBaseUrl().finally(() => setReady(true));
+  }, []);
 
   const handleLoggedIn = useCallback((newToken: string) => {
     setAuthToken(newToken);
@@ -172,7 +177,9 @@ function Root() {
 
   return (
     <>
-      {token ? (
+      {!ready ? (
+        <View style={{ flex: 1, backgroundColor: design.colors.background }} />
+      ) : token ? (
         <NavigationContainer theme={navTheme}>
           <MainTabs onLogout={handleLogout} />
         </NavigationContainer>

@@ -1,12 +1,46 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Client for the Rettungswache-Wachbuch read-only JSON API (see server docs/API.md).
 //
-// Override the backend per environment with EXPO_PUBLIC_API_URL, e.g.:
+// The backend address is configurable at runtime (persisted) so a single build
+// works against any reachable server; it can be pre-seeded at build time with
+// EXPO_PUBLIC_API_URL, e.g.:
 //   - Web / iOS simulator on the same host: http://127.0.0.1:8090
 //   - Android emulator: http://10.0.2.2:8090
 //   - Physical device: http://<LAN-IP-of-server>:8090
-export const API_BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:8090'
-).replace(/\/$/, '');
+const STORAGE_KEY = 'wachbuch.apiBaseUrl';
+
+function normalize(url: string): string {
+  return url.trim().replace(/\/$/, '');
+}
+
+export const DEFAULT_API_BASE_URL = normalize(
+  process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:8090',
+);
+
+let apiBaseUrl = DEFAULT_API_BASE_URL;
+
+export function getApiBaseUrl(): string {
+  return apiBaseUrl;
+}
+
+export async function initApiBaseUrl(): Promise<void> {
+  try {
+    const stored = await AsyncStorage.getItem(STORAGE_KEY);
+    if (stored) apiBaseUrl = normalize(stored);
+  } catch {
+    // Ignore storage errors; fall back to the default.
+  }
+}
+
+export async function setApiBaseUrl(url: string): Promise<void> {
+  apiBaseUrl = normalize(url) || DEFAULT_API_BASE_URL;
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, apiBaseUrl);
+  } catch {
+    // Ignore storage errors; the in-memory value still applies.
+  }
+}
 
 const REQUEST_TIMEOUT_MS = 8000;
 
@@ -43,7 +77,7 @@ async function request<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
