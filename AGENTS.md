@@ -19,10 +19,19 @@ testing on this Linux VM.
 - **iOS builds require macOS/Xcode** and are not possible on this Linux VM. Develop
   and test cross-platform behavior via Expo web here, and via Expo Go / EAS for the
   native platforms. Android builds are feasible on Linux with the Android SDK.
-- **Backend URL** is read from `EXPO_PUBLIC_API_URL` (default `http://127.0.0.1:8090`,
-  see `src/api.ts`). `EXPO_PUBLIC_*` vars are inlined at bundle time, so **restart
-  the Expo dev server after changing them**. Android emulators must use
-  `http://10.0.2.2:8090` (not `127.0.0.1`) to reach the host.
+- **Backend URL** is configurable at runtime: the login screen has a "Server-Adresse"
+  field, and the value is persisted (`AsyncStorage`, `src/api.ts`). The build-time
+  default comes from `EXPO_PUBLIC_API_URL` (default `http://127.0.0.1:8090`);
+  `EXPO_PUBLIC_*` vars are inlined at bundle time, so **restart the Expo dev server
+  after changing them**. Android emulators must use `http://10.0.2.2:8090`; physical
+  devices need the server's LAN IP.
+- **Native builds** (installable binaries): `android/` and `ios/` are gitignored and
+  generated on demand via `npx expo prebuild -p android`. A standalone, sideloadable
+  Android APK is produced with `cd android && ./gradlew :app:assembleRelease`
+  (requires the Android SDK; the RN template signs release with the debug key, so it
+  installs but is not a Play-Store upload). Cleartext HTTP is enabled for dev via the
+  `expo-build-properties` plugin in `app.json`. **iOS binaries cannot be built on
+  Linux** — use macOS/Xcode or EAS Build (cloud macOS) plus an Apple Developer account.
 - **CORS only affects the web target.** Native iOS/Android have no CORS, so they can
   call the server directly. The server's `/healthz/` does not send CORS headers, so
   when testing via Expo **web** in a browser, run a dev CORS proxy in front of the
