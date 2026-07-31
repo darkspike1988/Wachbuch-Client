@@ -30,6 +30,17 @@ testing on this Linux VM.
   `npx local-cors-proxy --proxyUrl http://127.0.0.1:8090 --port 8010 --proxyPartial ""`
   then `EXPO_PUBLIC_API_URL=http://localhost:8010 npm run web`. This proxy is a
   dev-only helper and is not part of the app.
-- The server currently serves HTML (server-rendered) plus the JSON `/healthz/`
-  endpoint. A richer JSON API on the server is needed before the client can consume
-  Übergaben/Kaffeekasse data directly.
+- The app consumes the server's versioned JSON API under `/api/v1/` (see the
+  server's `docs/API.md`). It authenticates via `POST /api/v1/anmeldung/` and sends
+  the returned bearer token on every request (`src/api.ts`); no cookies/CSRF.
+- **Platform-adaptive design** lives in `src/design.tsx`: iOS gets current iOS
+  elements incl. a translucent "liquid glass" tab bar (`expo-blur`), Android gets
+  Material 3 (purple surfaces, elevation, a FAB for primary create). On native,
+  `Platform.OS` picks the language automatically. On **web** it defaults to iOS and
+  can be forced with `?design=ios|android` or the on-screen pill toggle
+  (`DesignSwitcher`, web-only) — this toggle exists purely to preview both looks in
+  the browser.
+- Known RN-web quirk: list/scroll content on some screens can paint blank for a
+  moment right after navigation/creation (it settles on interaction/resize); it is
+  a web capture artifact, not present on native. Screenshots taken after the view
+  settles show the real content.
