@@ -177,3 +177,49 @@ export function getCoffee(): Promise<
     '/api/v1/kaffeekasse/',
   );
 }
+
+// --- Write endpoints (bearer token only) -----------------------------------
+
+export type NewHandover = {
+  category: string;
+  priority: string;
+  title: string;
+  details: string;
+};
+
+export const HANDOVER_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'station', label: 'Wache' },
+  { value: 'vehicle', label: 'Fahrzeugstatus' },
+  { value: 'material', label: 'Material' },
+  { value: 'task', label: 'Offene Aufgabe' },
+  { value: 'safety', label: 'Sicherheit/Mangel' },
+];
+
+export const HANDOVER_PRIORITIES: { value: string; label: string }[] = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'important', label: 'Wichtig' },
+  { value: 'urgent', label: 'Dringend' },
+];
+
+export const HANDOVER_STATUSES: { value: string; label: string }[] = [
+  { value: 'open', label: 'Offen' },
+  { value: 'in_progress', label: 'In Bearbeitung' },
+  { value: 'done', label: 'Erledigt' },
+];
+
+export function createHandover(body: NewHandover): Promise<HandoverDetail> {
+  return request<HandoverDetail>('/api/v1/uebergaben/', {
+    method: 'POST',
+    body,
+  });
+}
+
+export function setHandoverStatus(
+  id: number,
+  status: string,
+): Promise<HandoverSummary> {
+  return request<HandoverSummary>(`/api/v1/uebergaben/${id}/status/`, {
+    method: 'POST',
+    body: { status },
+  });
+}

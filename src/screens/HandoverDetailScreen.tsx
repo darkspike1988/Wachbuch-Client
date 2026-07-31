@@ -1,8 +1,8 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { getHandover } from '../api';
+import { ApiError, getHandover, HANDOVER_STATUSES, setHandoverStatus } from '../api';
 import QueryState from '../components/QueryState';
 import { HandoverStackParamList } from '../navigation';
 import { colors, formatDateTime, priorityColor } from '../theme';
@@ -11,11 +11,23 @@ type Props = NativeStackScreenProps<HandoverStackParamList, 'HandoverDetail'>;
 
 export default function HandoverDetailScreen({ route }: Props) {
   const { id } = route.params;
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['handover', id],
     queryFn: () => getHandover(id),
   });
   const data = query.data;
+
+  const mutation = useMutation({
+    mutationFn: (status: string) => setHandoverStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['handover', id] });
+      queryClient.invalidateQueries({ queryKey: ['handovers'] });
+      queryClient.invalidateQueries({ queryKey: ['overview'] });
+    },
+  });
+  const statusError =
+    mutation.error instanceof ApiError ? mutation.error.message : null;
 
   return (
     <QueryState
@@ -50,6 +62,34 @@ export default function HandoverDetailScreen({ route }: Props) {
             </Text>
             <Text style={styles.metaLine}>Version: {data.version}</Text>
           </View>
+
+          <Text style={styles.sectionTitle}>Status ändern</Text>
+          <View style={styles.statusRow}>
+            {HANDOVER_STATUSES.map((option) => {
+              const active = option.value === data.status;
+              return (
+                <Pressable
+                  key={option.value}
+                  disabled={active || mutation.isPending}
+                  onPress={() => mutation.mutate(option.value)}
+                  style={[styles.statusBtn, active && styles.statusBtnActive]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      active && styles.statusTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {mutation.isPending ? (
+            <ActivityIndicator color={colors.primary} style={styles.spinner} />
+          ) : null}
+          {statusError ? <Text style={styles.error}>{statusError}</Text> : null}
 
           {data.revisions.length > 0 ? (
             <>
@@ -115,4 +155,18 @@ const styles = StyleSheet.create({
   },
   revisionText: { fontSize: 13, color: colors.text, fontWeight: '600' },
   revisionMeta: { fontSize: 12, color: colors.muted },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  statusBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  statusText: { color: colors.muted, fontWeight: '600', fontSize: 13 },
+  statusTextActive: { color: '#fff' },
+  spinner: { marginTop: 10, alignSelf: 'flex-start' },
+  error: { color: colors.danger, fontSize: 13, marginTop: 10 },
 });
