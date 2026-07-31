@@ -1,0 +1,6 @@
+{
+  "name": "Wachbuch Client + Server",
+  "repositoryDependencies": [
+    "github.com/darkspike1988/Rettungswache-Wachbuch"
+  ]
+}
