@@ -1,17 +1,6 @@
-export type ServerHealth = {
-  status: string;
-};
-
-export type ServerStatus = {
-  api_version: string;
-  authenticated: boolean;
-  has_membership: boolean;
-  station?: string;
-  role?: string;
-};
-
-// Base URL of the Rettungswache-Wachbuch backend (the Docker server).
-// Override per environment with EXPO_PUBLIC_API_URL, e.g.:
+// Client for the Rettungswache-Wachbuch read-only JSON API (see server docs/API.md).
+//
+// Override the backend per environment with EXPO_PUBLIC_API_URL, e.g.:
 //   - Web / iOS simulator on the same host: http://127.0.0.1:8090
 //   - Android emulator: http://10.0.2.2:8090
 //   - Physical device: http://<LAN-IP-of-server>:8090
@@ -21,34 +10,170 @@ export const API_BASE_URL = (
 
 const REQUEST_TIMEOUT_MS = 8000;
 
-async function getJson<T>(path: string): Promise<T> {
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: { method?: string; body?: unknown; auth?: boolean } = {},
+): Promise<T> {
+  const { method = 'GET', body, auth = true } = options;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (auth && authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { Accept: 'application/json' },
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     if (!response.ok) {
-      throw new Error(`Server antwortete mit HTTP ${response.status}`);
+      const message =
+        (data && typeof data.error === 'string' && data.error) ||
+        `Serverfehler (HTTP ${response.status})`;
+      throw new ApiError(response.status, message);
     }
-    return (await response.json()) as T;
+    return data as T;
   } catch (err) {
+    if (err instanceof ApiError) throw err;
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Zeitüberschreitung bei der Server-Anfrage');
+      throw new ApiError(0, 'Zeitüberschreitung bei der Server-Anfrage');
     }
-    throw err;
+    throw new ApiError(0, 'Server nicht erreichbar');
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export function checkServerHealth(): Promise<ServerHealth> {
-  return getJson<ServerHealth>('/healthz/');
+// --- Types -----------------------------------------------------------------
+
+export type ServerStatus = {
+  api_version: string;
+  authenticated: boolean;
+  has_membership: boolean;
+  station?: string;
+  role?: string;
+};
+
+export type LoginResult = {
+  token: string;
+  expires_in: number;
+  has_membership: boolean;
+  station: string | null;
+  role: string | null;
+};
+
+export type HandoverSummary = {
+  id: number;
+  title: string;
+  category: string;
+  category_label: string;
+  priority: string;
+  priority_label: string;
+  status: string;
+  status_label: string;
+  updated_at: string;
+};
+
+export type HandoverDetail = HandoverSummary & {
+  details: string;
+  author: string;
+  version: number;
+  created_at: string;
+  completed_at: string | null;
+  revisions: { version: number; changed_by: string; created_at: string }[];
+};
+
+export type CoffeeBalances = {
+  own_balance_euros: number;
+  can_book: boolean;
+  total_balance_euros?: number;
+};
+
+export type CoffeeEntry = {
+  id: number;
+  member: string;
+  amount_euros: number;
+  reason: string;
+  created_at: string;
+  is_correction: boolean;
+};
+
+export type Overview = {
+  station: { name: string; slug: string };
+  role: string;
+  role_label: string;
+  modules: { calendar: boolean; birthdays: boolean; coffee: boolean; feeds: boolean };
+  handovers: { open_count: number; urgent_count: number; items: HandoverSummary[] };
+  events?: { id: number; title: string; starts_at: string; ends_at: string }[];
+  coffee?: CoffeeBalances;
+};
+
+export type Paginated<T> = {
+  count: number;
+  page: number;
+  num_pages: number;
+  results: T[];
+};
+
+// --- Endpoints -------------------------------------------------------------
+
+export function getServerStatus(): Promise<ServerStatus> {
+  return request<ServerStatus>('/api/v1/status/', { auth: true });
 }
 
-// Read-only versioned API (see the server's docs/API.md). Auth-optional; when the
-// session is authenticated the response also carries the station and role.
-export function getServerStatus(): Promise<ServerStatus> {
-  return getJson<ServerStatus>('/api/v1/status/');
+export function login(username: string, password: string): Promise<LoginResult> {
+  return request<LoginResult>('/api/v1/anmeldung/', {
+    method: 'POST',
+    body: { username, password },
+    auth: false,
+  });
+}
+
+export function getOverview(): Promise<Overview> {
+  return request<Overview>('/api/v1/uebersicht/');
+}
+
+export function getHandovers(
+  scope: 'aktiv' | 'dringend' | 'archiv' = 'aktiv',
+): Promise<Paginated<HandoverSummary>> {
+  return request<Paginated<HandoverSummary>>(
+    `/api/v1/uebergaben/?ansicht=${scope}`,
+  );
+}
+
+export function getHandover(id: number): Promise<HandoverDetail> {
+  return request<HandoverDetail>(`/api/v1/uebergaben/${id}/`);
+}
+
+export function getCoffee(): Promise<
+  Paginated<CoffeeEntry> & { balances: CoffeeBalances }
+> {
+  return request<Paginated<CoffeeEntry> & { balances: CoffeeBalances }>(
+    '/api/v1/kaffeekasse/',
+  );
 }
