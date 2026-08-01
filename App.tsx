@@ -5,18 +5,19 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from '@react-navigation/native-stack';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { initApiBaseUrl, setAuthToken } from './src/api';
+import { getOverview, initApiBaseUrl, setAuthToken } from './src/api';
 import { Design, DesignProvider, DesignSwitcher, useDesign } from './src/design';
 import { CalendarStackParamList, HandoverStackParamList } from './src/navigation';
 import CalendarCreateScreen from './src/screens/CalendarCreateScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
+import ChecklistsScreen from './src/screens/ChecklistsScreen';
 import CoffeeScreen from './src/screens/CoffeeScreen';
 import HandoverCreateScreen from './src/screens/HandoverCreateScreen';
 import HandoverDetailScreen from './src/screens/HandoverDetailScreen';
@@ -42,6 +43,7 @@ const TAB_ICONS: Record<
   Übersicht: { ios: 'home', android: 'home-outline' },
   Übergaben: { ios: 'swap-horizontal', android: 'clipboard-text-outline' },
   Kalender: { ios: 'calendar', android: 'calendar-month-outline' },
+  Checklisten: { ios: 'checkbox', android: 'clipboard-check-outline' },
   Kaffeekasse: { ios: 'cafe', android: 'coffee-outline' },
 };
 
@@ -113,6 +115,13 @@ function CalendarStackScreen() {
 function MainTabs({ onLogout }: { onLogout: () => void }) {
   const design = useDesign();
   const { colors } = design;
+  const overview = useQuery({ queryKey: ['overview'], queryFn: getOverview });
+  const modules = overview.data?.modules;
+  // Module tabs follow the server-side switches (configured in /einstellungen/).
+  // Until the first fetch resolves, show the default-on modules.
+  const showCalendar = modules ? modules.calendar : true;
+  const showCoffee = modules ? modules.coffee : true;
+  const showChecklists = modules ? modules.checklists : false;
 
   const LogoutButton = () => (
     <Pressable onPress={onLogout} hitSlop={8}>
@@ -160,12 +169,17 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         component={HandoverStackScreen}
         options={{ headerShown: false }}
       />
-      <Tabs.Screen
-        name="Kalender"
-        component={CalendarStackScreen}
-        options={{ headerShown: false }}
-      />
-      <Tabs.Screen name="Kaffeekasse" component={CoffeeScreen} />
+      {showCalendar ? (
+        <Tabs.Screen
+          name="Kalender"
+          component={CalendarStackScreen}
+          options={{ headerShown: false }}
+        />
+      ) : null}
+      {showChecklists ? (
+        <Tabs.Screen name="Checklisten" component={ChecklistsScreen} />
+      ) : null}
+      {showCoffee ? <Tabs.Screen name="Kaffeekasse" component={CoffeeScreen} /> : null}
     </Tabs.Navigator>
   );
 }

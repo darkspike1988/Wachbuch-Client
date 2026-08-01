@@ -177,7 +177,13 @@ export type Overview = {
   station: { name: string; slug: string };
   role: string;
   role_label: string;
-  modules: { calendar: boolean; birthdays: boolean; coffee: boolean; feeds: boolean };
+  modules: {
+    calendar: boolean;
+    birthdays: boolean;
+    coffee: boolean;
+    feeds: boolean;
+    checklists: boolean;
+  };
   handovers: { open_count: number; urgent_count: number; items: HandoverSummary[] };
   events?: { id: number; title: string; starts_at: string; ends_at: string }[];
   coffee?: CoffeeBalances;
@@ -276,6 +282,26 @@ export function setHandoverStatus(
 
 export function getCalendar(): Promise<Paginated<CalendarEvent>> {
   return request<Paginated<CalendarEvent>>('/api/v1/kalender/');
+}
+
+export type Checklist = {
+  id: number;
+  title: string;
+  description: string;
+  items: string[];
+  last_completed_at: string | null;
+  last_completed_by: string | null;
+};
+
+export function getChecklists(): Promise<{ results: Checklist[] }> {
+  return request<{ results: Checklist[] }>('/api/v1/checklisten/');
+}
+
+export function completeChecklist(id: number, note = ''): Promise<unknown> {
+  return request(`/api/v1/checklisten/${id}/erledigt/`, {
+    method: 'POST',
+    body: { note },
+  });
 }
 
 export function createCalendarEvent(
