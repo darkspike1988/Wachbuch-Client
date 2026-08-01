@@ -44,9 +44,14 @@ testing on this Linux VM.
   the returned bearer token on every request (`src/api.ts`); no cookies/CSRF.
 - **Platform-adaptive design** lives in `src/design.tsx`: iOS gets current iOS
   elements incl. a translucent "liquid glass" tab bar (`expo-blur`), Android gets
-  Material 3 (purple surfaces, elevation, a FAB for primary create). It also has
-  **light and dark palettes** for both platforms; the scheme follows the OS
-  (`useColorScheme`) on devices (dark mode is intended for night shifts). Bottom-tab
+  Material 3 (purple surfaces, elevation, a FAB for primary create).   The **platform is auto-detected** (native `Platform.OS`; web sniffs the user
+  agent). It also has **light and dark palettes** for both platforms. The scheme is
+  **automatic by default** (`schemeMode: 'auto'`): `src/scheme.ts` derives light/dark
+  from **sunrise/sunset at the device location** (`suncalc` + `expo-location`),
+  falling back to the OS `useColorScheme` and then a time-of-day heuristic. Users can
+  override to Hell/Dunkel. (`expo-location` needs the location permission — for a
+  native build re-run `expo prebuild`; on web it uses the browser geolocation.)
+  Bottom-tab
   **icons** are platform-adaptive (`@expo/vector-icons`: Ionicons on iOS, Material
   Community Icons on Android). On **web** the design language defaults to iOS and can
   be forced with `?design=ios|android`; a web-only `DesignSwitcher` pill also toggles
