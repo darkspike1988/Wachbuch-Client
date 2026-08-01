@@ -27,11 +27,10 @@ def verify_totp(secret, token):
 
 
 def qr_data_url(uri):
-    import qrcode
+    import segno
 
-    image = qrcode.make(uri)
     buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
+    segno.make(uri, error="m").save(buffer, kind="png", scale=6)
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 
