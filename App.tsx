@@ -1,3 +1,4 @@
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import {
@@ -24,8 +25,35 @@ import LoginScreen from './src/screens/LoginScreen';
 import OverviewScreen from './src/screens/OverviewScreen';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+    },
+  },
 });
+
+const TAB_ICONS: Record<
+  string,
+  { ios: keyof typeof Ionicons.glyphMap; android: keyof typeof MaterialCommunityIcons.glyphMap }
+> = {
+  Übersicht: { ios: 'home', android: 'home-outline' },
+  Übergaben: { ios: 'swap-horizontal', android: 'clipboard-text-outline' },
+  Kalender: { ios: 'calendar', android: 'calendar-month-outline' },
+  Kaffeekasse: { ios: 'cafe', android: 'coffee-outline' },
+};
+
+function tabIcon(routeName: string, isAndroid: boolean, color: string, size: number) {
+  const icons = TAB_ICONS[routeName];
+  if (!icons) return null;
+  return isAndroid ? (
+    <MaterialCommunityIcons name={icons.android} size={size} color={color} />
+  ) : (
+    <Ionicons name={icons.ios} size={size} color={color} />
+  );
+}
 
 const Tabs = createBottomTabNavigator();
 const HandoverStack = createNativeStackNavigator<HandoverStackParamList>();
@@ -94,13 +122,15 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
 
   return (
     <Tabs.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: colors.headerBackground },
         headerTintColor: colors.headerTint,
         headerTitleAlign: design.headerTitleAlign,
         headerShadowVisible: design.name === 'android',
-        tabBarActiveTintColor: design.name === 'android' ? colors.primary : colors.primary,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
+        tabBarIcon: ({ color, size }) =>
+          tabIcon(route.name, design.name === 'android', color, size),
         tabBarStyle: design.glass
           ? {
               position: 'absolute',
@@ -115,14 +145,14 @@ function MainTabs({ onLogout }: { onLogout: () => void }) {
         tabBarBackground: design.glass
           ? () => (
               <BlurView
-                tint="light"
+                tint={design.blurTint}
                 intensity={50}
                 style={StyleSheet.absoluteFill}
               />
             )
           : undefined,
         headerRight: () => <LogoutButton />,
-      }}
+      })}
     >
       <Tabs.Screen name="Übersicht" component={OverviewScreen} />
       <Tabs.Screen
@@ -163,6 +193,7 @@ function Root() {
   const navTheme = useMemo<Theme>(
     () => ({
       ...DefaultTheme,
+      dark: design.scheme === 'dark',
       colors: {
         ...DefaultTheme.colors,
         background: design.colors.background,
@@ -187,7 +218,11 @@ function Root() {
         <LoginScreen onLoggedIn={handleLoggedIn} />
       )}
       <DesignSwitcher />
-      <StatusBar style={design.name === 'android' ? 'light' : 'dark'} />
+      <StatusBar
+        style={
+          design.scheme === 'dark' || design.name === 'android' ? 'light' : 'dark'
+        }
+      />
     </>
   );
 }
