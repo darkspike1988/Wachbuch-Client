@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Anmelden | {{ app_name }}{% endblock %}
+{% block content %}
+<header class="page-heading narrow"><p class="context-line">Zugang</p><h1>Anmelden</h1><p class="lead">Persönliches Konto verwenden. Keine gemeinsamen Zugangsdaten.</p></header>
+<form method="post" class="form-card narrow">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="error-summary" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="field">{{ form.username.errors }}<label for="{{ form.username.id_for_label }}">Benutzername</label>{{ form.username }}</div>
+  <div class="field">{{ form.password.errors }}<label for="{{ form.password.id_for_label }}">Passwort</label>{{ form.password }}</div>
+  <div class="form-actions"><button class="button primary" type="submit">Anmelden</button></div>
+</form>
+{% endblock %}

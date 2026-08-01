@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Sicherheitscode | {{ app_name }}{% endblock %}
+{% block content %}
+<header class="page-heading narrow"><p class="context-line">Zwei-Faktor</p><h1>Sicherheitscode</h1><p class="lead">Bitte den aktuellen Code aus Ihrer Authenticator-App eingeben.</p></header>
+<form method="post" class="form-card narrow">
+  {% csrf_token %}
+  {% include "core/form_errors.html" %}
+  <div class="field">{{ form.token.errors }}<label for="{{ form.token.id_for_label }}">{{ form.token.label }}</label>{{ form.token }}</div>
+  <div class="form-actions"><button class="button primary" type="submit">Bestätigen</button></div>
+</form>
+{% endblock %}

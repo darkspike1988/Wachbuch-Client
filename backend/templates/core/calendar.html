@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Kalender | {{ app_name }}{% endblock %}
+{% block content %}
+<header class="page-heading heading-with-action">
+  <div>
+    <p class="context-line">Wachentermine</p>
+    <h1>Kalender</h1>
+  </div>
+  {% if can_create %}<a class="button primary" href="{% url 'calendar_create' %}">Termin anlegen</a>{% endif %}
+</header>
+<nav class="filter-nav" aria-label="Kalenderansicht">
+  <a href="{% url 'calendar' %}"{% if not show_cancelled %} aria-current="page"{% endif %}>Aktiv</a>
+  <a href="{% url 'calendar' %}?ansicht=abgesagt"{% if show_cancelled %} aria-current="page"{% endif %}>Abgesagt</a>
+</nav>
+<div class="agenda">
+  {% for event in page_obj %}
+    <article class="agenda-row">
+      <time datetime="{{ event.starts_at|date:'c' }}"><strong>{{ event.starts_at|date:"d.m." }}</strong><span>{{ event.starts_at|date:"H:i" }}–{{ event.ends_at|date:"H:i" }}</span></time>
+      <div>
+        <strong>{{ event.title }}</strong>
+        {% if event.description %}<p>{{ event.description|truncatechars:120 }}</p>{% endif %}
+        {% if event.is_cancelled %}<p class="field-hint">Abgesagt am {{ event.cancelled_at|date:"d.m.Y H:i" }}</p>{% endif %}
+        {% if can_manage and not event.is_cancelled %}
+          <p class="inline-actions">
+            <a href="{% url 'calendar_edit' event.pk %}">Bearbeiten</a>
+            <a href="{% url 'calendar_cancel' event.pk %}">Absagen</a>
+          </p>
+        {% endif %}
+      </div>
+    </article>
+  {% empty %}<p class="empty-state">{% if show_cancelled %}Keine abgesagten Termine.{% else %}Keine anstehenden Termine.{% endif %}</p>{% endfor %}
+</div>
+{% include "core/pagination.html" %}
+{% endblock %}

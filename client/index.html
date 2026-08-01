@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17343d">
+  <meta name="description" content="Wachbuch-Client für die Rettungswache">
+  <title>Wachbuch Client</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#inhalt">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">W</span>
+      <span>
+        <strong>Wachbuch</strong>
+        <small>Client</small>
+      </span>
+    </div>
+    <p id="identity" class="identity">Nicht angemeldet</p>
+  </header>
+
+  <main id="inhalt" class="page-shell">
+    <header class="page-heading">
+      <p class="context-line" id="station-line">Serververbindung</p>
+      <h1>Übersicht</h1>
+      <p class="lead">Liest Dashboard und Übergaben über die JSON-API des Wachbuch-Servers.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="status-heading">
+      <h2 id="status-heading">Status</h2>
+      <p id="status">Prüfe Verbindung …</p>
+      <label class="field">
+        <span>API-Basis-URL</span>
+        <input id="api-base" type="url" placeholder="https://wache.example.ts.net" autocomplete="url">
+      </label>
+      <button id="reload" type="button" class="button primary">Aktualisieren</button>
+    </section>
+
+    <section class="panel" aria-labelledby="handover-heading">
+      <div class="section-heading">
+        <h2 id="handover-heading">Aktive Übergaben</h2>
+        <p id="counts" class="muted"></p>
+      </div>
+      <div id="handovers" class="item-list"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="events-heading">
+      <h2 id="events-heading">Nächste Termine</h2>
+      <div id="events" class="item-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Session-Cookie des Servers erforderlich.</span>
+    <a href="../backend/README.md">Backend-Dokumentation</a>
+  </footer>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

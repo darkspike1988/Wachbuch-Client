@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Termin absagen | {{ app_name }}{% endblock %}
+{% block content %}
+<a class="back-link" href="{% url 'calendar' %}">Zurück zum Kalender</a>
+<header class="page-heading narrow"><p class="context-line">Kalender</p><h1>Termin absagen</h1><p class="lead">„{{ event.title }}“ wirklich absagen? Der Termin bleibt im Archiv sichtbar.</p></header>
+<form method="post" class="form-card narrow">
+  {% csrf_token %}
+  <div class="form-actions">
+    <button class="button primary" type="submit">Absage bestätigen</button>
+    <a class="button secondary" href="{% url 'calendar' %}">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}
