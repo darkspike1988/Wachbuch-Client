@@ -1,4 +1,11 @@
-import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Platform,
   Pressable,
@@ -8,6 +15,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+
+import { Coords, resolveAutoScheme } from './scheme';
 
 export type DesignName = 'ios' | 'android';
 export type Scheme = 'light' | 'dark';
@@ -183,35 +192,89 @@ export function buildDesign(name: DesignName, scheme: Scheme): Design {
   };
 }
 
+// Auto-detect the platform: native uses Platform.OS, the web build sniffs the
+// user agent (so an iPhone browser gets the iOS look, an Android phone Material).
 function initialDesign(): DesignName {
   if (Platform.OS === 'ios') return 'ios';
   if (Platform.OS === 'android') return 'android';
-  if (typeof window !== 'undefined' && window.location) {
-    const param = new URLSearchParams(window.location.search).get('design');
+  if (typeof window !== 'undefined') {
+    const param = new URLSearchParams(window.location?.search ?? '').get('design');
     if (param === 'android' || param === 'ios') return param;
+    const ua = window.navigator?.userAgent ?? '';
+    if (/android/i.test(ua)) return 'android';
+    if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
   }
   return 'ios';
 }
 
+export type SchemeMode = 'auto' | Scheme;
+
 type DesignContextValue = Design & {
+  schemeMode: SchemeMode;
   setDesignName: (name: DesignName) => void;
-  setScheme: (scheme: Scheme | null) => void;
+  setSchemeMode: (mode: SchemeMode) => void;
 };
 
 const DesignContext = createContext<DesignContextValue | null>(null);
 
+async function readCoords(): Promise<Coords | null> {
+  try {
+    const Location = await import('expo-location');
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (!permission.granted) return null;
+    const last = await Location.getLastKnownPositionAsync();
+    const position =
+      last ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low }));
+    if (!position) return null;
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function DesignProvider({ children }: { children: ReactNode }) {
-  const systemScheme = useColorScheme();
+  const osScheme = useColorScheme();
+  const systemScheme: Scheme | null =
+    osScheme === 'dark' ? 'dark' : osScheme === 'light' ? 'light' : null;
   const [name, setName] = useState<DesignName>(initialDesign);
-  const [schemeOverride, setSchemeOverride] = useState<Scheme | null>(null);
-  const scheme: Scheme = schemeOverride ?? (systemScheme === 'dark' ? 'dark' : 'light');
+  const [schemeMode, setSchemeMode] = useState<SchemeMode>('auto');
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [autoScheme, setAutoScheme] = useState<Scheme>(() =>
+    resolveAutoScheme(null, systemScheme),
+  );
+
+  // Fetch the device location once (used to derive sunrise/sunset).
+  useEffect(() => {
+    let cancelled = false;
+    readCoords().then((value) => {
+      if (!cancelled && value) setCoords(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Recompute the automatic scheme now and every 10 minutes (sun crosses horizon).
+  useEffect(() => {
+    const update = () => setAutoScheme(resolveAutoScheme(coords, systemScheme));
+    update();
+    const timer = setInterval(update, 10 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [coords, systemScheme]);
+
+  const scheme: Scheme = schemeMode === 'auto' ? autoScheme : schemeMode;
+
   const value = useMemo<DesignContextValue>(
     () => ({
       ...buildDesign(name, scheme),
+      schemeMode,
       setDesignName: setName,
-      setScheme: setSchemeOverride,
+      setSchemeMode,
     }),
-    [name, scheme],
+    [name, scheme, schemeMode],
   );
   return <DesignContext.Provider value={value}>{children}</DesignContext.Provider>;
 }
@@ -229,8 +292,13 @@ export function useDesign(): DesignContextValue {
  * On real devices Platform.OS and the system color scheme already drive the look.
  */
 export function DesignSwitcher() {
-  const { name, scheme, setDesignName, setScheme, colors } = useDesign();
+  const { name, schemeMode, setDesignName, setSchemeMode, colors } = useDesign();
   if (Platform.OS !== 'web') return null;
+  const schemeOptions: { value: SchemeMode; label: string }[] = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'light', label: 'Hell' },
+    { value: 'dark', label: 'Dunkel' },
+  ];
   return (
     <View style={styles.switcher} pointerEvents="box-none">
       <View style={styles.pill}>
@@ -251,18 +319,18 @@ export function DesignSwitcher() {
           );
         })}
         <View style={styles.divider} />
-        {(['light', 'dark'] as Scheme[]).map((option) => {
-          const active = option === scheme;
+        {schemeOptions.map((option) => {
+          const active = option.value === schemeMode;
           return (
             <Pressable
-              key={option}
-              onPress={() => setScheme(option)}
+              key={option.value}
+              onPress={() => setSchemeMode(option.value)}
               style={[styles.segment, active && { backgroundColor: colors.primary }]}
             >
               <Text
                 style={[styles.segmentText, { color: active ? colors.onPrimary : '#1b2733' }]}
               >
-                {option === 'light' ? 'Hell' : 'Dunkel'}
+                {option.label}
               </Text>
             </Pressable>
           );
