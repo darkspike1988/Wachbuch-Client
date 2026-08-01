@@ -9,7 +9,10 @@ WORKDIR /app
 RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --create-home app
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Upgrade build tooling and transitive image packages with known HIGH CVEs
+# (setuptools CVE-2025-47273, msgpack GHSA-6v7p-g79w-8964).
+RUN pip install --upgrade pip "setuptools>=78.1.1" "msgpack>=1.2.1" \
+    && pip install -r requirements.txt
 
 COPY --chown=app:app manage.py .
 COPY --chown=app:app config config

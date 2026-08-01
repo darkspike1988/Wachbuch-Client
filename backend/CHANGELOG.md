@@ -14,6 +14,7 @@
 - JSON-API `/api/v1/me|dashboard|handovers/`
 - Trivy-Scans in der CI; Nutzertexte mit Umlauten
 - MFA-QR ohne Pillow (`segno`), um HIGH-CVEs in Pillow 11.3 zu vermeiden
+- Docker-Image: setuptools/msgpack auf gepatchte Versionen angehoben (Trivy)
 
 ## Unreleased - Open-Source-Basis
 
