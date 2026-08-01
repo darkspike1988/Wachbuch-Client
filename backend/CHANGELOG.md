@@ -13,6 +13,7 @@
 - Optionale TOTP-MFA für Passwort-Login
 - JSON-API `/api/v1/me|dashboard|handovers/`
 - Trivy-Scans in der CI; Nutzertexte mit Umlauten
+- MFA-QR ohne Pillow (`segno`), um HIGH-CVEs in Pillow 11.3 zu vermeiden
 
 ## Unreleased - Open-Source-Basis
 
