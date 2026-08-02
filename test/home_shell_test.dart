@@ -5,6 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 
+void _usePhone(WidgetTester tester) {
+  tester.view.physicalSize = const Size(400, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 Map<String, dynamic> _mePayload({String stationName = 'Rettungswache Test'}) {
   return {
     'user': {'username': 'michael'},
@@ -42,6 +49,105 @@ class _ImmediateApi extends WachbuchApi {
     closed = true;
     super.close();
   }
+}
+
+class _PolishedApi extends _ImmediateApi {
+  int detailCalls = 0;
+
+  @override
+  Future<List<Map<String, dynamic>>> handovers() async => [
+    {
+      'id': 1,
+      'title': 'RTW auffüllen',
+      'priority': 'urgent',
+      'status': 'open',
+      'category': 'vehicle',
+      'updated_at': '2026-08-02T10:30:00+00:00',
+    },
+    {
+      'id': 2,
+      'title': 'Medikamentenschrank prüfen',
+      'priority': 'important',
+      'status': 'in_progress',
+      'category': 'material',
+      'updated_at': '2026-08-02T09:00:00+00:00',
+    },
+    {
+      'id': 3,
+      'title': 'Tor der Fahrzeughalle',
+      'priority': 'normal',
+      'status': 'open',
+      'category': 'station',
+      'updated_at': '2026-08-01T18:00:00+00:00',
+    },
+  ];
+
+  @override
+  Future<Map<String, dynamic>> handoverDetail(int id) async {
+    detailCalls += 1;
+    return {
+      'id': id,
+      'title': 'RTW auffüllen',
+      'details': 'Fach 3 kontrollieren und Verbrauchsmaterial ergänzen.',
+      'priority': 'urgent',
+      'status': 'open',
+      'category': 'vehicle',
+      'author': {'display_name': 'Michael'},
+      'version': 2,
+      'created_at': '2026-08-01T08:00:00+00:00',
+      'updated_at': '2026-08-02T10:30:00+00:00',
+    };
+  }
+}
+
+class _FilterReloadApi extends _ImmediateApi {
+  int handoverCalls = 0;
+
+  @override
+  Future<List<Map<String, dynamic>>> handovers() async {
+    handoverCalls += 1;
+    if (handoverCalls == 1) {
+      return [
+        {
+          'id': 1,
+          'title': 'Dringende Übergabe',
+          'priority': 'urgent',
+          'status': 'open',
+          'category': 'task',
+        },
+      ];
+    }
+    return [
+      {
+        'id': 2,
+        'title': 'Neue normale Übergabe',
+        'priority': 'normal',
+        'status': 'in_progress',
+        'category': 'station',
+      },
+    ];
+  }
+}
+
+class _MalformedApi extends _ImmediateApi {
+  @override
+  Future<List<Map<String, dynamic>>> handovers() async => [
+    {
+      'id': 7,
+      'title': 123,
+      'priority': 'normal',
+      'status': 'open',
+      'category': 'task',
+    },
+  ];
+
+  @override
+  Future<Map<String, dynamic>> handoverDetail(int id) async => {
+    'id': id,
+    'title': 123,
+    'details': 'Defensive Datenanzeige',
+    'author': 'unerwarteter API-Wert',
+  };
 }
 
 class _ControlledApi extends WachbuchApi {
@@ -109,6 +215,223 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('michael'), findsOneWidget);
     expect(find.text('https://wache.example.org'), findsOneWidget);
+  });
+
+  testWidgets('overview summarizes status and urgent priorities', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 offen'), findsOneWidget);
+    expect(find.text('1 in Bearbeitung'), findsOneWidget);
+    expect(find.text('1 dringend'), findsOneWidget);
+  });
+
+  testWidgets('handover search filters live and reports result count', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('handover-search')),
+      'medikament',
+    );
+    await tester.pump();
+
+    expect(find.text('Medikamentenschrank prüfen'), findsOneWidget);
+    expect(find.text('RTW auffüllen'), findsNothing);
+    expect(find.text('1 von 3 Übergaben'), findsOneWidget);
+  });
+
+  testWidgets('priority filter and search combine with AND', (tester) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('priority-filter-urgent')));
+    await tester.pump();
+    expect(find.text('RTW auffüllen'), findsOneWidget);
+    expect(find.text('Medikamentenschrank prüfen'), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const Key('handover-search')),
+      'Medikament',
+    );
+    await tester.pump();
+    expect(find.text('Keine Übergaben für diese Filter.'), findsOneWidget);
+  });
+
+  testWidgets('handover cards use localized chips and open real details', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fahrzeugstatus'), findsOneWidget);
+    expect(find.text('Dringend'), findsWidgets);
+    expect(find.text('Offen'), findsWidgets);
+
+    await tester.tap(find.text('RTW auffüllen'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Fach 3 kontrollieren und Verbrauchsmaterial ergänzen.'),
+      findsOneWidget,
+    );
+    expect(find.text('Michael'), findsOneWidget);
+    expect(find.text('Version 2'), findsOneWidget);
+  });
+
+  testWidgets('detail endpoint is called once when sheet rebuilds', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    final api = _PolishedApi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: api,
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RTW auffüllen'));
+    await tester.pumpAndSettle();
+    expect(api.detailCalls, 1);
+
+    tester.view.physicalSize = const Size(420, 800);
+    await tester.pumpAndSettle();
+
+    expect(api.detailCalls, 1);
+  });
+
+  testWidgets('active filter remains visible and removable after reload', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    final api = _FilterReloadApi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: api,
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('priority-filter-urgent')));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Aktualisieren'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('priority-filter-urgent')), findsOneWidget);
+    expect(find.text('Keine Übergaben für diese Filter.'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('priority-filter-urgent')));
+    await tester.pump();
+    expect(find.text('Neue normale Übergabe'), findsOneWidget);
+  });
+
+  testWidgets('malformed optional API fields do not crash cards or details', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _MalformedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+    expect(find.text('123'), findsOneWidget);
+
+    await tester.tap(find.text('123'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Defensive Datenanzeige'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('handover cards support 200 percent text scaling', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('RTW auffüllen'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('tablet layout uses Material NavigationRail', (tester) async {

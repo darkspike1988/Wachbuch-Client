@@ -9,7 +9,7 @@ Open-Source-Begleit-App für selbst gehostetes
 | **Server** | https://github.com/darkspike1988/Rettungswache-Wachbuch |
 | **Lizenz** | AGPL-3.0-or-later |
 | **API** | `/api/v1/` (Token-Auth, Paperless/Nextcloud-Stil) |
-| **App-Version** | 0.3.0 (passend zu Server ≥ 0.14.1) |
+| **App-Version** | 0.4.0 (passend zu Server ≥ 0.14.1) |
 
 ## Startflow
 
@@ -23,6 +23,9 @@ QR im Server-Web: Mein Konto → App-Tokens.
 - Token lokal im Keystore / Keychain
 - `GET /api/v1/me/` → eine Wache (keine Wachenauswahl in der App)
 - `GET /api/v1/handovers/` → aktive Übergaben
+- Volltextsuche, kombinierbare Status-/Prioritätsfilter und lokalisierte Chips
+- antippbare Übergabekarten mit Detailansicht über `GET /api/v1/handovers/{id}/`
+- kompakte Status- und Dringlichkeitsübersicht auf dem Dashboard
 - Phone: Bottom-Navigation · Tablet: NavigationRail + Grid
 - Material Design 3 mit responsivem Smartphone-/Tablet-Layout
 - automatisches Tag-/Nacht-Design nach lokal berechnetem Sonnenaufgang und Sonnenuntergang
@@ -46,7 +49,7 @@ flutter run
 # → dist/wachbuch-mobile.apk
 ```
 
-Siehe [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md) und [docs/PLAY-STORE.md](docs/PLAY-STORE.md).
+Siehe [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/MARKET-RESEARCH.md](docs/MARKET-RESEARCH.md).
 
 ## Kopplung zum Server
 

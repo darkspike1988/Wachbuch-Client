@@ -2,6 +2,27 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## 0.4.0 – 2026-08-02
+
+### Neu
+
+- Material-3-Suche über Titel, Kategorie, Status und Priorität der aktiven Übergaben.
+- Kombinierbare Status- und Prioritätsfilter mit einsatzgerechter Reihenfolge „Dringend → Wichtig → Normal“.
+- Lokalisierte, farbige Chips statt technischer API-Werte.
+- Ergebniszähler und eigener Leerzustand für Filter ohne Treffer.
+- Antippbare Übergabekarten mit Detail-Bottom-Sheet für Beschreibung, Autor, Änderungszeit und Version.
+- Dashboard-Zusammenfassung für offene, laufende und dringende Übergaben.
+
+### Qualität
+
+- Filterlogik als reine, defensiv gegen fehlende Felder getestete Funktion ausgelagert.
+- API-Vertrag für `GET /api/v1/handovers/{id}/` durch Regressionstest abgesichert.
+- Smartphone- und Tablet-Layouts für die neuen Karten und Filter getestet.
+- Detailaufrufe bleiben auch bei UI-Rebuilds auf genau einen HTTP-Request begrenzt.
+- Aktive Filter bleiben nach einem Daten-Reload sichtbar und entfernbar.
+- Unerwartete optionale API-Feldtypen führen nicht zum Absturz der Karten oder Detailansicht.
+- Übergabekarten passen ihre Höhe bis mindestens 200 % Textskalierung ohne Überlauf an.
+
 ## 0.3.0 – 2026-08-02
 
 ### Neu

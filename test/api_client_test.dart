@@ -156,6 +156,33 @@ void main() {
       );
     });
 
+    test('handoverDetail loads the existing detail endpoint', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.path, '/api/v1/handovers/42/');
+        expect(request.headers['Authorization'], 'Token wb_test123');
+        return http.Response(
+          jsonEncode({
+            'id': 42,
+            'title': 'RTW auffüllen',
+            'details': 'Fach 3 kontrollieren.',
+            'author': {'display_name': 'Michael'},
+            'version': 2,
+          }),
+          200,
+        );
+      });
+
+      final detail = await WachbuchApi(
+        baseUrl: 'https://wache.example.org',
+        token: 'wb_test123',
+        client: client,
+      ).handoverDetail(42);
+
+      expect(detail['details'], 'Fach 3 kontrollieren.');
+      expect((detail['author'] as Map)['display_name'], 'Michael');
+    });
+
     test('close releases the underlying HTTP client', () {
       final client = _TrackingClient();
       final api = WachbuchApi(

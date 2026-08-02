@@ -157,6 +157,14 @@ class WachbuchApi {
         .toList();
   }
 
+  /// GET /api/v1/handovers/{id}/
+  Future<Map<String, dynamic>> handoverDetail(int id) async {
+    final response = await _send(
+      _client.get(_uri('/api/v1/handovers/$id/'), headers: _headers()),
+    );
+    return _decode(response);
+  }
+
   void close() {
     _client.close();
   }

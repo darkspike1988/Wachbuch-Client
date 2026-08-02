@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
+import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
 class HomeShell extends StatefulWidget {
@@ -108,12 +109,14 @@ class _HomeShellState extends State<HomeShell> {
         roleLabel: _roleLabel,
         modules: _modules,
         handoverCount: _handovers.length,
+        handovers: _handovers,
         loading: _loading,
         hasData: _me != null,
         error: _error,
         onRefresh: _reload,
       ),
       _HandoversTab(
+        api: widget.api,
         items: _handovers,
         loading: _loading,
         error: _error,
@@ -207,6 +210,7 @@ class _OverviewTab extends StatelessWidget {
     required this.roleLabel,
     required this.modules,
     required this.handoverCount,
+    required this.handovers,
     required this.loading,
     required this.hasData,
     required this.error,
@@ -217,6 +221,7 @@ class _OverviewTab extends StatelessWidget {
   final String roleLabel;
   final Map<String, dynamic> modules;
   final int handoverCount;
+  final List<Map<String, dynamic>> handovers;
   final bool loading;
   final bool hasData;
   final String? error;
@@ -229,6 +234,15 @@ class _OverviewTab extends StatelessWidget {
     }
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.contentMaxWidth(width);
+    final openCount = handovers
+        .where((item) => item['status'] == 'open')
+        .length;
+    final inProgressCount = handovers
+        .where((item) => item['status'] == 'in_progress')
+        .length;
+    final urgentCount = handovers
+        .where((item) => item['priority'] == 'urgent')
+        .length;
 
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -257,6 +271,28 @@ class _OverviewTab extends StatelessWidget {
                 title: const Text('Aktive Übergaben'),
                 trailing: Text('$handoverCount'),
               ),
+              if (handoverCount > 0)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (openCount > 0)
+                      _HandoverChip(
+                        label: '$openCount offen',
+                        color: _statusColor(context, 'open'),
+                      ),
+                    if (inProgressCount > 0)
+                      _HandoverChip(
+                        label: '$inProgressCount in Bearbeitung',
+                        color: _statusColor(context, 'in_progress'),
+                      ),
+                    if (urgentCount > 0)
+                      _HandoverChip(
+                        label: '$urgentCount dringend',
+                        color: _priorityColor(context, 'urgent'),
+                      ),
+                  ],
+                ),
               const SizedBox(height: 8),
               Text(
                 'Module dieser Wache',
@@ -289,95 +325,521 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
-class _HandoversTab extends StatelessWidget {
+class _HandoversTab extends StatefulWidget {
   const _HandoversTab({
+    required this.api,
     required this.items,
     required this.loading,
     required this.error,
     required this.onRefresh,
   });
 
+  final WachbuchApi api;
   final List<Map<String, dynamic>> items;
   final bool loading;
   final String? error;
   final Future<void> Function() onRefresh;
 
   @override
+  State<_HandoversTab> createState() => _HandoversTabState();
+}
+
+class _HandoversTabState extends State<_HandoversTab> {
+  final _searchController = TextEditingController();
+  final Set<String> _statuses = {};
+  final Set<String> _priorities = {};
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggle(Set<String> target, String value, bool selected) {
+    setState(() {
+      selected ? target.add(value) : target.remove(value);
+    });
+  }
+
+  Future<void> _showDetails(Map<String, dynamic> item) async {
+    final rawId = item['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+    if (id == null) {
+      return;
+    }
+    final detailFuture = widget.api.handoverDetail(id);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) =>
+          _HandoverDetailSheet(future: detailFuture, fallback: item),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (loading && items.isEmpty) {
+    if (widget.loading && widget.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final width = MediaQuery.sizeOf(context).width;
     final cols = AppLayout.handoverColumns(width);
     final maxW = AppLayout.contentMaxWidth(width);
+    final filtered = filterHandovers(
+      widget.items,
+      query: _searchController.text,
+      statuses: _statuses,
+      priorities: _priorities,
+    );
+    final availableStatuses = _orderedValues(
+      [
+        ...widget.items.map((item) => item['status']?.toString() ?? ''),
+        ..._statuses,
+      ],
+      const ['open', 'in_progress', 'done'],
+    );
+    final availablePriorities = _orderedValues(
+      [
+        ...widget.items.map((item) => item['priority']?.toString() ?? ''),
+        ..._priorities,
+      ],
+      const ['urgent', 'important', 'normal'],
+    );
 
-    Widget tile(Map<String, dynamic> item) {
-      return Card(
-        margin: const EdgeInsets.all(4),
-        child: ListTile(
-          title: Text((item['title'] as String?) ?? 'Übergabe'),
-          subtitle: Text(
-            '${item['priority'] ?? ''} · ${item['status'] ?? ''} · ${item['category'] ?? ''}',
-          ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxW),
+        child: Column(
+          children: [
+            if (widget.items.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: SearchBar(
+                  key: const Key('handover-search'),
+                  controller: _searchController,
+                  hintText: 'Übergaben durchsuchen',
+                  leading: const Icon(Icons.search),
+                  trailing: [
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
+                        tooltip: 'Suche löschen',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              _FilterSection(
+                title: 'Status',
+                values: availableStatuses,
+                selected: _statuses,
+                label: handoverStatusLabel,
+                keyPrefix: 'status-filter',
+                onChanged: (value, selected) =>
+                    _toggle(_statuses, value, selected),
+              ),
+              _FilterSection(
+                title: 'Priorität',
+                values: availablePriorities,
+                selected: _priorities,
+                label: handoverPriorityLabel,
+                keyPrefix: 'priority-filter',
+                onChanged: (value, selected) =>
+                    _toggle(_priorities, value, selected),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${filtered.length} von ${widget.items.length} Übergaben',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+              ),
+            ],
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: widget.onRefresh,
+                child: _HandoverResults(
+                  items: filtered,
+                  allItemsEmpty: widget.items.isEmpty,
+                  error: widget.error,
+                  columns: cols,
+                  onOpen: _showDetails,
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _FilterSection extends StatelessWidget {
+  const _FilterSection({
+    required this.title,
+    required this.values,
+    required this.selected,
+    required this.label,
+    required this.keyPrefix,
+    required this.onChanged,
+  });
+
+  final String title;
+  final List<String> values;
+  final Set<String> selected;
+  final String Function(Object?) label;
+  final String keyPrefix;
+  final void Function(String value, bool selected) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Semantics(
+      container: true,
+      label: '$title filtern',
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Text('$title:', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(width: 8),
+            for (final value in values)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  key: Key('$keyPrefix-$value'),
+                  label: Text(label(value)),
+                  selected: selected.contains(value),
+                  onSelected: (active) => onChanged(value, active),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HandoverResults extends StatelessWidget {
+  const _HandoverResults({
+    required this.items,
+    required this.allItemsEmpty,
+    required this.error,
+    required this.columns,
+    required this.onOpen,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final bool allItemsEmpty;
+  final String? error;
+  final int columns;
+  final void Function(Map<String, dynamic> item) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (error != null && allItemsEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
       );
     }
+    if (allItemsEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: const [Text('Keine aktiven Übergaben.')],
+      );
+    }
+    if (items.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: const [Text('Keine Übergaben für diese Filter.')],
+      );
+    }
+    if (columns == 1) {
+      return ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        itemBuilder: (context, index) =>
+            _HandoverCard(item: items[index], onOpen: onOpen),
+      );
+    }
+    return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisExtent: _handoverCardExtent(context),
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) =>
+          _HandoverCard(item: items[index], onOpen: onOpen),
+    );
+  }
+}
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxW),
-          child: Builder(
-            builder: (context) {
-              if (error != null && items.isEmpty) {
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
+class _HandoverCard extends StatelessWidget {
+  const _HandoverCard({required this.item, required this.onOpen});
+
+  final Map<String, dynamic> item;
+  final void Function(Map<String, dynamic> item) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = item['title']?.toString().trim();
+    return Semantics(
+      button: true,
+      label:
+          'Übergabe ${title?.isNotEmpty == true ? title : 'ohne Titel'} öffnen',
+      child: SizedBox(
+        height: _handoverCardExtent(context),
+        child: Card(
+          margin: const EdgeInsets.all(4),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => onOpen(item),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title?.isNotEmpty == true ? title! : 'Übergabe',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    handoverCategoryLabel(item['category']),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const Spacer(),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _HandoverChip(
+                        label: handoverStatusLabel(item['status']),
+                        color: _statusColor(context, item['status']),
                       ),
-                    ),
-                  ],
-                );
-              }
-              if (items.isEmpty) {
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  children: const [Text('Keine aktiven Übergaben.')],
-                );
-              }
-              if (cols == 1) {
-                return ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 4),
-                  itemBuilder: (context, index) => tile(items[index]),
-                );
-              }
-              return GridView.builder(
-                padding: const EdgeInsets.all(12),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: cols,
-                  mainAxisExtent: 96,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) => tile(items[index]),
-              );
-            },
+                      _HandoverChip(
+                        label: handoverPriorityLabel(item['priority']),
+                        color: _priorityColor(context, item['priority']),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _HandoverChip extends StatelessWidget {
+  const _HandoverChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label, style: Theme.of(context).textTheme.labelMedium),
+    );
+  }
+}
+
+class _HandoverDetailSheet extends StatelessWidget {
+  const _HandoverDetailSheet({required this.future, required this.fallback});
+
+  final Future<Map<String, dynamic>> future;
+  final Map<String, dynamic> fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const SizedBox(
+              height: 240,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            final message = snapshot.error is ApiException
+                ? (snapshot.error! as ApiException).message
+                : 'Details konnten nicht geladen werden.';
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                message,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            );
+          }
+          final item = {...fallback, ...?snapshot.data};
+          final rawAuthor = item['author'];
+          final author = rawAuthor is Map ? rawAuthor : null;
+          final authorName = author?['display_name']?.toString();
+          final details = item['details']?.toString().trim();
+          final version = item['version'];
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              0,
+              24,
+              24 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['title']?.toString() ?? 'Übergabe',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _HandoverChip(
+                      label: handoverCategoryLabel(item['category']),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                    ),
+                    _HandoverChip(
+                      label: handoverStatusLabel(item['status']),
+                      color: _statusColor(context, item['status']),
+                    ),
+                    _HandoverChip(
+                      label: handoverPriorityLabel(item['priority']),
+                      color: _priorityColor(context, item['priority']),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  details?.isNotEmpty == true
+                      ? details!
+                      : 'Keine weiteren Angaben.',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 20),
+                if (authorName?.isNotEmpty == true)
+                  _DetailRow(icon: Icons.person_outline, value: authorName!),
+                if (item['updated_at'] != null)
+                  _DetailRow(
+                    icon: Icons.update,
+                    value:
+                        'Aktualisiert ${_formatTimestamp(item['updated_at'])}',
+                  ),
+                if (version != null)
+                  _DetailRow(icon: Icons.history, value: 'Version $version'),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.icon, required this.value});
+
+  final IconData icon;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+}
+
+List<String> _orderedValues(Iterable<String> values, List<String> order) {
+  final available = values.where((value) => value.isNotEmpty).toSet();
+  final result = order.where(available.remove).toList();
+  final unknown = available.toList()..sort();
+  return [...result, ...unknown];
+}
+
+double _handoverCardExtent(BuildContext context) {
+  final scale = MediaQuery.textScalerOf(context).scale(1);
+  final extraScale = (scale - 1).clamp(0.0, 2.0);
+  return 148 + (170 * extraScale);
+}
+
+Color _statusColor(BuildContext context, Object? status) {
+  final colors = Theme.of(context).colorScheme;
+  return switch (status?.toString()) {
+    'open' => colors.primaryContainer,
+    'in_progress' => colors.secondaryContainer,
+    'done' => colors.surfaceContainerHighest,
+    _ => colors.surfaceContainerHigh,
+  };
+}
+
+Color _priorityColor(BuildContext context, Object? priority) {
+  final colors = Theme.of(context).colorScheme;
+  return switch (priority?.toString()) {
+    'urgent' => colors.errorContainer,
+    'important' => colors.tertiaryContainer,
+    _ => colors.surfaceContainerHighest,
+  };
+}
+
+String _formatTimestamp(Object? value) {
+  final parsed = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+  if (parsed == null) {
+    return value?.toString() ?? '—';
+  }
+  String two(int number) => number.toString().padLeft(2, '0');
+  return '${two(parsed.day)}.${two(parsed.month)}.${parsed.year}, '
+      '${two(parsed.hour)}:${two(parsed.minute)} Uhr';
 }
 
 class _AccountTab extends StatelessWidget {
