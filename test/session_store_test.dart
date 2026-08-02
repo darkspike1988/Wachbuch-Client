@@ -46,4 +46,15 @@ void main() {
     expect(await store.readToken(), isNull);
     expect(await store.readServerUrl(), isNull);
   });
+
+  test('token expiry is detected from stored timestamp', () async {
+    final store = SessionStore();
+    await store.writeToken(
+      'wb_secret',
+      expiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
+    );
+
+    expect(await store.isTokenExpired(), isTrue);
+    expect(await store.readTokenExpiresAt(), isNotNull);
+  });
 }

@@ -15,6 +15,7 @@ class _MemorySessionStore extends SessionStore {
 
   String? url;
   String? token;
+  DateTime? expiresAt;
 
   @override
   Future<String?> readServerUrl() async => url;
@@ -23,18 +24,35 @@ class _MemorySessionStore extends SessionStore {
   Future<String?> readToken() async => token;
 
   @override
+  Future<DateTime?> readTokenExpiresAt() async => expiresAt;
+
+  @override
   Future<void> writeServerUrl(String value) async => url = value;
 
   @override
-  Future<void> writeToken(String value) async => token = value;
+  Future<void> writeToken(String value, {DateTime? expiresAt}) async {
+    token = value;
+    this.expiresAt = expiresAt;
+  }
 
   @override
-  Future<void> clearToken() async => token = null;
+  Future<void> clearToken() async {
+    token = null;
+    expiresAt = null;
+  }
 
   @override
   Future<void> clearAll() async {
     url = null;
     token = null;
+    expiresAt = null;
+  }
+
+  @override
+  Future<bool> isTokenExpired({DateTime? now}) async {
+    final expiry = expiresAt;
+    if (expiry == null) return false;
+    return !expiry.isAfter(now ?? DateTime.now());
   }
 }
 
@@ -44,14 +62,18 @@ class _ClosableApi extends WachbuchApi {
   bool closed = false;
 
   @override
-  Future<Map<String, dynamic>> discover() async => {'version': 'v1'};
+  Future<Map<String, dynamic>> discover() async => {
+    'ok': true,
+    'api_version': 'v1',
+    'endpoints': {'token': '/api/v1/token/'},
+  };
 
   @override
-  Future<String> obtainToken({
+  Future<AuthToken> obtainToken({
     required String username,
     required String password,
     String label = 'Mobile App',
-  }) async => 'wb_test';
+  }) async => const AuthToken(value: 'wb_test');
 
   @override
   void close() {
@@ -110,7 +132,7 @@ void main() {
         home: LoginScreen(
           store: _MemorySessionStore(),
           serverUrl: 'https://wache.example.org',
-          onLoggedIn: (_, __) async {},
+          onLoggedIn: (_, __, {DateTime? expiresAt}) async {},
           onChangeServer: () async {},
         ),
       ),
@@ -154,7 +176,7 @@ void main() {
           store: _MemorySessionStore(),
           serverUrl: 'https://wache.example.org',
           apiFactory: (_) => api,
-          onLoggedIn: (_, __) async => loggedIn = true,
+          onLoggedIn: (_, __, {DateTime? expiresAt}) async => loggedIn = true,
           onChangeServer: () async {},
         ),
       ),

@@ -2,6 +2,25 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## 0.5.1 – 2026-08-02
+
+### Sicherheit und Robustheit
+
+- Deep-Links im laufenden Betrieb fragen nach, bevor eine aktive Sitzung auf einen anderen Server umgestellt wird.
+- Gespeicherte Server-URLs werden beim Start erneut gegen die HTTPS-Regeln geprüft.
+- App-Tokens speichern und prüfen `expires_at`; abgelaufene Sitzungen landen auf dem Login mit Hinweis.
+- MFA-Antworten werden über den API-Code `mfa_required` erkannt, nicht nur über den Text.
+- Discovery akzeptiert nur Antworten, die wie ein Wachbuch-`/api/v1/`-Root aussehen.
+- Standort für das Solar-Theme wird nicht mehr ungefragt angefordert (System-Theme-Fallback).
+
+### Optimierungen
+
+- Übersicht und Übergaben laden parallel (`Future.wait`).
+- Tab-Wechsel behält Filterzustand (`IndexedStack`).
+- Überlappende Reloads werden per Generationszähler verworfen.
+- Modul-Chips zeigen deutsche Bezeichnungen statt API-Schlüssel.
+- Passwort-/Token-Felder werden nach erfolgreicher Anmeldung geleert.
+
 ## 0.5.0 – 2026-08-02
 
 ### Design und Lesbarkeit
