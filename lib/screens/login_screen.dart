@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/auth/session_store.dart';
+import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
 /// Second screen: username + password against the chosen server.
@@ -192,23 +193,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                     if (_error != null) ...[
                       const SizedBox(height: 16),
-                      Text(_error!, style: TextStyle(color: scheme.error)),
+                      ErrorBanner(message: _error!),
                     ],
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _busy ? null : _submit,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: _busy
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Anmelden'),
-                      ),
+                      child: _busy
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Anmelden'),
                     ),
                     const SizedBox(height: 12),
                     TextButton(

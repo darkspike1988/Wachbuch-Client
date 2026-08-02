@@ -3,6 +3,7 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
 import 'package:wachbuch_mobile/auth/session_store.dart';
 import 'package:wachbuch_mobile/screens/qr_scan_screen.dart';
+import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
 /// First screen: only server address (typed or QR) + confirm.
@@ -157,28 +158,25 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 16),
-                    Text(_error!, style: TextStyle(color: scheme.error)),
+                    ErrorBanner(message: _error!),
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: _busy ? null : _confirm,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: _busy
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Bestätigen'),
-                    ),
+                    child: _busy
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Bestätigen'),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Play-Store-Client: Verbindung nur zu Ihrem selbst gehosteten Server. '
                     'Produktion: HTTPS erforderlich.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   ),

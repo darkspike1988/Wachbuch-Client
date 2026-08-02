@@ -8,6 +8,7 @@ import 'package:wachbuch_mobile/auth/session_store.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 import 'package:wachbuch_mobile/screens/login_screen.dart';
 import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
+import 'package:wachbuch_mobile/theme/app_theme.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
 
 Future<void> main() async {
@@ -185,30 +186,6 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     });
   }
 
-  ThemeData _theme(Brightness brightness) {
-    const seed = Color(0xFF1F4D3A);
-    final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: brightness,
-    );
-    return ThemeData(
-      colorScheme: scheme,
-      useMaterial3: true,
-      inputDecorationTheme: const InputDecorationTheme(
-        filled: false,
-        border: OutlineInputBorder(),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        height: 72,
-        indicatorColor: scheme.secondaryContainer,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget home;
@@ -237,8 +214,8 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
 
     return MaterialApp(
       title: 'Wachbuch',
-      theme: _theme(Brightness.light),
-      darkTheme: _theme(Brightness.dark),
+      theme: buildWachbuchTheme(Brightness.light),
+      darkTheme: buildWachbuchTheme(Brightness.dark),
       themeMode: _themeMode,
       home: home,
     );

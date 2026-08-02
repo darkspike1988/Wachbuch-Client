@@ -2,6 +2,24 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## 0.5.0 – 2026-08-02
+
+### Design und Lesbarkeit
+
+- Durchgängiges, deterministisches Weiß-Blau-Designsystem für helles und dunkles Erscheinungsbild.
+- Lesbare Typografie mit mindestens 14 sp für Hinweise, Metadaten und Statusbeschriftungen.
+- Neu gestaltete Übersicht mit Wachen-Header und drei schnell erfassbaren Statuskarten.
+- Übergabekarten mit klarer Prioritätsmarkierung, größeren Abständen und kontrastgesicherten Chips.
+- Strukturierte Suche und Filter mit größeren Touch-Zielen und eindeutiger visueller Hierarchie.
+- Kontrastreiche Fehlerbanner mit Icon und Screenreader-Live-Region auf allen betroffenen Screens.
+- Lange Wachennamen werden in der App-Bar kontrolliert gekürzt; Karten bleiben bei 200 % Textskalierung überlauffrei.
+
+### Qualität
+
+- Reale Smartphone-Screenshots vor und nach der Überarbeitung mit Vision geprüft.
+- Theme-, Kontrast-, Semantik-, Dashboard- und Lesbarkeits-Regressionstests ergänzt.
+- Offizielle Flutter-Material-3- und Accessibility-Muster sowie offene Designsysteme als Referenz ausgewertet.
+
 ## 0.4.0 – 2026-08-02
 
 ### Neu

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
+import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
@@ -133,7 +134,7 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     final appBar = AppBar(
-      title: Text(_stationName),
+      title: Text(_stationName, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
         IconButton(
           tooltip: 'Aktualisieren',
@@ -253,69 +254,238 @@ class _OverviewTab extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                stationName,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              if (roleLabel.isNotEmpty)
-                Text(roleLabel, style: Theme.of(context).textTheme.bodyMedium),
+              _StationHero(stationName: stationName, roleLabel: roleLabel),
               const SizedBox(height: 16),
-              if (error != null)
-                Text(
-                  error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.assignment),
-                title: const Text('Aktive Übergaben'),
-                trailing: Text('$handoverCount'),
+              if (error != null) ...[
+                ErrorBanner(message: error!),
+                const SizedBox(height: 16),
+              ],
+              const _SectionTitle(
+                icon: Icons.monitor_heart_outlined,
+                title: 'Aktive Übergaben',
               ),
-              if (handoverCount > 0)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (openCount > 0)
-                      _HandoverChip(
-                        label: '$openCount offen',
-                        color: _statusColor(context, 'open'),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final textScale =
+                      MediaQuery.textScalerOf(context).scale(14) / 14;
+                  final columns = constraints.maxWidth < 360 || textScale > 1.3
+                      ? 2
+                      : 3;
+                  final metricWidth =
+                      (constraints.maxWidth - (8 * (columns - 1))) / columns;
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _DashboardMetric(
+                        key: const Key('overview-stat-open'),
+                        width: metricWidth,
+                        icon: Icons.inbox_outlined,
+                        value: openCount,
+                        label: 'offen',
                       ),
-                    if (inProgressCount > 0)
-                      _HandoverChip(
-                        label: '$inProgressCount in Bearbeitung',
-                        color: _statusColor(context, 'in_progress'),
+                      _DashboardMetric(
+                        key: const Key('overview-stat-progress'),
+                        width: metricWidth,
+                        icon: Icons.pending_actions_outlined,
+                        value: inProgressCount,
+                        label: 'in Bearbeitung',
                       ),
-                    if (urgentCount > 0)
-                      _HandoverChip(
-                        label: '$urgentCount dringend',
-                        color: _priorityColor(context, 'urgent'),
+                      _DashboardMetric(
+                        key: const Key('overview-stat-urgent'),
+                        width: metricWidth,
+                        icon: Icons.priority_high_rounded,
+                        value: urgentCount,
+                        label: 'dringend',
+                        urgent: urgentCount > 0,
                       ),
-                  ],
-                ),
-              const SizedBox(height: 8),
-              Text(
-                'Module dieser Wache',
-                style: Theme.of(context).textTheme.titleMedium,
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 24),
+              const _SectionTitle(
+                icon: Icons.dashboard_customize_outlined,
+                title: 'Module dieser Wache',
+              ),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: modules.entries.map((entry) {
                   final on = entry.value == true;
-                  return FilterChip(
+                  return Chip(
+                    avatar: Icon(
+                      on ? Icons.check_circle : Icons.remove_circle_outline,
+                      size: 18,
+                    ),
                     label: Text(entry.key),
-                    selected: on,
-                    onSelected: null,
                   );
                 }).toList(),
               ),
               const SizedBox(height: 24),
+              Material(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Ihre Wache und die verfügbaren Module werden automatisch '
+                          'aus Ihrem Benutzerkonto geladen.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StationHero extends StatelessWidget {
+  const _StationHero({required this.stationName, required this.roleLabel});
+
+  final String stationName;
+  final String roleLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.primary,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: scheme.onPrimary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.local_hospital_outlined,
+                color: scheme.onPrimary,
+                size: 30,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stationName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(color: scheme.onPrimary),
+                  ),
+                  if (roleLabel.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      roleLabel,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onPrimary.withValues(alpha: 0.88),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: scheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardMetric extends StatelessWidget {
+  const _DashboardMetric({
+    super.key,
+    required this.width,
+    required this.icon,
+    required this.value,
+    required this.label,
+    this.urgent = false,
+  });
+
+  final double width;
+  final IconData icon;
+  final int value;
+  final String label;
+  final bool urgent;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final background = urgent ? scheme.errorContainer : scheme.surface;
+    final foreground = urgent ? scheme.onErrorContainer : scheme.onSurface;
+    final accent = urgent ? scheme.error : scheme.primary;
+    return SizedBox(
+      width: width,
+      child: Card(
+        color: background,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 24, color: accent),
+              const SizedBox(height: 10),
               Text(
-                'Wachenspezifisch: Die Station kommt aus GET /api/v1/me/. '
-                'Es gibt keine freie Wachenauswahl in der App.',
-                style: Theme.of(context).textTheme.bodySmall,
+                '$value $label',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: foreground,
+                  height: 1.25,
+                ),
               ),
             ],
           ),
@@ -505,26 +675,35 @@ class _FilterSection extends StatelessWidget {
     if (values.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Semantics(
-      container: true,
-      label: '$title filtern',
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 0, 2),
+      child: Semantics(
+        container: true,
+        label: '$title filtern',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$title:', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(width: 8),
-            for (final value in values)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  key: Key('$keyPrefix-$value'),
-                  label: Text(label(value)),
-                  selected: selected.contains(value),
-                  onSelected: (active) => onChanged(value, active),
-                ),
+            Text(title, style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 6),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 16),
+              child: Row(
+                children: [
+                  for (final value in values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        key: Key('$keyPrefix-$value'),
+                        label: Text(label(value)),
+                        selected: selected.contains(value),
+                        showCheckmark: true,
+                        onSelected: (active) => onChanged(value, active),
+                      ),
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -553,12 +732,7 @@ class _HandoverResults extends StatelessWidget {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        ],
+        children: [ErrorBanner(message: error!)],
       );
     }
     if (allItemsEmpty) {
@@ -621,39 +795,58 @@ class _HandoverCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => onOpen(item),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title?.isNotEmpty == true ? title! : 'Übergabe',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  width: 5,
+                  color: _priorityColors(context, item['priority']).foreground,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title?.isNotEmpty == true ? title! : 'Übergabe',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          handoverCategoryLabel(item['category']),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const Spacer(),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _HandoverChip(
+                              label: handoverStatusLabel(item['status']),
+                              colors: _statusColors(context, item['status']),
+                            ),
+                            _HandoverChip(
+                              label: handoverPriorityLabel(item['priority']),
+                              colors: _priorityColors(
+                                context,
+                                item['priority'],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    handoverCategoryLabel(item['category']),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const Spacer(),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _HandoverChip(
-                        label: handoverStatusLabel(item['status']),
-                        color: _statusColor(context, item['status']),
-                      ),
-                      _HandoverChip(
-                        label: handoverPriorityLabel(item['priority']),
-                        color: _priorityColor(context, item['priority']),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -663,20 +856,27 @@ class _HandoverCard extends StatelessWidget {
 }
 
 class _HandoverChip extends StatelessWidget {
-  const _HandoverChip({required this.label, required this.color});
+  const _HandoverChip({required this.label, required this.colors});
 
   final String label;
-  final Color color;
+  final ({Color background, Color foreground}) colors;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: color,
+        color: colors.background,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label, style: Theme.of(context).textTheme.labelMedium),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: colors.foreground,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -705,10 +905,7 @@ class _HandoverDetailSheet extends StatelessWidget {
                 : 'Details konnten nicht geladen werden.';
             return Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(
-                message,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              child: ErrorBanner(message: message),
             );
           }
           final item = {...fallback, ...?snapshot.data};
@@ -738,17 +935,20 @@ class _HandoverDetailSheet extends StatelessWidget {
                   children: [
                     _HandoverChip(
                       label: handoverCategoryLabel(item['category']),
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
+                      colors: (
+                        background: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        foreground: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     _HandoverChip(
                       label: handoverStatusLabel(item['status']),
-                      color: _statusColor(context, item['status']),
+                      colors: _statusColors(context, item['status']),
                     ),
                     _HandoverChip(
                       label: handoverPriorityLabel(item['priority']),
-                      color: _priorityColor(context, item['priority']),
+                      colors: _priorityColors(context, item['priority']),
                     ),
                   ],
                 ),
@@ -791,7 +991,7 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20),
+          Icon(icon, size: 24, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 8),
           Expanded(child: Text(value)),
         ],
@@ -810,25 +1010,52 @@ List<String> _orderedValues(Iterable<String> values, List<String> order) {
 double _handoverCardExtent(BuildContext context) {
   final scale = MediaQuery.textScalerOf(context).scale(1);
   final extraScale = (scale - 1).clamp(0.0, 2.0);
-  return 148 + (170 * extraScale);
+  return 196 + (190 * extraScale);
 }
 
-Color _statusColor(BuildContext context, Object? status) {
+({Color background, Color foreground}) _statusColors(
+  BuildContext context,
+  Object? status,
+) {
   final colors = Theme.of(context).colorScheme;
   return switch (status?.toString()) {
-    'open' => colors.primaryContainer,
-    'in_progress' => colors.secondaryContainer,
-    'done' => colors.surfaceContainerHighest,
-    _ => colors.surfaceContainerHigh,
+    'open' => (
+      background: colors.primaryContainer,
+      foreground: colors.onPrimaryContainer,
+    ),
+    'in_progress' => (
+      background: colors.secondaryContainer,
+      foreground: colors.onSecondaryContainer,
+    ),
+    'done' => (
+      background: colors.surfaceContainerHighest,
+      foreground: colors.onSurface,
+    ),
+    _ => (
+      background: colors.surfaceContainerHigh,
+      foreground: colors.onSurface,
+    ),
   };
 }
 
-Color _priorityColor(BuildContext context, Object? priority) {
+({Color background, Color foreground}) _priorityColors(
+  BuildContext context,
+  Object? priority,
+) {
   final colors = Theme.of(context).colorScheme;
   return switch (priority?.toString()) {
-    'urgent' => colors.errorContainer,
-    'important' => colors.tertiaryContainer,
-    _ => colors.surfaceContainerHighest,
+    'urgent' => (
+      background: colors.errorContainer,
+      foreground: colors.onErrorContainer,
+    ),
+    'important' => (
+      background: colors.tertiaryContainer,
+      foreground: colors.onTertiaryContainer,
+    ),
+    _ => (
+      background: colors.surfaceContainerHighest,
+      foreground: colors.onSurface,
+    ),
   };
 }
 

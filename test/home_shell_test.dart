@@ -203,7 +203,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rettungswache Test'), findsWidgets);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1 offen'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
 
@@ -561,4 +561,120 @@ void main() {
     api.secondMe.complete(_mePayload(stationName: 'Wachbuch'));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('overview presents key figures as scannable dashboard cards', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('overview-stat-open')), findsOneWidget);
+    expect(find.byKey(const Key('overview-stat-progress')), findsOneWidget);
+    expect(find.byKey(const Key('overview-stat-urgent')), findsOneWidget);
+  });
+
+  testWidgets('overview metrics wrap on narrow screens with large text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final open = tester.getTopLeft(find.byKey(const Key('overview-stat-open')));
+    final urgent = tester.getTopLeft(
+      find.byKey(const Key('overview-stat-urgent')),
+    );
+    expect(urgent.dy, greaterThan(open.dy));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long station name is protected by an ellipsis in the app bar', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    const name = 'Rettungswache Rheda-Wiedenbrück Nord mit sehr langem Namen';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _ReloadApi(stationName: name),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(
+      find.descendant(of: find.byType(AppBar), matching: find.text(name)),
+    );
+    expect(title.maxLines, 1);
+    expect(title.overflow, TextOverflow.ellipsis);
+  });
+
+  testWidgets('status labels use at least 14sp for field readability', (
+    tester,
+  ) async {
+    _usePhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeShell(
+          api: _PolishedApi(),
+          onLogout: () async {},
+          onChangeServer: () async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übergaben'));
+    await tester.pumpAndSettle();
+
+    final urgent = tester.widgetList<Text>(find.text('Dringend')).last;
+    expect(urgent.style?.fontSize, greaterThanOrEqualTo(14));
+  });
+
+  testWidgets(
+    'station modules are rendered as information, not disabled filters',
+    (tester) async {
+      _usePhone(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HomeShell(
+            api: _ImmediateApi(),
+            onLogout: () async {},
+            onChangeServer: () async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Chip), findsNWidgets(2));
+      expect(find.byType(FilterChip), findsNothing);
+    },
+  );
 }

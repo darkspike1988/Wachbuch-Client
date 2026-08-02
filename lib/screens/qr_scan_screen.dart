@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
+import 'package:wachbuch_mobile/ui/error_banner.dart';
 
 /// Full-screen QR scanner for the Wachbuch server address.
 ///
@@ -89,7 +90,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(_error!, style: TextStyle(color: scheme.error)),
+              child: ErrorBanner(message: _error!),
             ),
           SafeArea(
             child: Padding(
@@ -97,7 +98,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               child: Text(
                 'QR aus dem Wachbuch-Web unter Mein Konto → App-Tokens',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
           ),
