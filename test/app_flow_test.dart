@@ -11,7 +11,7 @@ import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
 
 class _MemorySessionStore extends SessionStore {
-  _MemorySessionStore({this.url, this.expiresAt});
+  _MemorySessionStore({this.url});
 
   String? url;
   String? token;
