@@ -26,6 +26,7 @@ class _HomeShellState extends State<HomeShell> {
   List<Map<String, dynamic>> _handovers = [];
   String? _error;
   bool _loading = true;
+  int _reloadGeneration = 0;
 
   @override
   void initState() {
@@ -34,34 +35,39 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _reload() async {
+    final generation = ++_reloadGeneration;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final me = await widget.api.me();
-      final handovers = await widget.api.handovers();
-      if (!mounted) {
+      final results = await Future.wait([
+        widget.api.me(),
+        widget.api.handovers(),
+      ]);
+      if (!mounted || generation != _reloadGeneration) {
         return;
       }
       setState(() {
-        _me = me;
-        _handovers = handovers;
+        _me = results[0] as Map<String, dynamic>;
+        _handovers = results[1] as List<Map<String, dynamic>>;
         _loading = false;
       });
     } on ApiException catch (error) {
-      if (!mounted) {
+      if (!mounted || generation != _reloadGeneration) {
         return;
       }
       setState(() {
-        _error = error.message;
+        _error = error.statusCode == 401
+            ? 'Anmeldung abgelaufen oder widerrufen.'
+            : error.message;
         _loading = false;
       });
       if (error.statusCode == 401) {
         await widget.onLogout();
       }
     } catch (error) {
-      if (!mounted) {
+      if (!mounted || generation != _reloadGeneration) {
         return;
       }
       setState(() {
@@ -104,34 +110,36 @@ class _HomeShellState extends State<HomeShell> {
     final width = MediaQuery.sizeOf(context).width;
     final tablet = AppLayout.isTablet(width);
 
-    final pages = [
-      _OverviewTab(
-        stationName: _stationName,
-        roleLabel: _roleLabel,
-        modules: _modules,
-        handoverCount: _handovers.length,
-        handovers: _handovers,
-        loading: _loading,
-        hasData: _me != null,
-        error: _error,
-        onRefresh: _reload,
-      ),
-      _HandoversTab(
-        api: widget.api,
-        items: _handovers,
-        loading: _loading,
-        error: _error,
-        onRefresh: _reload,
-      ),
-      _AccountTab(
-        me: _me,
-        serverUrl: widget.api.baseUrl,
-        loading: _loading,
-        onLogout: widget.onLogout,
-        onChangeServer: widget.onChangeServer,
-        onRefresh: _reload,
-      ),
-    ];
+    final pages = IndexedStack(
+      index: _tab,
+      children: [
+        _OverviewTab(
+          stationName: _stationName,
+          roleLabel: _roleLabel,
+          modules: _modules,
+          handovers: _handovers,
+          loading: _loading,
+          hasData: _me != null,
+          error: _error,
+          onRefresh: _reload,
+        ),
+        _HandoversTab(
+          api: widget.api,
+          items: _handovers,
+          loading: _loading,
+          error: _error,
+          onRefresh: _reload,
+        ),
+        _AccountTab(
+          me: _me,
+          serverUrl: widget.api.baseUrl,
+          loading: _loading,
+          onLogout: widget.onLogout,
+          onChangeServer: widget.onChangeServer,
+          onRefresh: _reload,
+        ),
+      ],
+    );
 
     final appBar = AppBar(
       title: Text(_stationName, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -174,7 +182,7 @@ class _HomeShellState extends State<HomeShell> {
               ],
             ),
             const VerticalDivider(width: 1),
-            Expanded(child: pages[_tab]),
+            Expanded(child: pages),
           ],
         ),
       );
@@ -182,7 +190,7 @@ class _HomeShellState extends State<HomeShell> {
 
     return Scaffold(
       appBar: appBar,
-      body: pages[_tab],
+      body: pages,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (index) => setState(() => _tab = index),
@@ -210,7 +218,6 @@ class _OverviewTab extends StatelessWidget {
     required this.stationName,
     required this.roleLabel,
     required this.modules,
-    required this.handoverCount,
     required this.handovers,
     required this.loading,
     required this.hasData,
@@ -221,7 +228,6 @@ class _OverviewTab extends StatelessWidget {
   final String stationName;
   final String roleLabel;
   final Map<String, dynamic> modules;
-  final int handoverCount;
   final List<Map<String, dynamic>> handovers;
   final bool loading;
   final bool hasData;
@@ -320,7 +326,7 @@ class _OverviewTab extends StatelessWidget {
                       on ? Icons.check_circle : Icons.remove_circle_outline,
                       size: 18,
                     ),
-                    label: Text(entry.key),
+                    label: Text(moduleLabel(entry.key)),
                   );
                 }).toList(),
               ),

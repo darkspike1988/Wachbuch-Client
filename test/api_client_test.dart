@@ -12,7 +12,14 @@ void main() {
         expect(request.method, 'GET');
         expect(request.url.toString(), 'https://wache.example.org/api/v1/');
         expect(request.headers, isNot(contains('Authorization')));
-        return http.Response(jsonEncode({'version': 'v1'}), 200);
+        return http.Response(
+          jsonEncode({
+            'ok': true,
+            'api_version': 'v1',
+            'endpoints': {'token': '/api/v1/token/'},
+          }),
+          200,
+        );
       });
 
       final result = await WachbuchApi(
@@ -20,7 +27,7 @@ void main() {
         client: client,
       ).discover();
 
-      expect(result['version'], 'v1');
+      expect(result['api_version'], 'v1');
     });
 
     test('obtainToken sends credentials and returns the token', () async {
@@ -33,7 +40,13 @@ void main() {
           'password': 'secret',
           'label': 'Testgerät',
         });
-        return http.Response(jsonEncode({'token': 'wb_test123'}), 200);
+        return http.Response(
+          jsonEncode({
+            'token': 'wb_test123',
+            'expires_at': '2026-12-01T12:00:00Z',
+          }),
+          200,
+        );
       });
 
       final token =
@@ -46,7 +59,51 @@ void main() {
             label: 'Testgerät',
           );
 
-      expect(token, 'wb_test123');
+      expect(token.value, 'wb_test123');
+      expect(token.expiresAt, isNotNull);
+    });
+
+    test('discover rejects non-Wachbuch JSON payloads', () async {
+      final client = MockClient(
+        (_) async => http.Response(jsonEncode({'hello': 'world'}), 200),
+      );
+
+      await expectLater(
+        WachbuchApi(
+          baseUrl: 'https://wache.example.org',
+          client: client,
+        ).discover(),
+        throwsA(
+          isA<ApiException>().having(
+            (error) => error.message,
+            'message',
+            contains('Wachbuch-Server'),
+          ),
+        ),
+      );
+    });
+
+    test('API errors expose structured MFA codes', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'error': 'Zwei-Faktor erforderlich.',
+            'code': 'mfa_required',
+          }),
+          403,
+        ),
+      );
+
+      try {
+        await WachbuchApi(
+          baseUrl: 'https://wache.example.org',
+          client: client,
+        ).obtainToken(username: 'a', password: 'b');
+        fail('expected ApiException');
+      } on ApiException catch (error) {
+        expect(error.isMfaRequired, isTrue);
+        expect(error.code, 'mfa_required');
+      }
     });
 
     test('authenticated requests send the Wachbuch token', () async {

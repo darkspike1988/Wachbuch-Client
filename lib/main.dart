@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
@@ -44,11 +45,13 @@ class WachbuchApp extends StatefulWidget {
 }
 
 class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   _BootPhase _phase = _BootPhase.booting;
   String? _serverUrl;
   WachbuchApi? _api;
   StreamSubscription<Uri>? _linkSubscription;
   ThemeMode _themeMode = ThemeMode.system;
+  String? _sessionNotice;
 
   @override
   void initState() {
@@ -82,12 +85,29 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     var url = await widget.store.readServerUrl();
     var token = await widget.store.readToken();
 
+    if (url != null && url.isNotEmpty) {
+      try {
+        url = parseServerAddress(url, allowInsecure: kDebugMode);
+        await widget.store.writeServerUrl(url);
+      } on ArgumentError {
+        await widget.store.clearAll();
+        url = null;
+        token = null;
+      }
+    }
+
+    if (token != null && await widget.store.isTokenExpired()) {
+      await widget.store.clearToken();
+      token = null;
+      _sessionNotice = 'Ihre Anmeldung ist abgelaufen. Bitte erneut anmelden.';
+    }
+
     final initialLink = await widget.linkSource.getInitialLink();
     if (initialLink != null) {
       final linkedUrl = _parseLink(initialLink);
-      if (linkedUrl != null) {
-        await widget.store.clearAll();
-        await widget.store.writeServerUrl(linkedUrl);
+      // Cold-start via deep link is intentional; confirm only for hot links.
+      if (linkedUrl != null &&
+          await _applyServerLink(linkedUrl, confirmIfNeeded: false)) {
         url = linkedUrl;
         token = null;
       }
@@ -114,22 +134,66 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
 
   String? _parseLink(Uri link) {
     try {
-      return parseServerAddress(link.toString());
+      return parseServerAddress(link.toString(), allowInsecure: kDebugMode);
     } on ArgumentError {
       return null;
     }
   }
 
+  Future<bool> _applyServerLink(
+    String url, {
+    required bool confirmIfNeeded,
+  }) async {
+    if (confirmIfNeeded) {
+      final nav = _navigatorKey.currentContext;
+      if (nav == null) return false;
+      final confirmed = await showDialog<bool>(
+        context: nav,
+        builder: (context) => AlertDialog(
+          title: const Text('Server wechseln?'),
+          content: Text(
+            'Ein Link möchte die App auf\n$url\numstellen. '
+            'Die aktuelle Anmeldung wird dabei beendet.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Abbrechen'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Wechseln'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return false;
+    }
+    await widget.store.clearAll();
+    await widget.store.writeServerUrl(url);
+    return true;
+  }
+
   Future<void> _handleServerLink(Uri link) async {
     final url = _parseLink(link);
     if (url == null) return;
-    await widget.store.clearAll();
-    await widget.store.writeServerUrl(url);
-    if (!mounted) return;
+    if (_serverUrl == url && _phase == _BootPhase.home) {
+      return;
+    }
+    final needsConfirm =
+        _phase == _BootPhase.home &&
+        _serverUrl != null &&
+        _serverUrl != url;
+    final applied = await _applyServerLink(
+      url,
+      confirmIfNeeded: needsConfirm,
+    );
+    if (!applied || !mounted) return;
     setState(() {
       _api = null;
       _serverUrl = url;
       _phase = _BootPhase.login;
+      _sessionNotice = null;
     });
   }
 
@@ -154,22 +218,28 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _onLoggedIn(String url, String token) async {
+  Future<void> _onLoggedIn(
+    String url,
+    String token, {
+    DateTime? expiresAt,
+  }) async {
     await widget.store.writeServerUrl(url);
-    await widget.store.writeToken(token);
+    await widget.store.writeToken(token, expiresAt: expiresAt);
     if (!mounted) return;
     setState(() {
       _serverUrl = url;
       _api = WachbuchApi(baseUrl: url, token: token);
       _phase = _BootPhase.home;
+      _sessionNotice = null;
     });
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout({String? notice}) async {
     await widget.store.clearToken();
     if (!mounted) return;
     setState(() {
       _api = null;
+      _sessionNotice = notice;
       _phase = _serverUrl == null || _serverUrl!.isEmpty
           ? _BootPhase.setupServer
           : _BootPhase.login;
@@ -182,6 +252,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     setState(() {
       _api = null;
       _serverUrl = null;
+      _sessionNotice = null;
       _phase = _BootPhase.setupServer;
     });
   }
@@ -201,19 +272,23 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
         home = LoginScreen(
           store: widget.store,
           serverUrl: _serverUrl!,
+          notice: _sessionNotice,
           onLoggedIn: _onLoggedIn,
           onChangeServer: _changeServer,
         );
       case _BootPhase.home:
         home = HomeShell(
           api: _api!,
-          onLogout: _logout,
+          onLogout: () => _logout(
+            notice: 'Sitzung beendet. Bitte erneut anmelden.',
+          ),
           onChangeServer: _changeServer,
         );
     }
 
     return MaterialApp(
       title: 'Wachbuch',
+      navigatorKey: _navigatorKey,
       theme: buildWachbuchTheme(Brightness.light),
       darkTheme: buildWachbuchTheme(Brightness.dark),
       themeMode: _themeMode,

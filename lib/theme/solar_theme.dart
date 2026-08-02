@@ -28,12 +28,12 @@ class DeviceSolarLocationProvider implements SolarLocationProvider {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return null;
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
+      // Do not prompt here: theme is cosmetic. Fall back to system theme
+      // unless the user already granted location (e.g. another feature).
+      final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+          permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.unableToDetermine) {
         return null;
       }
 

@@ -13,13 +13,24 @@ WachbuchApi defaultWachbuchApiFactory(String baseUrl) {
 }
 
 class ApiException implements Exception {
-  ApiException(this.statusCode, this.message);
+  ApiException(this.statusCode, this.message, {this.code});
 
   final int statusCode;
   final String message;
+  final String? code;
+
+  bool get isMfaRequired =>
+      statusCode == 403 && (code == 'mfa_required' || message.contains('MFA'));
 
   @override
   String toString() => 'ApiException($statusCode): $message';
+}
+
+class AuthToken {
+  const AuthToken({required this.value, this.expiresAt});
+
+  final String value;
+  final DateTime? expiresAt;
 }
 
 class WachbuchApi {
@@ -95,6 +106,7 @@ class WachbuchApi {
         response.statusCode,
         (body['error'] as String?) ??
             'Anfrage fehlgeschlagen (${response.statusCode})',
+        code: body['code'] as String?,
       );
     }
     return body;
@@ -105,11 +117,13 @@ class WachbuchApi {
     final response = await _send(
       _client.get(_uri('/api/v1/'), headers: _headers(auth: false)),
     );
-    return _decode(response);
+    final body = _decode(response);
+    ensureWachbuchDiscovery(body);
+    return body;
   }
 
   /// POST /api/v1/token/
-  Future<String> obtainToken({
+  Future<AuthToken> obtainToken({
     required String username,
     required String password,
     String label = 'Mobile App',
@@ -130,7 +144,10 @@ class WachbuchApi {
     if (value == null || value.isEmpty) {
       throw ApiException(response.statusCode, 'Kein Token in der Antwort.');
     }
-    return value;
+    return AuthToken(
+      value: value,
+      expiresAt: _parseExpiresAt(body['expires_at']),
+    );
   }
 
   /// GET /api/v1/me/
@@ -179,6 +196,30 @@ class WachbuchApi {
   }
 }
 
+/// Validates that a discovery payload looks like a Wachbuch API root.
+void ensureWachbuchDiscovery(Map<String, dynamic> body) {
+  final endpoints = body['endpoints'];
+  final hasTokenEndpoint =
+      endpoints is Map &&
+      (endpoints.containsKey('token') || endpoints.containsKey('anmeldung'));
+  final ok = body['ok'] == true || body['ok'] == 'true';
+  final hasVersion =
+      body['api_version'] != null ||
+      body['version'] != null ||
+      body['name'] != null;
+  if (!ok && !hasTokenEndpoint && !hasVersion) {
+    throw ApiException(
+      0,
+      'Die Adresse antwortet nicht wie ein Wachbuch-Server (/api/v1/).',
+    );
+  }
+}
+
+DateTime? _parseExpiresAt(Object? raw) {
+  if (raw is! String || raw.isEmpty) return null;
+  return DateTime.tryParse(raw)?.toLocal();
+}
+
 String normalizeServerUrl(String input) {
   var value = input.trim();
   if (value.isEmpty) {
@@ -191,4 +232,18 @@ String normalizeServerUrl(String input) {
     value = value.substring(0, value.length - 1);
   }
   return value;
+}
+
+/// German labels for station module keys from `/me/`.
+String moduleLabel(String key) {
+  const labels = <String, String>{
+    'calendar': 'Kalender',
+    'birthdays': 'Geburtstage',
+    'coffee': 'Kaffeekasse',
+    'feeds': 'Meldungen & Verkehr',
+    'checklists': 'Checklisten',
+    'messaging': 'Nachrichten',
+    'tasks': 'Aufgaben',
+  };
+  return labels[key] ?? key;
 }

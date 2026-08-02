@@ -13,12 +13,19 @@ class LoginScreen extends StatefulWidget {
     required this.serverUrl,
     required this.onLoggedIn,
     required this.onChangeServer,
+    this.notice,
     this.apiFactory = defaultWachbuchApiFactory,
   });
 
   final SessionStore store;
   final String serverUrl;
-  final Future<void> Function(String serverUrl, String token) onLoggedIn;
+  final String? notice;
+  final Future<void> Function(
+    String serverUrl,
+    String token, {
+    DateTime? expiresAt,
+  })
+  onLoggedIn;
   final Future<void> Function() onChangeServer;
   final WachbuchApiFactory apiFactory;
 
@@ -35,6 +42,20 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _useTokenPaste = false;
   bool _obscure = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _error = widget.notice;
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.notice != oldWidget.notice && widget.notice != null) {
+      _error = widget.notice;
+    }
+  }
 
   @override
   void dispose() {
@@ -54,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       api = widget.apiFactory(widget.serverUrl);
       late final String token;
+      DateTime? expiresAt;
       if (_useTokenPaste) {
         token = _tokenCtrl.text.trim();
         if (token.isEmpty) {
@@ -64,18 +86,27 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         await api.copyWithToken(token).me();
       } else {
-        token = await api.obtainToken(
+        final auth = await api.obtainToken(
           username: _userCtrl.text.trim(),
           password: _passCtrl.text,
           label: 'Wachbuch Mobile',
         );
+        token = auth.value;
+        expiresAt = auth.expiresAt;
       }
-      await widget.onLoggedIn(widget.serverUrl, token);
+      TextInput.finishAutofillContext(shouldSave: true);
+      _passCtrl.clear();
+      _tokenCtrl.clear();
+      await widget.onLoggedIn(
+        widget.serverUrl,
+        token,
+        expiresAt: expiresAt,
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
         _error = error.message;
-        if (error.statusCode == 403 && error.message.contains('MFA')) {
+        if (error.isMfaRequired) {
           _error =
               '${error.message}\n\nBei Zwei-Faktor: App-Token im Web unter Mein Konto → App-Tokens erzeugen.';
           _useTokenPaste = true;
@@ -83,7 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = error.toString());
+      final message = error is ArgumentError
+          ? (error.message?.toString() ?? 'Ungültige Eingabe.')
+          : error.toString();
+      setState(() => _error = message);
     } finally {
       api?.close();
       if (mounted) setState(() => _busy = false);
