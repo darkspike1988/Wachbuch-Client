@@ -49,7 +49,23 @@ flutter run
 # → dist/wachbuch-mobile.apk
 ```
 
-Siehe [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/MARKET-RESEARCH.md](docs/MARKET-RESEARCH.md).
+### iOS
+
+Ein lokaler Simulator-Build benötigt macOS, Xcode und Flutter Stable:
+
+```bash
+flutter pub get
+flutter build ios --simulator --debug
+```
+
+Für jeden Pull Request prüft GitHub Actions zusätzlich einen iOS-Simulator-Build
+und einen signierfreien Release-Build. Der manuelle TestFlight-Workflow wird erst
+nach Einrichtung der geschützten Apple-Secrets verwendet.
+
+Siehe [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md),
+[docs/PLAY-STORE.md](docs/PLAY-STORE.md),
+[docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md) und
+[docs/MARKET-RESEARCH.md](docs/MARKET-RESEARCH.md).
 
 ## Kopplung zum Server
 
