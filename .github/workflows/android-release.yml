@@ -36,6 +36,8 @@ jobs:
           channel: stable
           cache: true
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools
 
       - name: Validate protected signing secrets
         env:
@@ -103,19 +105,41 @@ jobs:
         working-directory: android
         run: ./gradlew :app:lintProductionRelease
 
-      - name: Verify signatures, identity and release properties
+      - name: Verify signatures identity permissions SDKs and release properties
         run: |
           set -euo pipefail
+          export LC_ALL=C
           mkdir -p dist/aab dist/apk dist/reports dist/symbols
+
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          APKANALYZER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/apkanalyzer"
+          if [ ! -x "$APKANALYZER" ]; then
+            APKANALYZER=$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name apkanalyzer | sort -V | tail -n 1)
+          fi
+          test -x "$APKSIGNER"
+          test -x "$APKANALYZER"
+
+          expected_cert=$(keytool -list -v \
+            -keystore "$ANDROID_KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            | awk -F': ' '/SHA256:/{gsub(":", "", $2); print tolower($2); exit}')
+          test -n "$expected_cert"
 
           AAB=$(find build/app/outputs/bundle -type f -name '*production*release*.aab' -print -quit)
           test -n "$AAB"
-          jarsigner -verify -strict -verbose -certs "$AAB" > dist/reports/aab-signature.txt
+          test "$(stat -c%s "$AAB")" -le 104857600
+          jarsigner -verify -verbose -certs "$AAB" > dist/reports/aab-signature.txt
+          aab_cert=$(keytool -printcert -jarfile "$AAB" \
+            | awk -F': ' '/SHA256:/{gsub(":", "", $2); print tolower($2); exit}')
+          test "$aab_cert" = "$expected_cert"
           cp "$AAB" "dist/aab/wachbuch-${{ inputs.build_name }}-${{ inputs.build_number }}.aab"
 
-          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)
-          APKANALYZER=$(find "$ANDROID_SDK_ROOT" -type f -name apkanalyzer | head -n 1 || true)
-          test -x "$APKSIGNER"
+          cat > "$RUNNER_TEMP/expected-permissions.txt" <<'PERMISSIONS'
+          android.permission.ACCESS_COARSE_LOCATION
+          android.permission.CAMERA
+          android.permission.INTERNET
+          PERMISSIONS
 
           mapfile -d '' APKS < <(find build/app/outputs/flutter-apk -type f -name '*production*release.apk' -print0)
           if [ "${#APKS[@]}" -lt 3 ]; then
@@ -124,14 +148,25 @@ jobs:
           fi
 
           for apk in "${APKS[@]}"; do
-            "$APKSIGNER" verify --verbose --print-certs "$apk" \
-              | tee -a dist/reports/apk-signatures.txt
-            if [ -n "$APKANALYZER" ]; then
-              app_id=$($APKANALYZER manifest application-id "$apk")
-              debuggable=$($APKANALYZER manifest debuggable "$apk")
-              test "$app_id" = "de.wachbuch.mobile"
-              test "$debuggable" = "false"
-            fi
+            signer_output=$("$APKSIGNER" verify --verbose --print-certs "$apk")
+            printf '%s\n' "$signer_output" | tee -a dist/reports/apk-signatures.txt
+            apk_cert=$(printf '%s\n' "$signer_output" \
+              | awk -F': ' '/certificate SHA-256 digest:/{gsub(":", "", $2); print tolower($2); exit}')
+            test "$apk_cert" = "$expected_cert"
+
+            app_id=$($APKANALYZER manifest application-id "$apk")
+            debuggable=$($APKANALYZER manifest debuggable "$apk")
+            min_sdk=$($APKANALYZER manifest min-sdk "$apk")
+            target_sdk=$($APKANALYZER manifest target-sdk "$apk")
+            test "$app_id" = "de.wachbuch.mobile"
+            test "$debuggable" = "false"
+            test "$min_sdk" = "24"
+            test "$target_sdk" -ge 36
+            test "$(stat -c%s "$apk")" -le 52428800
+
+            $APKANALYZER manifest permissions "$apk" | sed '/^[[:space:]]*$/d' | sort -u \
+              > "$RUNNER_TEMP/actual-permissions.txt"
+            diff -u "$RUNNER_TEMP/expected-permissions.txt" "$RUNNER_TEMP/actual-permissions.txt"
             cp "$apk" dist/apk/
           done
 
@@ -145,6 +180,12 @@ jobs:
           flutter pub deps --json > dist/reports/flutter-dependencies.json
           (cd android && ./gradlew :app:dependencies --configuration productionReleaseRuntimeClasspath) \
             > dist/reports/android-production-dependencies.txt
+          python3 scripts/generate-android-sbom.py \
+            --pub dist/reports/flutter-dependencies.json \
+            --gradle dist/reports/android-production-dependencies.txt \
+            --output dist/reports/wachbuch-android.cdx.json \
+            --version "${{ inputs.build_name }}+${{ inputs.build_number }}"
+          python3 -m json.tool dist/reports/wachbuch-android.cdx.json >/dev/null
           cp build/app/reports/lint-results-productionRelease.html dist/reports/
           (cd dist && find aab apk -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
 
