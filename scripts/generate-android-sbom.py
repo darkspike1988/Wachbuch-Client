@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a deterministic CycloneDX SBOM from Flutter and Gradle reports."""
+"""Generate deterministic CycloneDX and OSV dependency documents."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--pub", required=True, type=Path)
     parser.add_argument("--gradle", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--osv-output", type=Path)
     parser.add_argument("--version", required=True)
     return parser.parse_args()
 
@@ -92,6 +93,44 @@ def gradle_components(path: Path) -> list[dict[str, Any]]:
     return components
 
 
+def dependency_kind(component: dict[str, Any]) -> str | None:
+    for prop in component.get("properties", []):
+        if prop.get("name") == "wachbuch:dependency-kind":
+            return str(prop.get("value"))
+    return None
+
+
+def write_osv_document(path: Path, components: list[dict[str, Any]]) -> None:
+    packages: list[dict[str, Any]] = []
+    for component in components:
+        if dependency_kind(component) == "root":
+            continue
+        purl = str(component["purl"])
+        if purl.startswith("pkg:pub/"):
+            package = {
+                "name": component["name"],
+                "version": component["version"],
+                "ecosystem": "Pub",
+            }
+        elif purl.startswith("pkg:maven/"):
+            package = {
+                "name": f"{component['group']}:{component['name']}",
+                "version": component["version"],
+                "ecosystem": "Maven",
+            }
+        else:
+            continue
+        packages.append({"package": package})
+
+    document = {"results": [{"packages": packages}]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Wrote {len(packages)} OSV packages to {path}")
+
+
 def main() -> None:
     args = parse_arguments()
     all_components = flutter_components(args.pub) + gradle_components(args.gradle)
@@ -132,6 +171,9 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"Wrote {len(components)} components to {args.output}")
+
+    if args.osv_output is not None:
+        write_osv_document(args.osv_output, components)
 
 
 if __name__ == "__main__":
