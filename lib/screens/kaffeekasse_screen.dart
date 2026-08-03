@@ -2,57 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
+import 'package:wachbuch_mobile/state/coffee_state.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
 class KaffeekasseScreen extends StatefulWidget {
-  const KaffeekasseScreen({super.key, required this.api});
+  const KaffeekasseScreen({
+    super.key,
+    required this.api,
+    this.state,
+  });
 
   final WachbuchApi api;
+  final CoffeeState? state;
 
   @override
   State<KaffeekasseScreen> createState() => _KaffeekasseScreenState();
 }
 
 class _KaffeekasseScreenState extends State<KaffeekasseScreen> {
-  Kaffeekasse? _kasse;
-  bool _loading = true;
-  String? _error;
-  int _reloadGeneration = 0;
+  late final CoffeeState _state;
+  late final bool _ownsState;
 
   @override
   void initState() {
     super.initState();
-    _reload();
+    _state = widget.state ?? CoffeeState(api: widget.api);
+    _ownsState = widget.state == null;
+    _state.addListener(_onStateChanged);
+    _state.reload();
   }
 
-  Future<void> _reload() async {
-    final generation = ++_reloadGeneration;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final kasse = await widget.api.kaffeekasse();
-      if (!mounted || generation != _reloadGeneration) return;
-      setState(() {
-        _kasse = kasse;
-        _loading = false;
-      });
-    } on ApiException catch (error) {
-      if (!mounted || generation != _reloadGeneration) return;
-      setState(() {
-        _error = error.message;
-        _loading = false;
-      });
-    } catch (error) {
-      if (!mounted || generation != _reloadGeneration) return;
-      setState(() {
-        _error = error.toString();
-        _loading = false;
-      });
+  @override
+  void dispose() {
+    _state.removeListener(_onStateChanged);
+    if (_ownsState) {
+      _state.dispose();
     }
+    super.dispose();
   }
+
+  void _onStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Kaffeekasse? get _kasse => _state.data;
+  bool get _loading => _state.loading;
+  String? get _error => _state.error;
+
+  Future<void> _reload() => _state.reload();
 
   @override
   Widget build(BuildContext context) {
