@@ -138,11 +138,15 @@ class _BalanceCard extends StatelessWidget {
                   size: 28,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Aktueller Kassenstand',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: foreground,
-                      ),
+                Expanded(
+                  child: Text(
+                    'Aktueller Kassenstand',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: foreground,
+                        ),
+                  ),
                 ),
               ],
             ),
@@ -218,7 +222,14 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Icon(Icons.receipt_outlined, size: 22, color: scheme.primary),
         const SizedBox(width: 8),
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
       ],
     );
   }
