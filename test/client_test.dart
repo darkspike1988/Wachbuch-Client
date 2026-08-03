@@ -21,7 +21,7 @@ void main() {
     );
   });
 
-  test('parseServerAddress accepts JSON and deep link', () {
+  test('parseServerAddress accepts JSON and production deep link', () {
     expect(
       parseServerAddress('{"url":"https://wache.example.org"}'),
       'https://wache.example.org',
@@ -29,6 +29,15 @@ void main() {
     expect(
       parseServerAddress(
         'wachbuch://connect?url=https%3A%2F%2Fwache.example.org',
+      ),
+      'https://wache.example.org',
+    );
+  });
+
+  test('parseServerAddress accepts isolated internal deep link scheme', () {
+    expect(
+      parseServerAddress(
+        'wachbuch-internal://connect?url=https%3A%2F%2Fwache.example.org',
       ),
       'https://wache.example.org',
     );
@@ -50,6 +59,28 @@ void main() {
 
   test('parseServerAddress rejects incomplete Wachbuch deep links', () {
     expect(() => parseServerAddress('wachbuch://connect'), throwsArgumentError);
+  });
+
+  test('parseServerAddress rejects ambiguous Wachbuch deep links', () {
+    expect(
+      () => parseServerAddress(
+        'wachbuch://connect?url=https%3A%2F%2Fwache.example.org&next=evil',
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => parseServerAddress(
+        'wachbuch://connect/path?url=https%3A%2F%2Fwache.example.org',
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('parseServerAddress rejects credentials embedded in URL', () {
+    expect(
+      () => parseServerAddress('https://user:secret@wache.example.org'),
+      throwsArgumentError,
+    );
   });
 
   test('parseServerAddress rejects malformed JSON payloads clearly', () {
