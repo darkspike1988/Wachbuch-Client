@@ -1,24 +1,72 @@
-name: Dependency Review
+name: Dependency Security
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "30 3 * * 1"
 
 permissions:
   contents: read
-  pull-requests: read
+  actions: read
 
 concurrency:
-  group: dependency-review-${{ github.ref }}
+  group: dependency-security-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  review:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v4.8.2
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
-          fail-on-severity: moderate
-          show-openssf-scorecard: true
-          warn-on-openssf-scorecard-level: 3
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools
+
+      - name: Resolve complete Flutter and Android dependency graph
+        run: |
+          set -euo pipefail
+          mkdir -p build/dependency-security
+          flutter pub get
+          flutter pub deps --json > build/dependency-security/flutter-dependencies.json
+          (cd android && ./gradlew :app:dependencies --configuration productionReleaseRuntimeClasspath) \
+            > build/dependency-security/android-production-dependencies.txt
+          APP_VERSION=$(awk '/^version:/ {print $2; exit}' pubspec.yaml)
+          python3 scripts/generate-android-sbom.py \
+            --pub build/dependency-security/flutter-dependencies.json \
+            --gradle build/dependency-security/android-production-dependencies.txt \
+            --output build/dependency-security/wachbuch-android.cdx.json \
+            --osv-output build/dependency-security/osv-scanner.json \
+            --version "$APP_VERSION"
+          python3 -m json.tool build/dependency-security/osv-scanner.json >/dev/null
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: osv-dependencies
+          path: build/dependency-security
+          if-no-files-found: error
+          retention-days: 2
+
+  osv-scan:
+    needs: prepare
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    with:
+      download-artifact: osv-dependencies
+      scan-args: |-
+        --lockfile=osv-scanner:osv-scanner.json
+      upload-sarif: false
+      fail-on-vuln: true
