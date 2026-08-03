@@ -5,6 +5,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:wachbuch_mobile/models/checkliste.dart';
+import 'package:wachbuch_mobile/models/kaffeekasse.dart';
+import 'package:wachbuch_mobile/models/kalender_entry.dart';
 
 typedef WachbuchApiFactory = WachbuchApi Function(String baseUrl);
 
@@ -180,6 +183,59 @@ class WachbuchApi {
       _client.get(_uri('/api/v1/handovers/$id/'), headers: _headers()),
     );
     return _decode(response);
+  }
+
+  /// GET /api/v1/kalender/ — Wachenkalender (Modul `calendar`).
+  Future<List<KalenderEntry>> kalender() async {
+    final response = await _send(
+      _client.get(_uri('/api/v1/kalender/'), headers: _headers()),
+    );
+    final body = _decode(response);
+    return _readList(body)
+        .map(KalenderEntry.fromJson)
+        .toList(growable: false);
+  }
+
+  /// GET /api/v1/kaffeekasse/ — Kassenstand und Ledger (Modul `coffee`).
+  Future<Kaffeekasse> kaffeekasse() async {
+    final response = await _send(
+      _client.get(_uri('/api/v1/kaffeekasse/'), headers: _headers()),
+    );
+    final body = _decode(response);
+    return Kaffeekasse.fromJson(body);
+  }
+
+  /// GET /api/v1/checklisten/ — Checklisten (Modul `checklists`).
+  Future<List<Checklist>> checklisten() async {
+    final response = await _send(
+      _client.get(_uri('/api/v1/checklisten/'), headers: _headers()),
+    );
+    final body = _decode(response);
+    return _readList(body).map(Checklist.fromJson).toList(growable: false);
+  }
+
+  /// POST /api/v1/checklisten/{id}/abschluss/ — Checkliste abschließen (append-only).
+  Future<Checklist> checklisteAbschluss(int id) async {
+    final response = await _send(
+      _client.post(
+        _uri('/api/v1/checklisten/$id/abschluss/'),
+        headers: _headers(),
+      ),
+    );
+    final body = _decode(response);
+    if (body.isEmpty) {
+      return Checklist(id: id, title: '', completed: true);
+    }
+    return Checklist.fromJson({...body, 'completed': true});
+  }
+
+  List<Map<String, dynamic>> _readList(Map<String, dynamic> body) {
+    final results = body['results'] ?? body['entries'] ?? body['termine'];
+    if (results is! List) return const [];
+    return results
+        .whereType<Map>()
+        .map((entry) => Map<String, dynamic>.from(entry))
+        .toList(growable: false);
   }
 
   void close() {

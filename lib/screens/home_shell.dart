@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
+import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
+import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
+import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
@@ -114,6 +117,7 @@ class _HomeShellState extends State<HomeShell> {
       index: _tab,
       children: [
         _OverviewTab(
+          api: widget.api,
           stationName: _stationName,
           roleLabel: _roleLabel,
           modules: _modules,
@@ -215,6 +219,7 @@ class _HomeShellState extends State<HomeShell> {
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
+    required this.api,
     required this.stationName,
     required this.roleLabel,
     required this.modules,
@@ -225,6 +230,7 @@ class _OverviewTab extends StatelessWidget {
     required this.onRefresh,
   });
 
+  final WachbuchApi api;
   final String stationName;
   final String roleLabel;
   final Map<String, dynamic> modules;
@@ -330,6 +336,8 @@ class _OverviewTab extends StatelessWidget {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 24),
+              _ModuleTiles(api: api, modules: modules),
               const SizedBox(height: 24),
               Material(
                 color: Theme.of(context).colorScheme.primaryContainer,
@@ -494,6 +502,161 @@ class _DashboardMetric extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModuleTiles extends StatelessWidget {
+  const _ModuleTiles({required this.api, required this.modules});
+
+  final WachbuchApi api;
+  final Map<String, dynamic> modules;
+
+  @override
+  Widget build(BuildContext context) {
+    final destinations = <_ModuleDestination>[];
+    if (modules['calendar'] == true) {
+      destinations.add(
+        const _ModuleDestination(
+          key: 'module-tile-calendar',
+          icon: Icons.event_outlined,
+          title: 'Kalender',
+          subtitle: 'Wachentermine und Dienste',
+        ),
+      );
+    }
+    if (modules['coffee'] == true) {
+      destinations.add(
+        const _ModuleDestination(
+          key: 'module-tile-coffee',
+          icon: Icons.coffee_outlined,
+          title: 'Kaffeekasse',
+          subtitle: 'Kassenstand und Buchungen',
+        ),
+      );
+    }
+    if (modules['checklists'] == true) {
+      destinations.add(
+        const _ModuleDestination(
+          key: 'module-tile-checklists',
+          icon: Icons.checklist_outlined,
+          title: 'Checklisten',
+          subtitle: 'Punkte abhaken und abschließen',
+        ),
+      );
+    }
+    if (destinations.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(
+          icon: Icons.apps_outlined,
+          title: 'Schnellzugriff',
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 600 ? 3 : 2;
+            final tileWidth =
+                (constraints.maxWidth - (8 * (columns - 1))) / columns;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final destination in destinations)
+                  _ModuleTile(
+                    key: Key(destination.key),
+                    width: tileWidth,
+                    destination: destination,
+                    onTap: () => _open(context, destination),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _open(BuildContext context, _ModuleDestination destination) {
+    final Widget screen;
+    switch (destination.key) {
+      case 'module-tile-calendar':
+        screen = KalenderScreen(api: api);
+      case 'module-tile-coffee':
+        screen = KaffeekasseScreen(api: api);
+      case 'module-tile-checklists':
+        screen = ChecklistenScreen(api: api);
+      default:
+        return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+}
+
+class _ModuleDestination {
+  const _ModuleDestination({
+    required this.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String key;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+}
+
+class _ModuleTile extends StatelessWidget {
+  const _ModuleTile({
+    super.key,
+    required this.width,
+    required this.destination,
+    required this.onTap,
+  });
+
+  final double width;
+  final _ModuleDestination destination;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: width,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(destination.icon, size: 28, color: scheme.primary),
+                const SizedBox(height: 10),
+                Text(
+                  destination.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  destination.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
