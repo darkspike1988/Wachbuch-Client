@@ -1,12 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Network: required for self-hosted Wachbuch API -->
+    <!-- Network: required for the self-hosted Wachbuch API. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Coarse foreground location is used only for local sunrise/sunset calculation. -->
+    <!-- Optional foreground location, used locally for sunrise/sunset only. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Camera: only for optional QR scan of server URL during setup.
-         Declared optional so devices without camera can still type the address.
-         Play policy: request just-in-time with in-app rationale (see QrScanScreen). -->
+    <!-- Camera is optional and requested just in time for server QR scanning. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature
         android:name="android.hardware.camera"
@@ -16,9 +14,12 @@
         android:required="false" />
 
     <application
-        android:label="Wachbuch"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
@@ -34,35 +35,32 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
             <meta-data
-              android:name="android.app.lib_name"
-              android:value="" />
+                android:name="android.app.lib_name"
+                android:value="" />
             <meta-data
-              android:name="flutter_deeplinking_enabled"
-              android:value="false" />
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:scheme="wachbuch"
+                    android:scheme="${appScheme}"
                     android:host="connect" />
             </intent-filter>
         </activity>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <meta-data
-            android:name="android.max_aspect"
-            android:value="2.4" />
     </application>
+
     <supports-screens
         android:smallScreens="true"
         android:normalScreens="true"
@@ -70,10 +68,11 @@
         android:xlargeScreens="true"
         android:anyDensity="true"
         android:resizeable="true" />
+
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
         </intent>
     </queries>
 </manifest>
