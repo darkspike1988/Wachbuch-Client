@@ -40,7 +40,18 @@ git clone https://github.com/darkspike1988/Wachbuch-Client.git
 cd Wachbuch-Client
 flutter pub get
 flutter test
-flutter run
+```
+
+Android lokal als eindeutig markierte interne Variante starten:
+
+```bash
+flutter run --flavor internal
+```
+
+Auf iOS bleibt der normale Start ohne Android-Flavor bestehen:
+
+```bash
+flutter run -d ios
 ```
 
 ### Android Internal
@@ -61,7 +72,7 @@ den Debug-Key zurück:
 
 ```bash
 cp android/key.properties.example android/key.properties
-BUILD_NAME=0.5.2 BUILD_NUMBER=11 ./scripts/build-aab.sh
+BUILD_NAME=0.5.2 BUILD_NUMBER=11 bash scripts/build-aab.sh
 ```
 
 Alternativ erstellt der geschützte Workflow **Android Signed Release** ein
