@@ -6,6 +6,7 @@ import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
+import 'package:wachbuch_mobile/ui/offline_banner.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({
@@ -29,6 +30,7 @@ class _HomeShellState extends State<HomeShell> {
   List<Map<String, dynamic>> _handovers = [];
   String? _error;
   bool _loading = true;
+  bool _offline = false;
   int _reloadGeneration = 0;
 
   @override
@@ -55,6 +57,7 @@ class _HomeShellState extends State<HomeShell> {
         _me = results[0] as Map<String, dynamic>;
         _handovers = results[1] as List<Map<String, dynamic>>;
         _loading = false;
+        _offline = false;
       });
     } on ApiException catch (error) {
       if (!mounted || generation != _reloadGeneration) {
@@ -65,6 +68,7 @@ class _HomeShellState extends State<HomeShell> {
             ? 'Anmeldung abgelaufen oder widerrufen.'
             : error.message;
         _loading = false;
+        _offline = error.statusCode == 0;
       });
       if (error.statusCode == 401) {
         await widget.onLogout();
@@ -76,6 +80,7 @@ class _HomeShellState extends State<HomeShell> {
       setState(() {
         _error = error.toString();
         _loading = false;
+        _offline = true;
       });
     }
   }
@@ -156,37 +161,50 @@ class _HomeShellState extends State<HomeShell> {
       ],
     );
 
+    final offlineBanner = OfflineBanner(
+      visible: _offline,
+      onRetry: _loading ? () {} : _reload,
+    );
+
     if (tablet) {
       return Scaffold(
         appBar: appBar,
-        body: Row(
+        body: Column(
           children: [
-            NavigationRail(
-              selectedIndex: _tab,
-              onDestinationSelected: (index) => setState(() => _tab = index),
-              labelType: width >= AppLayout.wideBreakpoint
-                  ? NavigationRailLabelType.all
-                  : NavigationRailLabelType.selected,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: Text('Übersicht'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment),
-                  label: Text('Übergaben'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: Text('Konto'),
-                ),
-              ],
+            offlineBanner,
+            Expanded(
+              child: Row(
+                children: [
+                  NavigationRail(
+                    selectedIndex: _tab,
+                    onDestinationSelected: (index) =>
+                        setState(() => _tab = index),
+                    labelType: width >= AppLayout.wideBreakpoint
+                        ? NavigationRailLabelType.all
+                        : NavigationRailLabelType.selected,
+                    destinations: const [
+                      NavigationRailDestination(
+                        icon: Icon(Icons.home_outlined),
+                        selectedIcon: Icon(Icons.home),
+                        label: Text('Übersicht'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.assignment_outlined),
+                        selectedIcon: Icon(Icons.assignment),
+                        label: Text('Übergaben'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.person_outline),
+                        selectedIcon: Icon(Icons.person),
+                        label: Text('Konto'),
+                      ),
+                    ],
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: pages),
+                ],
+              ),
             ),
-            const VerticalDivider(width: 1),
-            Expanded(child: pages),
           ],
         ),
       );
@@ -194,7 +212,9 @@ class _HomeShellState extends State<HomeShell> {
 
     return Scaffold(
       appBar: appBar,
-      body: pages,
+      body: Column(
+        children: [offlineBanner, Expanded(child: pages)],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (index) => setState(() => _tab = index),
