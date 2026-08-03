@@ -68,6 +68,7 @@ void main() {
     expect(find.byKey(const Key('module-tile-coffee')), findsOneWidget);
     expect(find.byKey(const Key('module-tile-checklists')), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('module-tile-calendar')));
     await tester.tap(find.byKey(const Key('module-tile-calendar')));
     await tester.pumpAndSettle();
 
@@ -77,6 +78,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('module-tile-coffee')));
     await tester.tap(find.byKey(const Key('module-tile-coffee')));
     await tester.pumpAndSettle();
 
@@ -85,6 +87,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('module-tile-checklists')));
     await tester.tap(find.byKey(const Key('module-tile-checklists')));
     await tester.pumpAndSettle();
 
