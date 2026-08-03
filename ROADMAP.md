@@ -12,17 +12,17 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 
 | Bereich | Ziel | Status |
 | --- | --- | --- |
-| Signierung | Produktionsbuild nie mit Debug-Schlüssel | umgesetzt, CI-Nachweis offen |
-| Varianten | interne Test-App klar von Produktion getrennt | umgesetzt, CI-Nachweis offen |
-| Datenschutz | keine Sicherung oder Geräteübertragung sensibler App-Daten | umgesetzt, CI-Nachweis offen |
-| Transport | HTTPS-only in nicht debuggbaren Builds | umgesetzt |
-| Berechtigungen | exakt erlaubte minimale Permission-Liste | umgesetzt, CI-Nachweis offen |
-| Deep Links | strikte Strukturprüfung und getrennte interne URI | umgesetzt, Tests grün |
-| Optimierung | R8, Resource Shrinking, ABI-Splits und AAB | umgesetzt, Builds grün |
-| Qualität | Analyse, Tests, warnungsfreies Lint, Größen- und Signatur-Gates | umgesetzt, finaler CI-Nachweis offen |
-| Lieferkette | Dependency Review, Dependabot und CycloneDX-SBOM | umgesetzt, CI-Nachweis offen |
-| Auditierbarkeit | Hashes, Symbole, Zertifikats- und Abhängigkeitsberichte | umgesetzt, CI-Nachweis offen |
-| Auslieferung | geschützter reproduzierbarer Signed-Release-Workflow | umgesetzt, externe Secrets offen |
+| Signierung | Produktionsbuild nie mit Debug-Schlüssel | umgesetzt und CI-geprüft |
+| Varianten | interne Test-App klar von Produktion getrennt | umgesetzt und CI-geprüft |
+| Datenschutz | keine Sicherung oder Geräteübertragung sensibler App-Daten | umgesetzt und CI-geprüft |
+| Transport | HTTPS-only in nicht debuggbaren Builds | umgesetzt und getestet |
+| Berechtigungen | exakt genehmigte minimale Merged-Manifest-Permission-Liste | umgesetzt und CI-geprüft |
+| Deep Links | strikte Strukturprüfung und getrennte interne URI | umgesetzt, 76 Tests grün |
+| Optimierung | R8, Resource Shrinking, ABI-Splits und AAB | umgesetzt und CI-geprüft |
+| Qualität | Analyse, Tests, warnungsfreies Lint, Größen- und Signatur-Gates | vollständig grün |
+| Lieferkette | OSV-Scan, Dependabot und CycloneDX-SBOM | umgesetzt und OSV-grün |
+| Auditierbarkeit | Hashes, Symbole, Zertifikats- und Abhängigkeitsberichte | umgesetzt und als Artefakte geprüft |
+| Auslieferung | geschützter reproduzierbarer Signed-Release-Workflow | technisch umgesetzt; externe Secrets offen |
 
 ## Phase 0 – Ausgangslage und Risikoanalyse
 
@@ -52,7 +52,8 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 - [x] ~~Server-URLs mit eingebetteten Zugangsdaten ablehnen.~~
 - [x] ~~Kamera weiterhin als optionales Gerätefeature deklarieren.~~
 - [x] ~~Unnötige Manifestangaben und veraltete API-spezifische Ressourcen entfernen.~~
-- [x] ~~Merged-Manifest auf exakt drei erlaubte Berechtigungen begrenzen.~~
+- [x] ~~Merged-Manifest auf die exakt genehmigte minimale Permission-Liste begrenzen.~~
+- [x] ~~Transitive `ACCESS_NETWORK_STATE`- und paketgebundene AndroidX-Receiver-Berechtigung explizit prüfen.~~
 
 ## Phase 3 – Größe, Performance und Artefakte
 
@@ -78,13 +79,13 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 - [x] ~~Unsigned Production-AAB im normalen PR-CI erzwingen, damit keine Schlüssel benötigt werden.~~
 - [x] ~~Flutter- und Android-Abhängigkeitsberichte als Audit-Artefakt erzeugen.~~
 - [x] ~~Deterministisches CycloneDX-SBOM für Dart- und Android-Abhängigkeiten erzeugen.~~
-- [x] ~~Dependency Review für neue moderate oder schwerere bekannte Schwachstellen als PR-Gate ergänzen.~~
+- [x] ~~Vollständige Pub-/Maven-Abhängigkeiten mit Google OSV als hartes Schwachstellen-Gate prüfen.~~
 - [x] ~~Dependabot für Pub, Gradle und GitHub Actions wöchentlich konfigurieren.~~
 - [x] ~~Obfuskationssymbole als geschütztes Artefakt aufbewahren.~~
 - [x] ~~Separaten, manuell auslösbaren Signed-Release-Workflow mit GitHub-Environment `google-play` ergänzen.~~
 - [x] ~~Produktionszertifikat gegen signiertes AAB und jede Produktions-APK vergleichen.~~
-- [ ] Alle neuen Flutter-, Android-, Dependency-Review- und iOS-CI-Jobs auf dem PR erfolgreich abschließen.
-- [ ] PR nach erfolgreicher Prüfung in `main` mergen.
+- [x] ~~Alle neuen Flutter-, Android-, OSV- und iOS-CI-Jobs auf PR #6 erfolgreich abschließen.~~
+- [ ] PR #6 nach erfolgreicher Prüfung in `main` mergen.
 
 ## Phase 5 – Externe Play-Store-Freigabe
 
