@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!--
+      Wachbuch only calls getLastKnownPosition/getCurrentPosition with normal
+      LocationSettings and never enables Geolocator foreground/background mode.
+      The dependency still packages BackgroundNotification, so lint sees its
+      optional notify() path and asks for POST_NOTIFICATIONS. Suppress only that
+      dependency class instead of expanding the app's runtime permissions.
+    -->
+    <issue id="NotificationPermission">
+        <ignore regexp="com\.baseflow\.geolocator\.location\.BackgroundNotification" />
+    </issue>
+</lint>
