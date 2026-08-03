@@ -16,11 +16,12 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 | Varianten | interne Test-App klar von Produktion getrennt | umgesetzt, CI-Nachweis offen |
 | Datenschutz | keine Sicherung oder Geräteübertragung sensibler App-Daten | umgesetzt, CI-Nachweis offen |
 | Transport | HTTPS-only in nicht debuggbaren Builds | umgesetzt |
-| Berechtigungen | nur Internet, optionale Kamera und optionaler grober Standort | umgesetzt |
-| Deep Links | strikte Strukturprüfung und getrennte interne URI | umgesetzt, Tests offen |
-| Optimierung | R8, Resource Shrinking, ABI-Splits und AAB | umgesetzt, CI-Nachweis offen |
-| Qualität | Analyse, Tests, Lint, Größen- und Signatur-Gates | umgesetzt, CI-Nachweis offen |
-| Auditierbarkeit | Hashes, Symbole und Abhängigkeitsberichte | umgesetzt, CI-Nachweis offen |
+| Berechtigungen | exakt erlaubte minimale Permission-Liste | umgesetzt, CI-Nachweis offen |
+| Deep Links | strikte Strukturprüfung und getrennte interne URI | umgesetzt, Tests grün |
+| Optimierung | R8, Resource Shrinking, ABI-Splits und AAB | umgesetzt, Builds grün |
+| Qualität | Analyse, Tests, warnungsfreies Lint, Größen- und Signatur-Gates | umgesetzt, finaler CI-Nachweis offen |
+| Lieferkette | Dependency Review, Dependabot und CycloneDX-SBOM | umgesetzt, CI-Nachweis offen |
+| Auditierbarkeit | Hashes, Symbole, Zertifikats- und Abhängigkeitsberichte | umgesetzt, CI-Nachweis offen |
 | Auslieferung | geschützter reproduzierbarer Signed-Release-Workflow | umgesetzt, externe Secrets offen |
 
 ## Phase 0 – Ausgangslage und Risikoanalyse
@@ -50,7 +51,8 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 - [x] ~~Deep Links auf exakten Host, leeren Pfad und genau einen `url`-Parameter begrenzen.~~
 - [x] ~~Server-URLs mit eingebetteten Zugangsdaten ablehnen.~~
 - [x] ~~Kamera weiterhin als optionales Gerätefeature deklarieren.~~
-- [x] ~~Veraltete maximale Seitenverhältnisbegrenzung entfernen.~~
+- [x] ~~Unnötige Manifestangaben und veraltete API-spezifische Ressourcen entfernen.~~
+- [x] ~~Merged-Manifest auf exakt drei erlaubte Berechtigungen begrenzen.~~
 
 ## Phase 3 – Größe, Performance und Artefakte
 
@@ -62,18 +64,26 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 - [x] ~~Dart-Obfuskation mit getrennten Symbolen aktivieren.~~
 - [x] ~~SHA-256-Prüfsummen für veröffentlichte Artefakte erzeugen.~~
 - [x] ~~50-MiB-Budget pro interner Split-APK und 100-MiB-Budget für das AAB erzwingen.~~
+- [x] ~~Minimum SDK 24 und Ziel-SDK mindestens 36 im Artefakt prüfen.~~
 
-## Phase 4 – CI und Release-Gates
+## Phase 4 – CI, Lieferkette und Release-Gates
 
 - [x] ~~Flutter-Analyse und vollständige Tests als Voraussetzung beibehalten.~~
-- [x] ~~Android-Lint für `productionRelease` ergänzen.~~
+- [x] ~~Android-Lint für `productionRelease` ergänzen und alle nicht begründeten Warnungen als Fehler behandeln.~~
+- [x] ~~Optionale ungenutzte Geolocator-Hintergrundklasse eng begründet aus dem Lint ausschließen, statt zusätzliche Berechtigungen anzufordern.~~
+- [x] ~~Flutter-Stable-Toolchain AGP 9.0.1/Gradle 9.1.0 als kompatibles Paar dokumentieren.~~
 - [x] ~~Interne APK-Signaturen mit `apksigner` prüfen.~~
 - [x] ~~Paket-ID und `debuggable=false` automatisiert prüfen.~~
+- [x] ~~Berechtigungs-Allowlist, Minimum-SDK und Ziel-SDK direkt aus jeder APK prüfen.~~
 - [x] ~~Unsigned Production-AAB im normalen PR-CI erzwingen, damit keine Schlüssel benötigt werden.~~
 - [x] ~~Flutter- und Android-Abhängigkeitsberichte als Audit-Artefakt erzeugen.~~
+- [x] ~~Deterministisches CycloneDX-SBOM für Dart- und Android-Abhängigkeiten erzeugen.~~
+- [x] ~~Dependency Review für neue moderate oder schwerere bekannte Schwachstellen als PR-Gate ergänzen.~~
+- [x] ~~Dependabot für Pub, Gradle und GitHub Actions wöchentlich konfigurieren.~~
 - [x] ~~Obfuskationssymbole als geschütztes Artefakt aufbewahren.~~
 - [x] ~~Separaten, manuell auslösbaren Signed-Release-Workflow mit GitHub-Environment `google-play` ergänzen.~~
-- [ ] Alle neuen Flutter-, Android- und iOS-CI-Jobs auf dem PR erfolgreich abschließen.
+- [x] ~~Produktionszertifikat gegen signiertes AAB und jede Produktions-APK vergleichen.~~
+- [ ] Alle neuen Flutter-, Android-, Dependency-Review- und iOS-CI-Jobs auf dem PR erfolgreich abschließen.
 - [ ] PR nach erfolgreicher Prüfung in `main` mergen.
 
 ## Phase 5 – Externe Play-Store-Freigabe
