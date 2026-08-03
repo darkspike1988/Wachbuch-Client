@@ -4,9 +4,10 @@ Stand: 3. August 2026
 
 ## Android-Ziel: 10/10 Release Engineering
 
-Die Bewertung bezieht sich auf die technische Qualität des Repositorys und der
-erzeugten Android-Artefakte. Ein öffentlicher Play-Store-Release benötigt
-zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
+Die technische Android-Härtung ist abgeschlossen und in `main` integriert.
+Die Bewertung bezieht sich auf die Qualität des Repositorys und der erzeugten
+Android-Artefakte. Ein öffentlicher Play-Store-Release benötigt zusätzlich
+Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 
 ### Bewertungsmatrix
 
@@ -85,7 +86,7 @@ zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
 - [x] ~~Separaten, manuell auslösbaren Signed-Release-Workflow mit GitHub-Environment `google-play` ergänzen.~~
 - [x] ~~Produktionszertifikat gegen signiertes AAB und jede Produktions-APK vergleichen.~~
 - [x] ~~Alle neuen Flutter-, Android-, OSV- und iOS-CI-Jobs auf PR #6 erfolgreich abschließen.~~
-- [ ] PR #6 nach erfolgreicher Prüfung in `main` mergen.
+- [x] ~~PR #6 per Squash in `main` mergen (`7fb3255`).~~
 
 ## Phase 5 – Externe Play-Store-Freigabe
 
@@ -105,10 +106,10 @@ zur tatsächlichen Einrichtung bewusst offen.
 
 ## Definition of Done
 
-**Technische Android-Bewertung 10/10:** Alle Punkte der Phasen 0 bis 4 sind
-abgehakt, die CI ist grün und die Änderungen sind in `main`.
+**Technische Android-Bewertung 10/10:** Erreicht. Alle Punkte der Phasen 0 bis 4
+sind abgehakt, die CI ist grün und die Änderungen sind in `main`.
 
-**Öffentlicher Play-Store-Release abgeschlossen:** Zusätzlich sind alle
-verbindlichen Punkte der Phase 5 abgehakt. Das Repository kann diese externen
-Schritte vorbereiten und prüfen, aber keine Google-Konten, Schlüssel oder
-rechtlichen Erklärungen selbst erzeugen.
+**Öffentlicher Play-Store-Release abgeschlossen:** Noch offen. Zusätzlich müssen
+alle verbindlichen Punkte der Phase 5 abgehakt werden. Das Repository kann diese
+externen Schritte vorbereiten und prüfen, aber keine Google-Konten, Schlüssel
+oder rechtlichen Erklärungen selbst erzeugen.
