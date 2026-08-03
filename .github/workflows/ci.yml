@@ -97,7 +97,7 @@ jobs:
           AAB=$(find build/app/outputs/bundle -type f -name '*production*release*.aab' -print -quit)
           test -n "$AAB"
           test "$(stat -c%s "$AAB")" -le 104857600
-          if jarsigner -verify "$AAB" >/dev/null 2>&1; then
+          if unzip -Z1 "$AAB" | grep -Eiq '^META-INF/.*\.(RSA|DSA|EC)$'; then
             echo "Verification AAB must remain unsigned without release credentials" >&2
             exit 1
           fi
