@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
@@ -58,7 +59,7 @@ class _KaffeekasseScreenState extends State<KaffeekasseScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.contentMaxWidth(width);
     return Scaffold(
-      appBar: AppBar(title: const Text('Kaffeekasse')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.kaffeekasseTitle)),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -91,12 +92,12 @@ class _KaffeekasseScreenState extends State<KaffeekasseScreen> {
               _PaymentHintCard(hint: kasse.paymentHint),
               const SizedBox(height: 16),
             ],
-            _SectionTitle(title: 'Letzte Buchungen'),
+            _SectionTitle(title: AppLocalizations.of(context)!.kaffeekasseLastTransactions),
             const SizedBox(height: 8),
             if (kasse.ledger.isEmpty)
-              const _EmptyState(
+              _EmptyState(
                 icon: Icons.receipt_long_outlined,
-                message: 'Noch keine Buchungen.',
+                message: AppLocalizations.of(context)!.kaffeekasseEmptyLedger,
               )
             else
               for (final entry in kasse.ledger) ...[
@@ -140,7 +141,7 @@ class _BalanceCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Aktueller Kassenstand',
+                    AppLocalizations.of(context)!.kaffeekasseBalanceLabel,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -161,7 +162,7 @@ class _BalanceCard extends StatelessWidget {
             if (urgent) ...[
               const SizedBox(height: 6),
               Text(
-                'Die Kasse ist im Minus – bitte nachzahlen.',
+                AppLocalizations.of(context)!.kaffeekasseNegative,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: foreground,
                     ),
@@ -248,7 +249,9 @@ class _LedgerTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 4),
       title: Text(
-        entry.description.isNotEmpty ? entry.description : 'Buchung',
+        entry.description.isNotEmpty
+            ? entry.description
+            : AppLocalizations.of(context)!.kaffeekasseEntryFallback,
         style: Theme.of(context).textTheme.bodyLarge,
       ),
       subtitle: Text(

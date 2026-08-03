@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
+
+import 'test_localization.dart';
 
 class _ChecklistenApi extends WachbuchApi {
   _ChecklistenApi(this.lists) : super(baseUrl: 'https://wache.example.org', token: 'wb_test');
@@ -40,7 +41,7 @@ class _ErrorApi extends WachbuchApi {
 void main() {
   testWidgets('renders checklists with items and completion button', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: ChecklistenScreen(
           api: _ChecklistenApi([
             Checklist(
@@ -80,7 +81,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      MaterialApp(home: ChecklistenScreen(api: api)),
+      localizedApp(home: ChecklistenScreen(api: api)),
     );
     await tester.pumpAndSettle();
 
@@ -94,7 +95,7 @@ void main() {
 
   testWidgets('shows an empty state when no checklists exist', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: ChecklistenScreen(api: _ChecklistenApi(const []))),
+      localizedApp(home: ChecklistenScreen(api: _ChecklistenApi(const []))),
     );
     await tester.pumpAndSettle();
 
@@ -103,7 +104,7 @@ void main() {
 
   testWidgets('shows an error banner on API failure', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: ChecklistenScreen(api: _ErrorApi())),
+      localizedApp(home: ChecklistenScreen(api: _ErrorApi())),
     );
     await tester.pumpAndSettle();
 
@@ -122,7 +123,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(
-      MaterialApp(home: ChecklistenScreen(api: api)),
+      localizedApp(home: ChecklistenScreen(api: api)),
     );
     await tester.pumpAndSettle();
 

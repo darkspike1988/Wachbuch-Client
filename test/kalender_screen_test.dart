@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+
+import 'test_localization.dart';
 
 class _KalenderApi extends WachbuchApi {
   _KalenderApi(this.entries)
@@ -26,7 +27,7 @@ class _ErrorApi extends WachbuchApi {
 void main() {
   testWidgets('renders app bar and upcoming entries', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: KalenderScreen(
           api: _KalenderApi([
             KalenderEntry(
@@ -58,7 +59,7 @@ void main() {
 
   testWidgets('shows an empty state when no entries exist', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: KalenderScreen(api: _KalenderApi(const []))),
+      localizedApp(home: KalenderScreen(api: _KalenderApi(const []))),
     );
     await tester.pumpAndSettle();
 
@@ -67,7 +68,7 @@ void main() {
 
   testWidgets('shows an error banner on API failure', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: KalenderScreen(api: _ErrorApi())),
+      localizedApp(home: KalenderScreen(api: _ErrorApi())),
     );
     await tester.pumpAndSettle();
 

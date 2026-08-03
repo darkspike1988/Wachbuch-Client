@@ -6,6 +6,8 @@ import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 
+import 'test_localization.dart';
+
 class _ModulesApi extends WachbuchApi {
   _ModulesApi() : super(baseUrl: 'https://wache.example.org', token: 'wb_test');
 
@@ -50,11 +52,21 @@ void _usePhone(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+/// Pops the topmost route via the navigator state, since phone-scaled AppBar
+/// back buttons might not be hittable through `pageBack()` in widget tests.
+Future<void> _popTopRoute(WidgetTester tester) async {
+  final NavigatorState navigator = tester.state<NavigatorState>(
+    find.byType(Navigator).last,
+  );
+  navigator.pop();
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('module tiles navigate to their screens', (tester) async {
     _usePhone(tester);
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: HomeShell(
           api: _ModulesApi(),
           onLogout: () async {},
@@ -75,8 +87,7 @@ void main() {
     expect(find.text('Kalender'), findsWidgets);
     expect(find.text('RTW-Dienst'), findsOneWidget);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await _popTopRoute(tester);
 
     await tester.ensureVisible(find.byKey(const Key('module-tile-coffee')));
     await tester.tap(find.byKey(const Key('module-tile-coffee')));
@@ -84,8 +95,7 @@ void main() {
 
     expect(find.text('Kaffeekasse'), findsWidgets);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await _popTopRoute(tester);
 
     await tester.ensureVisible(find.byKey(const Key('module-tile-checklists')));
     await tester.tap(find.byKey(const Key('module-tile-checklists')));
