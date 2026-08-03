@@ -10,4 +10,15 @@
     <issue id="NotificationPermission">
         <ignore regexp="com\.baseflow\.geolocator\.location\.BackgroundNotification" />
     </issue>
+
+    <!--
+      Flutter Stable generated AGP 9.0.1 with Gradle 9.1.0. Android's official
+      compatibility table lists Gradle 9.1.0 as the minimum for AGP 9.0. Keep
+      that tested Flutter toolchain pair instead of independently advancing the
+      wrapper. Limit the exception to this one wrapper file; dependency update
+      automation continues to surface future Flutter/AGP changes.
+    -->
+    <issue id="AndroidGradlePluginVersion">
+        <ignore regexp="gradle-wrapper\.properties" />
+    </issue>
 </lint>
