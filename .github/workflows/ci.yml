@@ -41,6 +41,8 @@ jobs:
           channel: stable
           cache: true
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools
 
       - name: Resolve dependencies
         run: flutter pub get
@@ -66,7 +68,7 @@ jobs:
         working-directory: android
         run: ./gradlew :app:lintProductionRelease
 
-      - name: Verify identities, signatures and size budgets
+      - name: Verify identities permissions SDKs signatures and size budgets
         run: |
           set -euo pipefail
           mapfile -d '' APKS < <(find build/app/outputs/flutter-apk -type f -name '*internal*release.apk' -print0)
@@ -76,8 +78,18 @@ jobs:
           fi
 
           APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)
-          APKANALYZER=$(find "$ANDROID_SDK_ROOT" -type f -name apkanalyzer | head -n 1 || true)
+          APKANALYZER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/apkanalyzer"
+          if [ ! -x "$APKANALYZER" ]; then
+            APKANALYZER=$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name apkanalyzer | sort -V | tail -n 1)
+          fi
           test -x "$APKSIGNER"
+          test -x "$APKANALYZER"
+
+          cat > "$RUNNER_TEMP/expected-permissions.txt" <<'PERMISSIONS'
+          android.permission.ACCESS_COARSE_LOCATION
+          android.permission.CAMERA
+          android.permission.INTERNET
+          PERMISSIONS
 
           for apk in "${APKS[@]}"; do
             "$APKSIGNER" verify --verbose --print-certs "$apk"
@@ -86,12 +98,19 @@ jobs:
               echo "$apk exceeds the 50 MiB internal APK budget" >&2
               exit 1
             fi
-            if [ -n "$APKANALYZER" ]; then
-              app_id=$($APKANALYZER manifest application-id "$apk")
-              debuggable=$($APKANALYZER manifest debuggable "$apk")
-              test "$app_id" = "de.wachbuch.mobile.internal"
-              test "$debuggable" = "false"
-            fi
+
+            app_id=$($APKANALYZER manifest application-id "$apk")
+            debuggable=$($APKANALYZER manifest debuggable "$apk")
+            min_sdk=$($APKANALYZER manifest min-sdk "$apk")
+            target_sdk=$($APKANALYZER manifest target-sdk "$apk")
+            test "$app_id" = "de.wachbuch.mobile.internal"
+            test "$debuggable" = "false"
+            test "$min_sdk" = "24"
+            test "$target_sdk" -ge 36
+
+            $APKANALYZER manifest permissions "$apk" | sed '/^[[:space:]]*$/d' | sort -u \
+              > "$RUNNER_TEMP/actual-permissions.txt"
+            diff -u "$RUNNER_TEMP/expected-permissions.txt" "$RUNNER_TEMP/actual-permissions.txt"
           done
 
           AAB=$(find build/app/outputs/bundle -type f -name '*production*release*.aab' -print -quit)
@@ -102,7 +121,7 @@ jobs:
             exit 1
           fi
 
-      - name: Package auditable artifacts
+      - name: Package auditable artifacts and CycloneDX SBOM
         run: |
           set -euo pipefail
           mkdir -p dist/internal dist/reports dist/symbols
@@ -111,6 +130,13 @@ jobs:
           flutter pub deps --json > dist/reports/flutter-dependencies.json
           (cd android && ./gradlew :app:dependencies --configuration productionReleaseRuntimeClasspath) \
             > dist/reports/android-production-dependencies.txt
+          APP_VERSION=$(awk '/^version:/ {print $2; exit}' pubspec.yaml)
+          python3 scripts/generate-android-sbom.py \
+            --pub dist/reports/flutter-dependencies.json \
+            --gradle dist/reports/android-production-dependencies.txt \
+            --output dist/reports/wachbuch-android.cdx.json \
+            --version "$APP_VERSION"
+          python3 -m json.tool dist/reports/wachbuch-android.cdx.json >/dev/null
           (cd dist/internal && sha256sum *.apk > SHA256SUMS)
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
