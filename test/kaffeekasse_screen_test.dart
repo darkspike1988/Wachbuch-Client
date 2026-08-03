@@ -4,6 +4,8 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 
+import 'test_localization.dart';
+
 class _KaffeekasseApi extends WachbuchApi {
   _KaffeekasseApi(this.kasse)
       : super(baseUrl: 'https://wache.example.org', token: 'wb_test');
@@ -25,7 +27,7 @@ class _ErrorApi extends WachbuchApi {
 void main() {
   testWidgets('renders balance, payment hint and ledger', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: KaffeekasseScreen(
           api: _KaffeekasseApi(Kaffeekasse(
             balance: '12,50 €',
@@ -61,7 +63,7 @@ void main() {
 
   testWidgets('warns when the balance is negative', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: KaffeekasseScreen(
           api: _KaffeekasseApi(Kaffeekasse(
             balance: '-5,00 €',
@@ -78,7 +80,7 @@ void main() {
 
   testWidgets('shows empty ledger state', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      localizedApp(
         home: KaffeekasseScreen(
           api: _KaffeekasseApi(Kaffeekasse(
             balance: '0,00 €',
@@ -94,7 +96,7 @@ void main() {
 
   testWidgets('shows an error banner on API failure', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: KaffeekasseScreen(api: _ErrorApi())),
+      localizedApp(home: KaffeekasseScreen(api: _ErrorApi())),
     );
     await tester.pumpAndSettle();
 

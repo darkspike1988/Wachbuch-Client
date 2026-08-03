@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
@@ -58,7 +59,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.contentMaxWidth(width);
     return Scaffold(
-      appBar: AppBar(title: const Text('Kalender')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.kalenderTitle)),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -84,9 +85,9 @@ class _KalenderScreenState extends State<KalenderScreen> {
             const SizedBox(height: 16),
           ],
           if (_entries.isEmpty && _error == null)
-            const _EmptyState(
+            _EmptyState(
               icon: Icons.event_busy,
-              message: 'Keine anstehenden Termine.',
+              message: AppLocalizations.of(context)!.kalenderEmpty,
             )
           else
             for (final entry in _entries) ...[
@@ -128,7 +129,9 @@ class _KalenderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entry.title.isNotEmpty ? entry.title : 'Termin',
+                    entry.title.isNotEmpty
+                        ? entry.title
+                        : AppLocalizations.of(context)!.kalenderEntryFallback,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 6),
@@ -142,7 +145,7 @@ class _KalenderCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          _formatRange(entry),
+                          _formatRange(entry, AppLocalizations.of(context)!),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: scheme.onSurfaceVariant,
                               ),
@@ -188,12 +191,12 @@ class _KalenderCard extends StatelessWidget {
   }
 }
 
-String _formatRange(KalenderEntry entry) {
+String _formatRange(KalenderEntry entry, AppLocalizations l10n) {
   final start = entry.startsAt;
   final end = entry.endsAt;
-  if (start == null && end == null) return 'Zeit folgt';
+  if (start == null && end == null) return l10n.kalenderTimeTbd;
   if (entry.allDay) {
-    return start != null ? _formatDay(start) : 'Ganztägig';
+    return start != null ? _formatDay(start) : l10n.kalenderAllDay;
   }
   if (start != null && end != null) {
     final sameDay = _isSameDay(start, end);

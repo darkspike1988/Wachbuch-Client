@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
@@ -108,7 +109,7 @@ class _ChecklistenScreenState extends State<ChecklistenScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.contentMaxWidth(width);
     return Scaffold(
-      appBar: AppBar(title: const Text('Checklisten')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.checklistenTitle)),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -134,9 +135,9 @@ class _ChecklistenScreenState extends State<ChecklistenScreen> {
             const SizedBox(height: 16),
           ],
           if (_lists.isEmpty && _error == null)
-            const _EmptyState(
+            _EmptyState(
               icon: Icons.checklist_outlined,
-              message: 'Keine Checklisten verfügbar.',
+              message: AppLocalizations.of(context)!.checklistenEmpty,
             )
           else
             for (final list in _lists) ...[
@@ -184,7 +185,9 @@ class _ChecklistCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    list.title.isNotEmpty ? list.title : 'Checkliste',
+                    list.title.isNotEmpty
+                        ? list.title
+                        : AppLocalizations.of(context)!.checklistFallback,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -207,7 +210,7 @@ class _ChecklistCard extends StatelessWidget {
             const SizedBox(height: 12),
             if (list.items.isEmpty)
               Text(
-                'Keine Punkte.',
+                AppLocalizations.of(context)!.checklistNoItems,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -220,7 +223,9 @@ class _ChecklistCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Abgeschlossen ${_formatTimestamp(list.completedAt!)}',
+                  AppLocalizations.of(context)!.checklistCompletedAt(
+                    _formatTimestamp(list.completedAt!),
+                  ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               )
@@ -236,7 +241,7 @@ class _ChecklistCard extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check_circle_outline),
-                  label: const Text('Checkliste abschließen'),
+                  label: Text(AppLocalizations.of(context)!.checklistCompleteButton),
                 ),
               ),
           ],
@@ -267,7 +272,9 @@ class _ChecklistItemTile extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              item.label.isNotEmpty ? item.label : 'Punkt',
+              item.label.isNotEmpty
+                  ? item.label
+                  : AppLocalizations.of(context)!.checklistItemFallback,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     decoration: item.checked ? TextDecoration.lineThrough : null,
                     color: item.checked ? scheme.onSurfaceVariant : null,
