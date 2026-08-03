@@ -2,6 +2,24 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## Unreleased – Android Release Hardening
+
+### Sicherheit und Auslieferung
+
+- Interne und produktive Android-Varianten besitzen getrennte Paket-IDs, Namen und Deep-Link-Schemas.
+- Produktionsbuilds fallen nicht mehr auf den Android-Debug-Key zurück.
+- Produktive Signierung wird ausschließlich aus privater lokaler Konfiguration oder geschützten CI-Secrets geladen.
+- Cloud-Backup und Geräteübertragung sind für sämtliche App-Daten ausgeschlossen.
+- Deep-Links prüfen jetzt exakten Host, leeren Pfad, genau einen URL-Parameter und lehnen eingebettete Zugangsdaten ab.
+- R8-Minifizierung, Resource Shrinking, ABI-Splits und Dart-Obfuskation sind für Release-Builds aktiviert.
+
+### Qualität und Nachvollziehbarkeit
+
+- Android-Lint, Signatur-, Paket-ID-, Debbugable- und Größenprüfungen wurden als CI-Gates ergänzt.
+- CI erzeugt SHA-256-Hashes, Obfuskationssymbole und Flutter-/Android-Abhängigkeitsberichte.
+- Geschützter Workflow für signierte AAB- und APK-Artefakte mit temporärem Upload-Keystore ergänzt.
+- Dauerhafte Android-10/10-Roadmap sowie Installations- und Play-Store-Dokumentation ergänzt.
+
 ## 0.5.1 – 2026-08-02
 
 ### Sicherheit und Robustheit

@@ -10,6 +10,7 @@ Open-Source-Begleit-App für selbst gehostetes
 | **Lizenz** | AGPL-3.0-or-later |
 | **API** | `/api/v1/` (Token-Auth, Paperless/Nextcloud-Stil) |
 | **App-Version** | 0.5.1 (passend zu Server ≥ 0.14.1) |
+| **Roadmap** | [ROADMAP.md](ROADMAP.md) |
 
 ## Startflow
 
@@ -30,7 +31,7 @@ QR im Server-Web: Mein Konto → App-Tokens.
 - Material Design 3 mit responsivem Smartphone-/Tablet-Layout
 - automatisches Tag-/Nacht-Design nach lokal berechnetem Sonnenaufgang und Sonnenuntergang
 - dafür wird nur der ungefähre Gerätestandort während der App-Nutzung abgefragt; keine Standortdaten verlassen das Gerät
-- `wachbuch://connect?url=…` öffnet die App und übernimmt sicher eine neue Serveradresse
+- `wachbuch://connect?url=…` öffnet die Produktions-App und übernimmt nach Bestätigung eine neue Serveradresse
 
 ## Start
 
@@ -39,15 +40,44 @@ git clone https://github.com/darkspike1988/Wachbuch-Client.git
 cd Wachbuch-Client
 flutter pub get
 flutter test
-flutter run
 ```
 
-### Android-APK
+Android lokal als eindeutig markierte interne Variante starten:
+
+```bash
+flutter run --flavor internal
+```
+
+Auf iOS bleibt der normale Start ohne Android-Flavor bestehen:
+
+```bash
+flutter run -d ios
+```
+
+### Android Internal
+
+Die installierbare Testversion besitzt die separate Paket-ID
+`de.wachbuch.mobile.internal` und kann parallel zur Produktions-App installiert
+werden:
 
 ```bash
 ./scripts/build-apk.sh
-# → dist/wachbuch-mobile.apk
+# → dist/internal-apk/*.apk + SHA256SUMS
 ```
+
+### Android Production
+
+Ein Produktionsbuild benötigt einen eigenen Upload-Key und fällt niemals auf
+den Debug-Key zurück:
+
+```bash
+cp android/key.properties.example android/key.properties
+BUILD_NAME=0.5.2 BUILD_NUMBER=11 bash scripts/build-aab.sh
+```
+
+Alternativ erstellt der geschützte Workflow **Android Signed Release** ein
+signiertes AAB, signierte ABI-APKs, Hashes, Zertifikatsberichte und
+Obfuskationssymbole.
 
 ### iOS
 
