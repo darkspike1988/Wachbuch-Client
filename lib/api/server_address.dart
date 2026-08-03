@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 
+const _wachbuchSchemes = {'wachbuch', 'wachbuch-internal'};
+
 /// Extracts a Wachbuch server origin from typed text or QR content.
 ///
 /// Accepted forms (Google Play / Nextcloud-style self-host setup):
@@ -14,6 +16,7 @@ import 'package:wachbuch_mobile/api/client.dart';
 /// - `https://wache.example.org/anmelden/` (path stripped to origin)
 /// - JSON: `{"url":"https://…"}` or `{"server":"https://…"}`
 /// - `wachbuch://connect?url=https%3A%2F%2F…`
+/// - `wachbuch-internal://connect?url=https%3A%2F%2F…`
 String parseServerAddress(String raw, {bool allowInsecure = kDebugMode}) {
   var value = raw.trim();
   if (value.isEmpty) {
@@ -43,12 +46,16 @@ String parseServerAddress(String raw, {bool allowInsecure = kDebugMode}) {
   if (candidate.scheme.isNotEmpty &&
       candidate.scheme != 'http' &&
       candidate.scheme != 'https' &&
-      candidate.scheme != 'wachbuch') {
+      !_wachbuchSchemes.contains(candidate.scheme)) {
     throw ArgumentError('Nur HTTP- oder HTTPS-Adressen werden unterstützt.');
   }
 
-  if (candidate.scheme == 'wachbuch') {
-    if (candidate.host != 'connect' && !candidate.path.contains('connect')) {
+  if (_wachbuchSchemes.contains(candidate.scheme)) {
+    if (candidate.host != 'connect' || candidate.path.isNotEmpty) {
+      throw ArgumentError('Ungültiger Wachbuch-Link.');
+    }
+    if (candidate.queryParametersAll.keys.any((key) => key != 'url') ||
+        candidate.queryParametersAll['url']?.length != 1) {
       throw ArgumentError('Ungültiger Wachbuch-Link.');
     }
     final url = candidate.queryParameters['url'];
@@ -63,6 +70,9 @@ String parseServerAddress(String raw, {bool allowInsecure = kDebugMode}) {
     final uri = Uri.parse(normalized);
     if ((uri.scheme != 'http' && uri.scheme != 'https') || uri.host.isEmpty) {
       throw ArgumentError('Ungültige Server-Adresse.');
+    }
+    if (uri.userInfo.isNotEmpty) {
+      throw ArgumentError('Anmeldedaten dürfen nicht Teil der Server-Adresse sein.');
     }
     if (uri.scheme == 'http' && !allowInsecure) {
       throw ArgumentError('Für diese App ist eine HTTPS-Adresse erforderlich.');
