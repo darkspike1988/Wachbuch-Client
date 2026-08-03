@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: flutter-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -21,9 +26,10 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  apk:
+  android:
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
@@ -35,14 +41,91 @@ jobs:
           channel: stable
           cache: true
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
-      - run: flutter pub get
-      - run: flutter build apk --release
-      - name: Package APK
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build hardened internal APKs
+        run: >-
+          flutter build apk
+          --release
+          --flavor internal
+          --split-per-abi
+          --obfuscate
+          --split-debug-info=build/symbols/internal
+
+      - name: Build production AAB without publishing credentials
+        run: >-
+          flutter build appbundle
+          --release
+          --flavor production
+          --obfuscate
+          --split-debug-info=build/symbols/production
+
+      - name: Run Android lint
+        working-directory: android
+        run: ./gradlew :app:lintProductionRelease
+
+      - name: Verify identities, signatures and size budgets
         run: |
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/wachbuch-mobile.apk
+          set -euo pipefail
+          mapfile -d '' APKS < <(find build/app/outputs/flutter-apk -type f -name '*internal*release.apk' -print0)
+          if [ "${#APKS[@]}" -lt 3 ]; then
+            echo "Expected split internal APKs for the supported ABIs" >&2
+            exit 1
+          fi
+
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          APKANALYZER=$(find "$ANDROID_SDK_ROOT" -type f -name apkanalyzer | head -n 1 || true)
+          test -x "$APKSIGNER"
+
+          for apk in "${APKS[@]}"; do
+            "$APKSIGNER" verify --verbose --print-certs "$apk"
+            size=$(stat -c%s "$apk")
+            if [ "$size" -gt 52428800 ]; then
+              echo "$apk exceeds the 50 MiB internal APK budget" >&2
+              exit 1
+            fi
+            if [ -n "$APKANALYZER" ]; then
+              app_id=$($APKANALYZER manifest application-id "$apk")
+              debuggable=$($APKANALYZER manifest debuggable "$apk")
+              test "$app_id" = "de.wachbuch.mobile.internal"
+              test "$debuggable" = "false"
+            fi
+          done
+
+          AAB=$(find build/app/outputs/bundle -type f -name '*production*release*.aab' -print -quit)
+          test -n "$AAB"
+          test "$(stat -c%s "$AAB")" -le 104857600
+          if jarsigner -verify "$AAB" >/dev/null 2>&1; then
+            echo "Verification AAB must remain unsigned without release credentials" >&2
+            exit 1
+          fi
+
+      - name: Package auditable artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist/internal dist/reports dist/symbols
+          find build/app/outputs/flutter-apk -type f -name '*internal*release.apk' -exec cp {} dist/internal/ \;
+          cp -R build/symbols/. dist/symbols/
+          flutter pub deps --json > dist/reports/flutter-dependencies.json
+          (cd android && ./gradlew :app:dependencies --configuration productionReleaseRuntimeClasspath) \
+            > dist/reports/android-production-dependencies.txt
+          (cd dist/internal && sha256sum *.apk > SHA256SUMS)
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: wachbuch-mobile-apk
-          path: dist/wachbuch-mobile.apk
+          name: wachbuch-internal-apks
+          path: dist/internal
           if-no-files-found: error
+          retention-days: 30
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wachbuch-android-audit
+          path: |
+            dist/reports
+            dist/symbols
+            build/app/reports/lint-results-productionRelease.html
+          if-no-files-found: error
+          retention-days: 30
