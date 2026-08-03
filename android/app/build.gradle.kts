@@ -105,6 +105,15 @@ android {
             )
         }
     }
+
+    lint {
+        abortOnError = true
+        checkReleaseBuilds = true
+        warningsAsErrors = true
+        lintConfig = file("lint.xml")
+        htmlReport = true
+        textReport = true
+    }
 }
 
 kotlin {
