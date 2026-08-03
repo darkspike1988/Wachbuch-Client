@@ -1,0 +1,103 @@
+# Wachbuch Client Roadmap
+
+Stand: 3. August 2026
+
+## Android-Ziel: 10/10 Release Engineering
+
+Die Bewertung bezieht sich auf die technische Qualität des Repositorys und der
+erzeugten Android-Artefakte. Ein öffentlicher Play-Store-Release benötigt
+zusätzlich Konten, Schlüssel, Angaben und Freigaben außerhalb des Quellcodes.
+
+### Bewertungsmatrix
+
+| Bereich | Ziel | Status |
+| --- | --- | --- |
+| Signierung | Produktionsbuild nie mit Debug-Schlüssel | umgesetzt, CI-Nachweis offen |
+| Varianten | interne Test-App klar von Produktion getrennt | umgesetzt, CI-Nachweis offen |
+| Datenschutz | keine Sicherung oder Geräteübertragung sensibler App-Daten | umgesetzt, CI-Nachweis offen |
+| Transport | HTTPS-only in nicht debuggbaren Builds | umgesetzt |
+| Berechtigungen | nur Internet, optionale Kamera und optionaler grober Standort | umgesetzt |
+| Deep Links | strikte Strukturprüfung und getrennte interne URI | umgesetzt, Tests offen |
+| Optimierung | R8, Resource Shrinking, ABI-Splits und AAB | umgesetzt, CI-Nachweis offen |
+| Qualität | Analyse, Tests, Lint, Größen- und Signatur-Gates | umgesetzt, CI-Nachweis offen |
+| Auditierbarkeit | Hashes, Symbole und Abhängigkeitsberichte | umgesetzt, CI-Nachweis offen |
+| Auslieferung | geschützter reproduzierbarer Signed-Release-Workflow | umgesetzt, externe Secrets offen |
+
+## Phase 0 – Ausgangslage und Risikoanalyse
+
+- [x] ~~Tatsächlich erzeugte APK aus GitHub Actions statisch analysieren.~~
+- [x] ~~APK-Größe, native Architekturen und eingebettete Scanner-Bibliotheken erfassen.~~
+- [x] ~~Debug-Signierung im bisherigen Release-Build als kritischen Fehler dokumentieren.~~
+- [x] ~~Fehlende Backup-Regeln, deaktiviertes Shrinking und fehlendes AAB-Gate erfassen.~~
+
+## Phase 1 – Identität und Signierung
+
+- [x] ~~Varianten `internal` und `production` einführen.~~
+- [x] ~~Interne App mit Paket-ID `de.wachbuch.mobile.internal` kennzeichnen.~~
+- [x] ~~Interne App als „Wachbuch Internal“ sichtbar machen.~~
+- [x] ~~Internes Deep-Link-Schema `wachbuch-internal://` vom Produktionsschema trennen.~~
+- [x] ~~Produktionssignierung aus `key.properties` oder geschützten Umgebungsvariablen laden.~~
+- [x] ~~Debug-Key-Fallback aus dem Produktionsbuild entfernen.~~
+- [x] ~~Build mit `REQUIRE_RELEASE_SIGNING=true` ohne vollständige Schlüsselkonfiguration hart abbrechen.~~
+- [x] ~~Keystores, Zertifikate und lokale Signing-Dateien in `.gitignore` sperren.~~
+
+## Phase 2 – Datenschutz und Angriffsfläche
+
+- [x] ~~Cloud-Backups unter Android 11 und älter vollständig ausschließen.~~
+- [x] ~~Cloud-Backup und Geräteübertragung unter Android 12+ vollständig ausschließen.~~
+- [x] ~~`android:allowBackup="false"` setzen.~~
+- [x] ~~Klartext-HTTP für Release und Produktion blockieren.~~
+- [x] ~~Deep Links auf exakten Host, leeren Pfad und genau einen `url`-Parameter begrenzen.~~
+- [x] ~~Server-URLs mit eingebetteten Zugangsdaten ablehnen.~~
+- [x] ~~Kamera weiterhin als optionales Gerätefeature deklarieren.~~
+- [x] ~~Veraltete maximale Seitenverhältnisbegrenzung entfernen.~~
+
+## Phase 3 – Größe, Performance und Artefakte
+
+- [x] ~~R8-Minifizierung für Release aktivieren.~~
+- [x] ~~Android Resource Shrinking aktivieren.~~
+- [x] ~~Optimierte Standard-ProGuard-Konfiguration verwenden.~~
+- [x] ~~Interne APKs getrennt pro ABI bauen.~~
+- [x] ~~Produktion als Android App Bundle prüfen und ausliefern.~~
+- [x] ~~Dart-Obfuskation mit getrennten Symbolen aktivieren.~~
+- [x] ~~SHA-256-Prüfsummen für veröffentlichte Artefakte erzeugen.~~
+- [x] ~~50-MiB-Budget pro interner Split-APK und 100-MiB-Budget für das AAB erzwingen.~~
+
+## Phase 4 – CI und Release-Gates
+
+- [x] ~~Flutter-Analyse und vollständige Tests als Voraussetzung beibehalten.~~
+- [x] ~~Android-Lint für `productionRelease` ergänzen.~~
+- [x] ~~Interne APK-Signaturen mit `apksigner` prüfen.~~
+- [x] ~~Paket-ID und `debuggable=false` automatisiert prüfen.~~
+- [x] ~~Unsigned Production-AAB im normalen PR-CI erzwingen, damit keine Schlüssel benötigt werden.~~
+- [x] ~~Flutter- und Android-Abhängigkeitsberichte als Audit-Artefakt erzeugen.~~
+- [x] ~~Obfuskationssymbole als geschütztes Artefakt aufbewahren.~~
+- [x] ~~Separaten, manuell auslösbaren Signed-Release-Workflow mit GitHub-Environment `google-play` ergänzen.~~
+- [ ] Alle neuen Flutter-, Android- und iOS-CI-Jobs auf dem PR erfolgreich abschließen.
+- [ ] PR nach erfolgreicher Prüfung in `main` mergen.
+
+## Phase 5 – Externe Play-Store-Freigabe
+
+Diese Punkte können nicht im Repository selbst erledigt werden und bleiben bis
+zur tatsächlichen Einrichtung bewusst offen.
+
+- [ ] Langfristigen Upload-Keystore erzeugen und offline sichern.
+- [ ] GitHub-Environment `google-play` mit erforderlichen Reviewern anlegen.
+- [ ] Secrets `ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS` und `ANDROID_UPLOAD_KEY_PASSWORD` hinterlegen.
+- [ ] Geschützten Workflow **Android Signed Release** erfolgreich ausführen.
+- [ ] Play App Signing für `de.wachbuch.mobile` aktivieren.
+- [ ] Signiertes AAB zunächst in den internen Test-Track hochladen.
+- [ ] Datenschutzerklärung, Data-Safety-Formular und Berechtigungsangaben finalisieren.
+- [ ] Store-Texte, Screenshots, App-Icon und Feature Graphic einreichen.
+- [ ] Play-Pre-Launch-Report ohne kritische Abstürze, ANRs oder Sicherheitswarnungen abschließen.
+- [ ] Optional eine eigene öffentliche Domain für verifizierte Android App Links bereitstellen.
+
+## Definition of Done
+
+**Technische Android-Bewertung 10/10:** Alle Punkte der Phasen 0 bis 4 sind
+abgehakt, die CI ist grün und die Änderungen sind in `main`.
+
+**Öffentlicher Play-Store-Release abgeschlossen:** Zusätzlich sind alle
+verbindlichen Punkte der Phase 5 abgehakt. Das Repository kann diese externen
+Schritte vorbereiten und prüfen, aber keine Google-Konten, Schlüssel oder
+rechtlichen Erklärungen selbst erzeugen.
