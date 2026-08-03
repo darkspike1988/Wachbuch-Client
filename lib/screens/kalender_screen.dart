@@ -202,7 +202,7 @@ String _formatRange(KalenderEntry entry) {
         : '${_formatDay(start)} ${_formatTime(start)} – ${_formatDay(end)} ${_formatTime(end)} Uhr';
   }
   if (start != null) return '${_formatDay(start)}, ${_formatTime(start)} Uhr';
-  return '${_formatDay(end!)}';
+  return _formatDay(end!);
 }
 
 String _formatDay(DateTime date) {

@@ -923,7 +923,7 @@ class _HandoverResults extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        separatorBuilder: (_, _) => const SizedBox(height: 4),
         itemBuilder: (context, index) =>
             _HandoverCard(item: items[index], onOpen: onOpen),
       );

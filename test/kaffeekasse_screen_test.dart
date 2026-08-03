@@ -94,7 +94,7 @@ void main() {
 
   testWidgets('shows an error banner on API failure', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: KaffeekasseScreen(api: _ErrorApi())),
+      MaterialApp(home: KaffeekasseScreen(api: _ErrorApi())),
     );
     await tester.pumpAndSettle();
 
