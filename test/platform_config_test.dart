@@ -8,14 +8,19 @@ void main() {
       'android/app/src/main/AndroidManifest.xml',
     ).readAsString();
     final gradle = await File('android/app/build.gradle.kts').readAsString();
+    final lint = await File('android/app/lint.xml').readAsString();
 
     expect(manifest, contains('android.intent.action.VIEW'));
     expect(manifest, contains('android.intent.category.BROWSABLE'));
     expect(manifest, contains('android:scheme="\${appScheme}"'));
     expect(manifest, contains('android:host="connect"'));
     expect(manifest, contains('android.permission.ACCESS_COARSE_LOCATION'));
+    expect(manifest, isNot(contains('android.permission.POST_NOTIFICATIONS')));
     expect(manifest, contains('android:allowBackup="false"'));
-    expect(manifest, contains('android:dataExtractionRules="@xml/data_extraction_rules"'));
+    expect(
+      manifest,
+      contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
+    );
 
     expect(
       gradle,
@@ -26,7 +31,19 @@ void main() {
       contains('manifestPlaceholders["appScheme"] = "wachbuch-internal"'),
     );
     expect(gradle, contains('applicationIdSuffix = ".internal"'));
-    expect(gradle, contains('manifestPlaceholders["appLabel"] = "Wachbuch Internal"'));
+    expect(
+      gradle,
+      contains('manifestPlaceholders["appLabel"] = "Wachbuch Internal"'),
+    );
+    expect(gradle, contains('warningsAsErrors = true'));
+
+    expect(lint, contains('NotificationPermission'));
+    expect(
+      lint,
+      contains(
+        r'com\.baseflow\.geolocator\.location\.BackgroundNotification',
+      ),
+    );
   });
 
   test('iOS registers the wachbuch URI scheme', () async {
