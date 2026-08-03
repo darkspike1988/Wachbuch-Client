@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 
 /// High-contrast error feedback with icon and live-region semantics.
 class ErrorBanner extends StatelessWidget {
