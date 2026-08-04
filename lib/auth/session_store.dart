@@ -30,13 +30,12 @@ class SessionStore {
     return DateTime.tryParse(raw)?.toLocal();
   }
 
+  static const _defaultTokenLifetime = Duration(days: 90);
+
   Future<void> writeToken(String token, {DateTime? expiresAt}) async {
     await _secure.write(key: _tokenKey, value: token);
-    if (expiresAt != null) {
-      await _secure.write(key: _expiresKey, value: expiresAt.toUtc().toIso8601String());
-    } else {
-      await _secure.delete(key: _expiresKey);
-    }
+    final exp = (expiresAt ?? DateTime.now().add(_defaultTokenLifetime)).toUtc();
+    await _secure.write(key: _expiresKey, value: exp.toIso8601String());
   }
 
   Future<void> clearToken() async {

@@ -84,5 +84,23 @@ void main() {
 
       expect(kasse.ledger.first.amount, -1);
     });
+
+    test('extracts IBAN from a formatted payment hint', () {
+      final kasse = Kaffeekasse.fromJson({
+        'balance': '0',
+        'payment_hint': 'Überweisung an IBAN: DE89 3704 0044 0532 0130 00',
+      });
+
+      expect(kasse.iban, 'DE89370400440532013000');
+    });
+
+    test('returns null when the payment hint has no IBAN', () {
+      final kasse = Kaffeekasse.fromJson({
+        'balance': '0',
+        'payment_hint': 'PayPal: paypal.me/wache',
+      });
+
+      expect(kasse.iban, isNull);
+    });
   });
 }

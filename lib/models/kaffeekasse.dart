@@ -23,7 +23,15 @@ class Kaffeekasse {
   final String paymentHint;
 
   bool get isNegative => _parseMoney(balance).isNegative;
+
+  String? get iban {
+    final normalized = paymentHint.replaceAll(RegExp(r'\s'), '').toUpperCase();
+    final match = _ibanRegExp.firstMatch(normalized);
+    return match?.group(0);
+  }
 }
+
+final RegExp _ibanRegExp = RegExp(r'[A-Z]{2}\d{2}[A-Z0-9]{10,30}');
 
 class KaffeekasseEntry {
   const KaffeekasseEntry({

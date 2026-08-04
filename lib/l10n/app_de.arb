@@ -34,6 +34,31 @@
   "metricUrgent": "dringend",
   "overviewModulesTitle": "Module dieser Wache",
   "overviewModulesHint": "Ihre Wache und die verfügbaren Module werden automatisch aus Ihrem Benutzerkonto geladen.",
+  "overviewLastUpdated": "Aktualisiert {time}",
+  "@overviewLastUpdated": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "relativeJustNow": "gerade eben",
+  "relativeMinutesAgo": "{count, plural, =1{vor einer Minute} other{vor {count} Minuten}}",
+  "@relativeMinutesAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "relativeHoursAgo": "{count, plural, =1{vor einer Stunde} other{vor {count} Stunden}}",
+  "@relativeHoursAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "relativeDaysAgo": "{count, plural, =1{gestern} other{vor {count} Tagen}}",
+  "@relativeDaysAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "moduleCalendarTitle": "Kalender",
   "moduleCalendarSubtitle": "Wachentermine und Dienste",
   "moduleCoffeeTitle": "Kaffeekasse",
@@ -91,6 +116,8 @@
   "accountRefreshProfile": "Profil aktualisieren",
   "accountLogout": "Abmelden",
   "accountChangeServer": "Anderen Server einrichten",
+  "accountCopyServer": "Server-Adresse kopieren",
+  "accountCopyServerDone": "Server-Adresse kopiert",
 
   "kalenderTitle": "Kalender",
   "kalenderEmpty": "Keine anstehenden Termine.",
@@ -104,6 +131,8 @@
   "kaffeekasseLastTransactions": "Letzte Buchungen",
   "kaffeekasseEmptyLedger": "Noch keine Buchungen.",
   "kaffeekasseEntryFallback": "Buchung",
+  "kaffeekasseCopyIban": "IBAN kopieren",
+  "kaffeekasseCopyIbanDone": "IBAN kopiert",
 
   "checklistenTitle": "Checklisten",
   "checklistenEmpty": "Keine Checklisten verfügbar.",

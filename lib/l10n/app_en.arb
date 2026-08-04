@@ -24,6 +24,31 @@
   "metricUrgent": "urgent",
   "overviewModulesTitle": "Modules of this station",
   "overviewModulesHint": "Your station and the available modules are loaded automatically from your account.",
+  "overviewLastUpdated": "Updated {time}",
+  "@overviewLastUpdated": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "relativeJustNow": "just now",
+  "relativeMinutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@relativeMinutesAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "relativeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@relativeHoursAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "relativeDaysAgo": "{count, plural, =1{yesterday} other{{count} days ago}}",
+  "@relativeDaysAgo": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "moduleCalendarTitle": "Calendar",
   "moduleCalendarSubtitle": "Shift schedules and duties",
   "moduleCoffeeTitle": "Coffee fund",
@@ -55,6 +80,8 @@
   "accountRefreshProfile": "Refresh profile",
   "accountLogout": "Sign out",
   "accountChangeServer": "Set up another server",
+  "accountCopyServer": "Copy server address",
+  "accountCopyServerDone": "Server address copied",
 
   "kalenderTitle": "Calendar",
   "kalenderEmpty": "No upcoming appointments.",
@@ -68,6 +95,8 @@
   "kaffeekasseLastTransactions": "Recent transactions",
   "kaffeekasseEmptyLedger": "No transactions yet.",
   "kaffeekasseEntryFallback": "Transaction",
+  "kaffeekasseCopyIban": "Copy IBAN",
+  "kaffeekasseCopyIbanDone": "IBAN copied",
 
   "checklistenTitle": "Checklists",
   "checklistenEmpty": "No checklists available.",

@@ -3,6 +3,7 @@ import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/state/coffee_state.dart';
+import 'package:wachbuch_mobile/ui/copy_button.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
@@ -87,7 +88,7 @@ class _KaffeekasseScreenState extends State<KaffeekasseScreen> {
             _BalanceCard(kasse: kasse),
             const SizedBox(height: 16),
             if (kasse.paymentHint.isNotEmpty) ...[
-              _PaymentHintCard(hint: kasse.paymentHint),
+              _PaymentHintCard(hint: kasse.paymentHint, iban: kasse.iban),
               const SizedBox(height: 16),
             ],
             _SectionTitle(title: AppLocalizations.of(context)!.kaffeekasseLastTransactions),
@@ -174,9 +175,10 @@ class _BalanceCard extends StatelessWidget {
 }
 
 class _PaymentHintCard extends StatelessWidget {
-  const _PaymentHintCard({required this.hint});
+  const _PaymentHintCard({required this.hint, this.iban});
 
   final String hint;
+  final String? iban;
 
   @override
   Widget build(BuildContext context) {
@@ -195,11 +197,49 @@ class _PaymentHintCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                hint,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSecondaryContainer,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hint,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                        ),
+                  ),
+                  if (iban != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.onSecondaryContainer.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _formatIban(iban!),
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: scheme.onSecondaryContainer,
+                                    fontFamily: 'monospace',
+                                  ),
+                            ),
+                          ),
+                          CopyIconButton(
+                            key: const Key('copy-iban'),
+                            value: iban!,
+                            tooltip: AppLocalizations.of(context)!.kaffeekasseCopyIban,
+                            snackbarText: AppLocalizations.of(context)!.kaffeekasseCopyIbanDone,
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
+                ],
               ),
             ),
           ],
@@ -207,6 +247,15 @@ class _PaymentHintCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatIban(String iban) {
+  final buffer = StringBuffer();
+  for (var i = 0; i < iban.length; i += 4) {
+    if (i > 0) buffer.write(' ');
+    buffer.write(iban.substring(i, i + 4 > iban.length ? iban.length : i + 4));
+  }
+  return buffer.toString();
 }
 
 class _SectionTitle extends StatelessWidget {

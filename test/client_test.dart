@@ -106,4 +106,44 @@ void main() {
       'http://192.168.1.20:8090',
     );
   });
+
+  test('parseServerAddress rejects raw IPv4 addresses in release mode', () {
+    expect(
+      () => parseServerAddress('https://192.168.1.20', allowInsecure: false),
+      throwsArgumentError,
+    );
+  });
+
+  test('parseServerAddress allows loopback addresses even in release mode', () {
+    expect(
+      parseServerAddress('https://127.0.0.1', allowInsecure: false),
+      'https://127.0.0.1',
+    );
+    expect(
+      parseServerAddress('https://localhost', allowInsecure: false),
+      'https://localhost',
+    );
+  });
+
+  test('parseServerAddress rejects privileged ports below 1024', () {
+    expect(
+      () => parseServerAddress('https://wache.example.org:80'),
+      throwsArgumentError,
+    );
+    expect(
+      () => parseServerAddress('https://wache.example.org:22'),
+      throwsArgumentError,
+    );
+  });
+
+  test('parseServerAddress accepts port 443 and high ports', () {
+    expect(
+      parseServerAddress('https://wache.example.org:443'),
+      'https://wache.example.org:443',
+    );
+    expect(
+      parseServerAddress('https://wache.example.org:8443'),
+      'https://wache.example.org:8443',
+    );
+  });
 }

@@ -77,9 +77,21 @@ String parseServerAddress(String raw, {bool allowInsecure = kDebugMode}) {
     if (uri.scheme == 'http' && !allowInsecure) {
       throw ArgumentError('Für diese App ist eine HTTPS-Adresse erforderlich.');
     }
+    if (!_isLoopback(uri.host) && _isRawIp(uri.host) && !allowInsecure) {
+      throw ArgumentError('Bitte einen Domain-Namen angeben (keine IP-Adresse).');
+    }
+    if (uri.hasPort && uri.port != 443 && uri.port <= 1024) {
+      throw ArgumentError('Der Port muss 443 oder größer als 1024 sein.');
+    }
     final port = uri.hasPort ? ':${uri.port}' : '';
     return '${uri.scheme}://${uri.host}$port';
   } on FormatException {
     throw ArgumentError('Ungültige Server-Adresse.');
   }
 }
+
+bool _isLoopback(String host) => host == 'localhost' || host == '127.0.0.1' || host == '::1';
+
+bool _isRawIp(String host) => _ipv4.hasMatch(host) || host.contains(':');
+
+final RegExp _ipv4 = RegExp(r'^\d{1,3}(\.\d{1,3}){3}$');

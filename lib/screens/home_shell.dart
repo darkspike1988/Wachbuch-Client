@@ -4,6 +4,7 @@ import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/ui/copy_button.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
@@ -33,6 +34,7 @@ class _HomeShellState extends State<HomeShell> {
   bool _loading = true;
   bool _offline = false;
   int _reloadGeneration = 0;
+  DateTime? _lastUpdated;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _HomeShellState extends State<HomeShell> {
         _handovers = results[1] as List<Map<String, dynamic>>;
         _loading = false;
         _offline = false;
+        _lastUpdated = DateTime.now();
       });
     } on ApiException catch (error) {
       if (!mounted || generation != _reloadGeneration) {
@@ -134,6 +137,7 @@ class _HomeShellState extends State<HomeShell> {
           loading: _loading,
           hasData: _me != null,
           error: _error,
+          lastUpdated: _lastUpdated,
           onRefresh: _reload,
         ),
         _HandoversTab(
@@ -251,6 +255,7 @@ class _OverviewTab extends StatelessWidget {
     required this.loading,
     required this.hasData,
     required this.error,
+    required this.lastUpdated,
     required this.onRefresh,
   });
 
@@ -262,12 +267,13 @@ class _OverviewTab extends StatelessWidget {
   final bool loading;
   final bool hasData;
   final String? error;
+  final DateTime? lastUpdated;
   final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
     if (loading && !hasData) {
-      return const Center(child: CircularProgressIndicator());
+      return const _DashboardSkeleton();
     }
     final l = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
@@ -292,6 +298,10 @@ class _OverviewTab extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               _StationHero(stationName: stationName, roleLabel: roleLabel),
+              if (lastUpdated != null) ...[
+                const SizedBox(height: 8),
+                _LastUpdatedCaption(timestamp: lastUpdated!),
+              ],
               const SizedBox(height: 16),
               if (error != null) ...[
                 ErrorBanner(message: error!),
@@ -479,6 +489,85 @@ class _SectionTitle extends StatelessWidget {
           child: Text(title, style: Theme.of(context).textTheme.titleMedium),
         ),
       ],
+    );
+  }
+}
+
+class _LastUpdatedCaption extends StatelessWidget {
+  const _LastUpdatedCaption({required this.timestamp});
+
+  final DateTime timestamp;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(Icons.schedule, size: 14, color: scheme.onSurfaceVariant),
+        const SizedBox(width: 4),
+        Text(
+          l.overviewLastUpdated(_relativeTime(l, timestamp)),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+String _relativeTime(AppLocalizations l, DateTime timestamp) {
+  final delta = DateTime.now().difference(timestamp);
+  if (delta.inSeconds < 45) return l.relativeJustNow;
+  if (delta.inMinutes < 60) return l.relativeMinutesAgo(delta.inMinutes);
+  if (delta.inHours < 24) return l.relativeHoursAgo(delta.inHours);
+  return l.relativeDaysAgo(delta.inDays);
+}
+
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final box = Theme.of(context).colorScheme.surfaceContainerHighest;
+    Widget block(double height) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            height: height,
+            decoration: BoxDecoration(
+              color: box,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            block(96),
+            block(20),
+            block(20),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: block(76)),
+                const SizedBox(width: 8),
+                Expanded(child: block(76)),
+                const SizedBox(width: 8),
+                Expanded(child: block(76)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            block(20),
+            block(64),
+            block(64),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1302,40 +1391,50 @@ class _AccountTab extends StatelessWidget {
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxW),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l.accountLoggedInAs),
-              subtitle: Text((user?['username'] as String?) ?? '—'),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l.accountServer),
-              subtitle: Text(serverUrl),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l.accountLicense),
-              subtitle: Text(l.accountLicenseValue),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: loading ? null : onRefresh,
-              child: Text(l.accountRefreshProfile),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.tonal(
-              onPressed: loading ? null : onLogout,
-              child: Text(l.accountLogout),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: loading ? null : onChangeServer,
-              child: Text(l.accountChangeServer),
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.accountLoggedInAs),
+                subtitle: Text((user?['username'] as String?) ?? '—'),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.accountServer),
+                subtitle: Text(serverUrl),
+                trailing: CopyIconButton(
+                  key: const Key('copy-server-url'),
+                  value: serverUrl,
+                  tooltip: l.accountCopyServer,
+                  snackbarText: l.accountCopyServerDone,
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.accountLicense),
+                subtitle: Text(l.accountLicenseValue),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: loading ? null : onRefresh,
+                child: Text(l.accountRefreshProfile),
+              ),
+              const SizedBox(height: 8),
+              FilledButton.tonal(
+                onPressed: loading ? null : onLogout,
+                child: Text(l.accountLogout),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: loading ? null : onChangeServer,
+                child: Text(l.accountChangeServer),
+              ),
+            ],
+          ),
         ),
       ),
     );

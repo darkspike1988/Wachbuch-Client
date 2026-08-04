@@ -57,4 +57,37 @@ void main() {
     expect(await store.isTokenExpired(), isTrue);
     expect(await store.readTokenExpiresAt(), isNotNull);
   });
+
+  test('pasted token without expiry falls back to a 90-day lifetime', () async {
+    final store = SessionStore();
+    await store.writeToken('wb_pasted');
+
+    final expiresAt = await store.readTokenExpiresAt();
+    expect(expiresAt, isNotNull);
+    final drift = expiresAt!.difference(DateTime.now());
+    expect(drift.inDays, greaterThanOrEqualTo(89));
+    expect(drift.inDays, lessThanOrEqualTo(90));
+    expect(await store.isTokenExpired(), isFalse);
+  });
+
+  test('explicit expires_at overrides the default and persists', () async {
+    final store = SessionStore();
+    final inFiveDays = DateTime.now().add(const Duration(days: 5));
+    await store.writeToken('wb_explicit', expiresAt: inFiveDays);
+
+    final stored = await store.readTokenExpiresAt();
+    expect(stored, isNotNull);
+    expect(await store.isTokenExpired(), isFalse);
+    expect(await store.isTokenExpired(now: inFiveDays.add(const Duration(days: 1))), isTrue);
+  });
+
+  test('clearToken removes the expiry alongside the token', () async {
+    final store = SessionStore();
+    await store.writeToken('wb_secret');
+
+    await store.clearToken();
+
+    expect(await store.readToken(), isNull);
+    expect(await store.readTokenExpiresAt(), isNull);
+  });
 }
