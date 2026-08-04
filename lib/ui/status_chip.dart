@@ -23,7 +23,7 @@ class StatusChip extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(WachbuchTokens.radiusMd),
       ),
       constraints: const BoxConstraints(minHeight: 36),
