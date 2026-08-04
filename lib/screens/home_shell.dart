@@ -4,6 +4,8 @@ import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/state/auth_state.dart';
+import 'package:wachbuch_mobile/state/handover_state.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
@@ -27,89 +29,56 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
-  Map<String, dynamic>? _me;
-  List<Map<String, dynamic>> _handovers = [];
-  String? _error;
-  bool _loading = true;
-  bool _offline = false;
   int _reloadGeneration = 0;
+  late final HandoverState _handoverState;
+  late final AuthState _authState;
+  late final Listenable _listenable;
 
   @override
   void initState() {
     super.initState();
+    _handoverState = HandoverState(api: widget.api);
+    _authState = AuthState(api: widget.api);
+    _listenable = Listenable.merge([_handoverState, _authState]);
     _reload();
   }
 
   Future<void> _reload() async {
     final generation = ++_reloadGeneration;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final results = await Future.wait([
-        widget.api.me(),
-        widget.api.handovers(),
-      ]);
-      if (!mounted || generation != _reloadGeneration) {
-        return;
-      }
-      setState(() {
-        _me = results[0] as Map<String, dynamic>;
-        _handovers = results[1] as List<Map<String, dynamic>>;
-        _loading = false;
-        _offline = false;
-      });
-    } on ApiException catch (error) {
-      if (!mounted || generation != _reloadGeneration) {
-        return;
-      }
-      setState(() {
-        _error = error.statusCode == 401
-            ? AppLocalizations.of(context)!.sessionExpiredError
-            : error.message;
-        _loading = false;
-        _offline = error.statusCode == 0;
-      });
-      if (error.statusCode == 401) {
-        await widget.onLogout();
-      }
-    } catch (error) {
-      if (!mounted || generation != _reloadGeneration) {
-        return;
-      }
-      setState(() {
-        _error = error.toString();
-        _loading = false;
-        _offline = true;
-      });
+    await Future.wait([
+      _authState.reload(),
+      _handoverState.reload(),
+    ]);
+    if (!mounted || generation != _reloadGeneration) {
+      return;
+    }
+    final isUnauthorized =
+        _authState.lastError?.statusCode == 401 ||
+        _handoverState.lastError?.statusCode == 401;
+    if (isUnauthorized) {
+      await widget.onLogout();
     }
   }
 
-  String _stationName(AppLocalizations l10n) {
-    final station = (_me?['membership'] as Map?)?['station'] as Map?;
-    return (station?['name'] as String?) ?? l10n.stationFallback;
-  }
+  bool get _loading => _authState.loading || _handoverState.loading;
 
-  String get _roleLabel {
-    final membership = _me?['membership'] as Map?;
-    return (membership?['role_label'] as String?) ?? '';
-  }
+  bool get _offline =>
+      _authState.lastError?.statusCode == 0 ||
+      _handoverState.lastError?.statusCode == 0;
 
-  Map<String, dynamic> get _modules {
-    final station = (_me?['membership'] as Map?)?['station'] as Map?;
-    final modules = station?['modules'];
-    if (modules is Map<String, dynamic>) {
-      return modules;
+  String? _displayError(AppLocalizations l10n) {
+    for (final error in [_authState.lastError, _handoverState.lastError]) {
+      if (error == null) continue;
+      if (error.statusCode == 401) return l10n.sessionExpiredError;
+      return error.message;
     }
-    if (modules is Map) {
-      return Map<String, dynamic>.from(modules);
-    }
-    return {};
+    return _authState.error ?? _handoverState.error;
   }
 
   @override
   void dispose() {
+    _handoverState.dispose();
+    _authState.dispose();
     widget.api.close();
     super.dispose();
   }
@@ -120,123 +89,134 @@ class _HomeShellState extends State<HomeShell> {
     final width = MediaQuery.sizeOf(context).width;
     final tablet = AppLayout.isTablet(width);
 
-    final stationName = _stationName(l);
+    return ListenableBuilder(
+      listenable: _listenable,
+      builder: (context, _) {
+        final stationName = _authState.stationName(l.stationFallback);
+        final error = _displayError(l);
+        final loading = _loading;
+        final offline = _offline;
 
-    final pages = IndexedStack(
-      index: _tab,
-      children: [
-        _OverviewTab(
-          api: widget.api,
-          stationName: stationName,
-          roleLabel: _roleLabel,
-          modules: _modules,
-          handovers: _handovers,
-          loading: _loading,
-          hasData: _me != null,
-          error: _error,
-          onRefresh: _reload,
-        ),
-        _HandoversTab(
-          api: widget.api,
-          items: _handovers,
-          loading: _loading,
-          error: _error,
-          onRefresh: _reload,
-        ),
-        _AccountTab(
-          me: _me,
-          serverUrl: widget.api.baseUrl,
-          loading: _loading,
-          onLogout: widget.onLogout,
-          onChangeServer: widget.onChangeServer,
-          onRefresh: _reload,
-        ),
-      ],
-    );
-
-    final appBar = AppBar(
-      title: Text(stationName, maxLines: 1, overflow: TextOverflow.ellipsis),
-      actions: [
-        IconButton(
-          tooltip: l.refreshTooltip,
-          onPressed: _loading ? null : _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    );
-
-    final offlineBanner = OfflineBanner(
-      visible: _offline,
-      onRetry: _loading ? () {} : _reload,
-    );
-
-    if (tablet) {
-      return Scaffold(
-        appBar: appBar,
-        body: Column(
+        final pages = IndexedStack(
+          index: _tab,
           children: [
-            offlineBanner,
-            Expanded(
-              child: Row(
-                children: [
-                  NavigationRail(
-                    selectedIndex: _tab,
-                    onDestinationSelected: (index) =>
-                        setState(() => _tab = index),
-                    labelType: width >= AppLayout.wideBreakpoint
-                        ? NavigationRailLabelType.all
-                        : NavigationRailLabelType.selected,
-                    destinations: [
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.home_outlined),
-                        selectedIcon: const Icon(Icons.home),
-                        label: Text(l.navOverview),
-                      ),
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.assignment_outlined),
-                        selectedIcon: const Icon(Icons.assignment),
-                        label: Text(l.navHandovers),
-                      ),
-                      NavigationRailDestination(
-                        icon: const Icon(Icons.person_outline),
-                        selectedIcon: const Icon(Icons.person),
-                        label: Text(l.navAccount),
-                      ),
-                    ],
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: pages),
-                ],
-              ),
+            _OverviewTab(
+              api: widget.api,
+              stationName: stationName,
+              roleLabel: _authState.roleLabel,
+              modules: _authState.modules,
+              handovers: _handoverState.items,
+              loading: loading,
+              hasData: _authState.hasData,
+              error: error,
+              onRefresh: _reload,
+            ),
+            _HandoversTab(
+              api: widget.api,
+              handoverState: _handoverState,
+              error: error,
+              onRefresh: _reload,
+            ),
+            _AccountTab(
+              me: _authState.me,
+              serverUrl: widget.api.baseUrl,
+              loading: loading,
+              onLogout: widget.onLogout,
+              onChangeServer: widget.onChangeServer,
+              onRefresh: _reload,
             ),
           ],
-        ),
-      );
-    }
+        );
 
-    return Scaffold(
-      appBar: appBar,
-      body: Column(
-        children: [offlineBanner, Expanded(child: pages)],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (index) => setState(() => _tab = index),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            label: l.navOverview,
+        final appBar = AppBar(
+          title: Text(
+            stationName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.assignment_outlined),
-            label: l.navHandovers,
+          actions: [
+            IconButton(
+              tooltip: l.refreshTooltip,
+              onPressed: loading ? null : _reload,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        );
+
+        final offlineBanner = OfflineBanner(
+          visible: offline,
+          onRetry: loading ? () {} : _reload,
+        );
+
+        if (tablet) {
+          return Scaffold(
+            appBar: appBar,
+            body: Column(
+              children: [
+                offlineBanner,
+                Expanded(
+                  child: Row(
+                    children: [
+                      NavigationRail(
+                        selectedIndex: _tab,
+                        onDestinationSelected: (index) =>
+                            setState(() => _tab = index),
+                        labelType: width >= AppLayout.wideBreakpoint
+                        ? NavigationRailLabelType.all
+                        : NavigationRailLabelType.selected,
+                        destinations: [
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.home_outlined),
+                            selectedIcon: const Icon(Icons.home),
+                            label: Text(l.navOverview),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.assignment_outlined),
+                            selectedIcon: const Icon(Icons.assignment),
+                            label: Text(l.navHandovers),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.person_outline),
+                            selectedIcon: const Icon(Icons.person),
+                            label: Text(l.navAccount),
+                          ),
+                        ],
+                      ),
+                      const VerticalDivider(width: 1),
+                      Expanded(child: pages),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: appBar,
+          body: Column(
+            children: [offlineBanner, Expanded(child: pages)],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            label: l.navAccount,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _tab,
+            onDestinationSelected: (index) => setState(() => _tab = index),
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                label: l.navOverview,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.assignment_outlined),
+                label: l.navHandovers,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline),
+                label: l.navAccount,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -692,15 +672,13 @@ class _ModuleTile extends StatelessWidget {
 class _HandoversTab extends StatefulWidget {
   const _HandoversTab({
     required this.api,
-    required this.items,
-    required this.loading,
+    required this.handoverState,
     required this.error,
     required this.onRefresh,
   });
 
   final WachbuchApi api;
-  final List<Map<String, dynamic>> items;
-  final bool loading;
+  final HandoverState handoverState;
   final String? error;
   final Future<void> Function() onRefresh;
 
@@ -710,19 +688,11 @@ class _HandoversTab extends StatefulWidget {
 
 class _HandoversTabState extends State<_HandoversTab> {
   final _searchController = TextEditingController();
-  final Set<String> _statuses = {};
-  final Set<String> _priorities = {};
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _toggle(Set<String> target, String value, bool selected) {
-    setState(() {
-      selected ? target.add(value) : target.remove(value);
-    });
   }
 
   Future<void> _showDetails(Map<String, dynamic> item) async {
@@ -743,7 +713,9 @@ class _HandoversTabState extends State<_HandoversTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.loading && widget.items.isEmpty) {
+    final state = widget.handoverState;
+    final items = state.items;
+    if (state.loading && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -751,24 +723,18 @@ class _HandoversTabState extends State<_HandoversTab> {
     final width = MediaQuery.sizeOf(context).width;
     final cols = AppLayout.handoverColumns(width);
     final maxW = AppLayout.contentMaxWidth(width);
-    final filtered = filterHandovers(
-      widget.items,
-      l10n: l,
-      query: _searchController.text,
-      statuses: _statuses,
-      priorities: _priorities,
-    );
+    final filtered = state.filteredItems;
     final availableStatuses = _orderedValues(
       [
-        ...widget.items.map((item) => item['status']?.toString() ?? ''),
-        ..._statuses,
+        ...items.map((item) => item['status']?.toString() ?? ''),
+        ...state.statuses,
       ],
       const ['open', 'in_progress', 'done'],
     );
     final availablePriorities = _orderedValues(
       [
-        ...widget.items.map((item) => item['priority']?.toString() ?? ''),
-        ..._priorities,
+        ...items.map((item) => item['priority']?.toString() ?? ''),
+        ...state.priorities,
       ],
       const ['urgent', 'important', 'normal'],
     );
@@ -779,7 +745,7 @@ class _HandoversTabState extends State<_HandoversTab> {
         constraints: BoxConstraints(maxWidth: maxW),
         child: Column(
           children: [
-            if (widget.items.isNotEmpty) ...[
+            if (items.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: SearchBar(
@@ -793,38 +759,38 @@ class _HandoversTabState extends State<_HandoversTab> {
                         tooltip: l.handoverSearchClear,
                         onPressed: () {
                           _searchController.clear();
-                          setState(() {});
+                          state.setSearchQuery('');
                         },
                         icon: const Icon(Icons.close),
                       ),
                   ],
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (text) => state.setSearchQuery(text),
                 ),
               ),
               _FilterSection(
                 title: l.filterStatus,
                 values: availableStatuses,
-                selected: _statuses,
+                selected: state.statuses,
                 label: (value) => handoverStatusLabel(value, l),
                 keyPrefix: 'status-filter',
                 onChanged: (value, selected) =>
-                    _toggle(_statuses, value, selected),
+                    state.toggleStatus(value, selected: selected),
               ),
               _FilterSection(
                 title: l.filterPriority,
                 values: availablePriorities,
-                selected: _priorities,
+                selected: state.priorities,
                 label: (value) => handoverPriorityLabel(value, l),
                 keyPrefix: 'priority-filter',
                 onChanged: (value, selected) =>
-                    _toggle(_priorities, value, selected),
+                    state.togglePriority(value, selected: selected),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    l.handoversCount(filtered.length, widget.items.length),
+                    l.handoversCount(filtered.length, items.length),
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ),
@@ -835,7 +801,7 @@ class _HandoversTabState extends State<_HandoversTab> {
                 onRefresh: widget.onRefresh,
                 child: _HandoverResults(
                   items: filtered,
-                  allItemsEmpty: widget.items.isEmpty,
+                  allItemsEmpty: items.isEmpty,
                   error: widget.error,
                   columns: cols,
                   onOpen: _showDetails,
