@@ -15,7 +15,6 @@ class CopyIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return IconButton(
       icon: Icon(Icons.copy_outlined, size: iconSize),
       iconSize: iconSize,

@@ -17,7 +17,6 @@ class PriorityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = WachbuchTokens.priorityColor(priority);
-    final scheme = Theme.of(context).colorScheme;
     final text = label ?? _defaultLabel(priority);
 
     return Container(
@@ -26,8 +25,8 @@ class PriorityBadge extends StatelessWidget {
         vertical: compact ? WachbuchTokens.spaceXs : 6,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
         borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
       ),
       constraints: BoxConstraints(minHeight: compact ? 28 : 36),
