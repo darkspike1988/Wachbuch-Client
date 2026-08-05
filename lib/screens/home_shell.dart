@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
-import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
-import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
-import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
@@ -606,18 +603,23 @@ class _ModuleTiles extends StatelessWidget {
   }
 
   void _open(BuildContext context, _ModuleDestination destination) {
-    final Widget screen;
+    // Lazy loading for module screens to improve app start time
+    final Widget Function(WachbuchApi) screenBuilder;
     switch (destination.key) {
       case 'module-tile-calendar':
-        screen = KalenderScreen(api: api);
+        screenBuilder = (api) => KalenderScreen(api: api);
       case 'module-tile-coffee':
-        screen = KaffeekasseScreen(api: api);
+        screenBuilder = (api) => KaffeekasseScreen(api: api);
       case 'module-tile-checklists':
-        screen = ChecklistenScreen(api: api);
+        screenBuilder = (api) => ChecklistenScreen(api: api);
       default:
         return;
     }
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => screenBuilder(api),
+      ),
+    );
   }
 }
 

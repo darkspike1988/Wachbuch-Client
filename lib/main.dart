@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
@@ -13,11 +14,42 @@ import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
 import 'package:wachbuch_mobile/theme/app_theme.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
 
+/// Preload critical assets to improve app start time
+Future<void> _preloadAssets() async {
+  try {
+    // Preload theme data
+    final themeController = SolarThemeController.device();
+    await themeController.load();
+    
+    // Preload any critical images or fonts here
+    // Example: await precacheImage(AssetImage('assets/launch_image.png'), navigatorKey.currentContext!);
+  } catch (e) {
+    debugPrint('Asset preloading failed: $e');
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Preload critical assets while initializing
+  await _preloadAssets();
+  
+  // Initialize session store
   final store = SessionStore();
+  
+  // Initialize server links
   final links = AppLinksServerLinkSource();
+  
+  // Initialize theme controller
   final themeController = SolarThemeController.device();
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+  
   runApp(
     WachbuchApp(
       store: store,
