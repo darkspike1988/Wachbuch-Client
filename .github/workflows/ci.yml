@@ -25,6 +25,15 @@ jobs:
       - run: flutter pub get
       - name: Generate localizations
         run: flutter gen-l10n
+      - name: Check for outdated dependencies
+        run: flutter pub outdated --mode=null-safety
+      - name: Verify dependency versions
+        run: |
+          # Prüfe, dass keine 'any' Versionen mehr vorhanden sind
+          if grep -q "any" pubspec.yaml; then
+            echo "::error::Found 'any' version constraints in pubspec.yaml"
+            exit 1
+          fi
       - run: flutter analyze
       - run: flutter test
 
