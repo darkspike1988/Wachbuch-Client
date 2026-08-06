@@ -133,11 +133,20 @@ class WachbuchApi {
       }
     }
     if (response.statusCode >= 400) {
+      final error = body['error'];
+      String? message;
+      String? code;
+      if (error is Map) {
+        message = error['message'] as String?;
+        code = error['code'] as String?;
+      } else if (error is String) {
+        message = error;
+        code = body['code'] as String?;
+      }
       throw ApiException(
         response.statusCode,
-        (body['error'] as String?) ??
-            'Anfrage fehlgeschlagen (${response.statusCode})',
-        code: body['code'] as String?,
+        message ?? 'Anfrage fehlgeschlagen (${response.statusCode})',
+        code: code,
       );
     }
     return body;
@@ -259,8 +268,12 @@ class WachbuchApi {
   }
 
   /// POST /api/v1/checklisten/{id}/abschluss/ — Checkliste abschließen (append-only).
+  ///
+  /// Kein Retry (`maxAttempts: 1`): Der Abschluss ist append-only und nicht
+  /// idempotent. Ein Wiederholungsversuch nach einem 5xx-/Netzwerkfehler
+  /// könnte einen doppelten Abschluss erzeugen.
   Future<Checklist> checklisteAbschluss(int id) async {
-    return _withRetry(() async {
+    return _withRetry(maxAttempts: 1, () async {
       final response = await _send(
         _client.post(
           _uri('/api/v1/checklisten/$id/abschluss/'),

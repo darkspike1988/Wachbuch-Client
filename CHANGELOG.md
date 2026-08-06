@@ -2,6 +2,27 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## Unreleased – Review-Härtung
+
+### Fixes
+
+- Checklisten-Abschluss (`POST .../abschluss/`) wird nicht mehr wiederholt:
+  Der append-only-Endpunkt ist nicht idempotent, ein Retry nach 5xx-/Netzwerkfehler
+  konnte doppelte Abschlüsse erzeugen (`maxAttempts: 1`).
+- Fehlerantworten des Servers werden sowohl im flachen Format
+  (`{"error": "…", "code": "…"}`) als auch im kanonischen, verschachtelten
+  Format (`{"error": {"code", "message", "correlation_id"}}`) geparst;
+  zuvor führte das verschachtelte Format zu einem TypeError statt einer
+  lesbaren `ApiException`.
+- `CoffeeState` erhält denselben Dispose-Guard wie `AuthState`/`HandoverState`
+  (kein `notifyListeners()` nach `dispose()` mehr).
+- `intl` auf `^0.20.2` gepinnt (zuvor `any` → nicht reproduzierbare Builds).
+
+### Tests
+
+- Negativtest: verschachteltes Server-Fehlerpayload liefert Code + Meldung.
+- Negativtest: Checklisten-Abschluss wird nach einem 5xx genau einmal gesendet.
+
 ## Unreleased – Module API (Kalender, Kaffeekasse, Checklisten)
 
 ### Neu

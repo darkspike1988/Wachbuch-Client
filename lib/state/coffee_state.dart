@@ -7,6 +7,7 @@ class CoffeeState extends ChangeNotifier {
 
   final WachbuchApi api;
 
+  bool _disposed = false;
   Kaffeekasse? _data;
   bool _loading = false;
   String? _error;
@@ -18,14 +19,24 @@ class CoffeeState extends ChangeNotifier {
   Future<void> reload() async {
     _loading = true;
     _error = null;
-    notifyListeners();
+    _notify();
     try {
       _data = await api.kaffeekasse();
     } catch (e) {
       _error = 'Kaffeekasse nicht erreichbar: $e';
     } finally {
       _loading = false;
-      notifyListeners();
+      _notify();
     }
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
