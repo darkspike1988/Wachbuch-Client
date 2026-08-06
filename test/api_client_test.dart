@@ -251,6 +251,64 @@ void main() {
 
       expect(client.closed, isTrue);
     });
+
+    test('nested server error payloads expose code and message', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'ok': false,
+            'error': {
+              'code': 'mfa_setup_required',
+              'message': 'Zwei-Faktor-Anmeldung muss zuerst eingerichtet werden.',
+              'correlation_id': 'abc123',
+            },
+          }),
+          403,
+        ),
+      );
+
+      await expectLater(
+        WachbuchApi(
+          baseUrl: 'https://wache.example.org',
+          client: client,
+        ).discover(),
+        throwsA(
+          isA<ApiException>()
+              .having((error) => error.statusCode, 'statusCode', 403)
+              .having(
+                (error) => error.code,
+                'code',
+                'mfa_setup_required',
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                contains('Zwei-Faktor'),
+              ),
+        ),
+      );
+    });
+
+    test('checklisteAbschluss is not retried after a server error', () async {
+      var attempts = 0;
+      final client = MockClient((request) async {
+        attempts += 1;
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/checklisten/7/abschluss/');
+        return http.Response(jsonEncode({'error': 'Serverfehler.'}), 500);
+      });
+
+      await expectLater(
+        WachbuchApi(
+          baseUrl: 'https://wache.example.org',
+          token: 'wb_test123',
+          client: client,
+        ).checklisteAbschluss(7),
+        throwsA(isA<ApiException>()),
+      );
+
+      expect(attempts, 1);
+    });
   });
 }
 
