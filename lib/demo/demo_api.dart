@@ -18,6 +18,9 @@ import 'package:wachbuch_mobile/models/report_stats.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
 const demoTokenPrefix = 'wb_demo_';
+const _maxAttachmentBytes = 2 * 1024 * 1024;
+const _maxAttachmentsPerDefect = 8;
+const _maxAttachmentTotalBytes = 12 * 1024 * 1024;
 
 /// Returns a demo API when [baseUrl] matches a [DemoService] host.
 /// Real authenticated sessions receive a token-bound encrypted read cache.
@@ -58,6 +61,7 @@ class DemoWachbuchApi extends WachbuchApi {
     Map<int, List<HandoverAck>>? acks,
     Map<int, List<DefectAttachment>>? attachments,
     Map<int, Uint8List>? attachmentBytes,
+    Set<int>? completedChecklists,
   })  : _defects = List<Defect>.from(defects ?? profile.defects),
         _assets = List<StationAsset>.from(assets ?? profile.assets),
         _inventory = List<InventoryItem>.from(inventory ?? profile.inventory),
@@ -73,6 +77,7 @@ class DemoWachbuchApi extends WachbuchApi {
         _attachmentBytes = Map<int, Uint8List>.from(
           attachmentBytes ?? const <int, Uint8List>{},
         ),
+        _completedChecklists = Set<int>.from(completedChecklists ?? const <int>{}),
         super(
           baseUrl: profile.service.serverUrl,
           token: token ?? '$demoTokenPrefix${profile.service.id}',
@@ -80,7 +85,7 @@ class DemoWachbuchApi extends WachbuchApi {
         );
 
   final DemoProfile profile;
-  final Set<int> _completedChecklists = {};
+  final Set<int> _completedChecklists;
   final List<Defect> _defects;
   final List<StationAsset> _assets;
   final List<InventoryItem> _inventory;
@@ -242,18 +247,35 @@ class DemoWachbuchApi extends WachbuchApi {
     required String contentType,
     required Uint8List bytes,
   }) async {
-    if (bytes.length > 2 * 1024 * 1024) {
-      throw ApiException(413, 'Bild darf maximal 2 MiB groß sein.');
-    }
     if (!_defects.any((item) => item.id == defectId)) {
       throw ApiException(404, 'Mangel nicht gefunden.');
     }
+    if (bytes.isEmpty || bytes.length > _maxAttachmentBytes) {
+      throw ApiException(413, 'Bild darf maximal 2 MiB groß sein.');
+    }
+
+    final normalizedType = contentType.toLowerCase() == 'image/jpg'
+        ? 'image/jpeg'
+        : contentType.toLowerCase();
+    if (!_imageMatches(bytes, normalizedType)) {
+      throw ApiException(415, 'Nur gültige JPEG-, PNG- oder WebP-Bilder sind erlaubt.');
+    }
+
+    final current = _attachments[defectId] ?? const <DefectAttachment>[];
+    if (current.length >= _maxAttachmentsPerDefect) {
+      throw ApiException(409, 'Maximal 8 Fotos pro Mangel sind erlaubt.');
+    }
+    final totalBytes = current.fold<int>(0, (sum, item) => sum + item.size);
+    if (totalBytes + bytes.length > _maxAttachmentTotalBytes) {
+      throw ApiException(413, 'Gesamtgröße der Fotos pro Mangel darf 12 MiB nicht überschreiten.');
+    }
+
     final id = _nextAttachmentId++;
     final item = DefectAttachment(
       id: id,
       defectId: defectId,
       filename: filename,
-      contentType: contentType,
+      contentType: normalizedType,
       size: bytes.length,
       createdAt: DateTime.now(),
       uploadedBy: profile.username,
@@ -262,6 +284,29 @@ class DemoWachbuchApi extends WachbuchApi {
     _attachments.putIfAbsent(defectId, () => <DefectAttachment>[]).add(item);
     _attachmentBytes[id] = Uint8List.fromList(bytes);
     return item;
+  }
+
+  bool _imageMatches(Uint8List bytes, String contentType) {
+    if (contentType == 'image/jpeg') {
+      return bytes.length >= 3 &&
+          bytes[0] == 0xff &&
+          bytes[1] == 0xd8 &&
+          bytes[2] == 0xff;
+    }
+    if (contentType == 'image/png') {
+      const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+      return bytes.length >= signature.length &&
+          List.generate(signature.length, (i) => bytes[i])
+              .asMap()
+              .entries
+              .every((entry) => entry.value == signature[entry.key]);
+    }
+    if (contentType == 'image/webp') {
+      return bytes.length >= 12 &&
+          String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
+          String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP';
+    }
+    return false;
   }
 
   @override
@@ -407,6 +452,7 @@ class DemoWachbuchApi extends WachbuchApi {
       acks: _acks,
       attachments: _attachments,
       attachmentBytes: _attachmentBytes,
+      completedChecklists: _completedChecklists,
     );
   }
 
