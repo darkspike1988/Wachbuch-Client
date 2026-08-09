@@ -9,7 +9,7 @@ import 'package:wachbuch_mobile/ui/asset_status_board.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
-/// Vehicle/device statusboard + Schlüssel/Pool checkout (Phase C + G).
+/// Vehicle/device statusboard + Schlüssel/Pool checkout.
 class AssetsScreen extends StatefulWidget {
   const AssetsScreen({super.key, required this.api});
 
@@ -66,6 +66,112 @@ class _AssetsScreenState extends State<AssetsScreen> {
         _error = error.toString();
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _editAssetStatus(StationAsset asset) async {
+    final l = AppLocalizations.of(context)!;
+    final noteController = TextEditingController(text: asset.note);
+    var selectedStatus = asset.status;
+
+    final apply = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  0,
+                  24,
+                  24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      asset.label,
+                      style: Theme.of(sheetContext)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final status in const [
+                          'ready',
+                          'limited',
+                          'workshop',
+                          'oob',
+                        ])
+                          ChoiceChip(
+                            label: Text(switch (status) {
+                              'ready' => l.assetStatusReady,
+                              'limited' => l.assetStatusLimited,
+                              'workshop' => l.assetStatusWorkshop,
+                              _ => l.assetStatusOob,
+                            }),
+                            selected: selectedStatus == status,
+                            onSelected: (_) =>
+                                setSheetState(() => selectedStatus = status),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: noteController,
+                      maxLength: 300,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: l.defectDescriptionLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(true),
+                      child: Text(l.commonSave),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    final note = noteController.text.trim();
+    noteController.dispose();
+    if (apply != true || !mounted) return;
+
+    setState(() => _busy.add('asset:${asset.id}'));
+    try {
+      final updated = await widget.api.updateAssetStatus(
+        asset.id,
+        status: selectedStatus,
+        note: note,
+      );
+      if (!mounted) return;
+      setState(() {
+        _assets = [
+          for (final item in _assets)
+            if (item.id == asset.id) updated else item,
+        ];
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _busy.remove('asset:${asset.id}'));
     }
   }
 
@@ -135,7 +241,10 @@ class _AssetsScreenState extends State<AssetsScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else ...[
-                  AssetStatusBoard(assets: _assets),
+                  AssetStatusBoard(
+                    assets: _assets,
+                    onAssetTap: _editAssetStatus,
+                  ),
                   if (_inventory.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Text(
