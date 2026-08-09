@@ -10,6 +10,7 @@ import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/screens/reports_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
@@ -211,8 +212,8 @@ class _HomeShellState extends State<HomeShell> {
                         onDestinationSelected: (index) =>
                             setState(() => _tab = index),
                         labelType: width >= AppLayout.wideBreakpoint
-                        ? NavigationRailLabelType.all
-                        : NavigationRailLabelType.selected,
+                            ? NavigationRailLabelType.all
+                            : NavigationRailLabelType.selected,
                         destinations: [
                           NavigationRailDestination(
                             icon: const Icon(Icons.home_outlined),
@@ -299,6 +300,7 @@ class _OverviewTab extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
     final l = AppLocalizations.of(context)!;
+    final languageCode = Localizations.localeOf(context).languageCode;
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.contentMaxWidth(width);
     final openCount = handovers
@@ -390,7 +392,9 @@ class _OverviewTab extends StatelessWidget {
                       on ? Icons.check_circle : Icons.remove_circle_outline,
                       size: 18,
                     ),
-                    label: Text(moduleLabel(entry.key)),
+                    label: Text(
+                      moduleLabel(entry.key, languageCode: languageCode),
+                    ),
                   );
                 }).toList(),
               ),
@@ -626,6 +630,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['reports'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-reports',
+          icon: Icons.insights_outlined,
+          title: l.moduleReportsTitle,
+          subtitle: l.moduleReportsSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -673,6 +687,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = DefectsScreen(api: api);
       case 'module-tile-assets':
         screen = AssetsScreen(api: api);
+      case 'module-tile-reports':
+        screen = ReportsScreen(api: api);
       default:
         return;
     }
@@ -718,8 +734,6 @@ class _OverviewAssetBoardState extends State<_OverviewAssetBoard> {
         _loading = false;
       });
     } on ApiException catch (_) {
-      // 501 or other errors: keep board empty; overview already surfaces
-      // auth/network problems elsewhere.
       if (!mounted) return;
       setState(() {
         _assets = const [];
@@ -1220,6 +1234,7 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
   List<HandoverAck> _acks = const [];
   bool _acksSupported = true;
   bool _acking = false;
+  bool _creatingDefect = false;
   String? _ackError;
 
   @override
@@ -1277,6 +1292,50 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
         _ackError = l.handoverAckFailed;
       });
     }
+  }
+
+  Future<void> _createDefectFromHandover(
+    AppLocalizations l,
+    Map<String, dynamic> item,
+  ) async {
+    if (_creatingDefect) return;
+    setState(() => _creatingDefect = true);
+    final rawTitle = item['title']?.toString().trim() ?? '';
+    final title = rawTitle.isNotEmpty ? rawTitle : l.handoverFallback;
+    final details = item['details']?.toString().trim() ?? '';
+    try {
+      await widget.api.createDefect(
+        title: title,
+        description: details,
+        priority: _mapHandoverPriority(item['priority']),
+        category: 'task',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l.moduleDefectsTitle}: $title')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.defectCreateFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _creatingDefect = false);
+    }
+  }
+
+  String _mapHandoverPriority(Object? value) {
+    final raw = value?.toString().trim().toLowerCase() ?? '';
+    return switch (raw) {
+      'urgent' || 'high' => 'urgent',
+      'important' || 'medium' => 'important',
+      _ => 'normal',
+    };
   }
 
   @override
@@ -1420,6 +1479,21 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('handover-to-defect'),
+                  onPressed: _creatingDefect
+                      ? null
+                      : () => _createDefectFromHandover(l, item),
+                  icon: _creatingDefect
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.report_problem_outlined),
+                  label: Text(l.defectAdd),
+                ),
               ],
             ),
           );
