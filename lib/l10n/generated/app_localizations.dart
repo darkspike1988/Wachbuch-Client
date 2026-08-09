@@ -662,6 +662,84 @@ abstract class AppLocalizations {
   /// **'Play-Store-Client: Verbindung nur zu Ihrem selbst gehosteten Server. Produktion: HTTPS erforderlich.'**
   String get setupFooter;
 
+  /// No description provided for @setupDemoButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Demo-Modus ausprobieren'**
+  String get setupDemoButton;
+
+  /// No description provided for @setupDemoTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Demo-Modus wählen'**
+  String get setupDemoTitle;
+
+  /// No description provided for @setupDemoSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr oder Polizei.'**
+  String get setupDemoSubtitle;
+
+  /// No description provided for @setupDemoRettungsdienst.
+  ///
+  /// In de, this message translates to:
+  /// **'Rettungsdienst'**
+  String get setupDemoRettungsdienst;
+
+  /// No description provided for @setupDemoRettungsdienstHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Schichtübergabe & Material auf der Rettungswache'**
+  String get setupDemoRettungsdienstHint;
+
+  /// No description provided for @setupDemoFeuerwehr.
+  ///
+  /// In de, this message translates to:
+  /// **'Feuerwehr'**
+  String get setupDemoFeuerwehr;
+
+  /// No description provided for @setupDemoFeuerwehrHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gerätehaus, Fahrzeuge und Dienstübergabe'**
+  String get setupDemoFeuerwehrHint;
+
+  /// No description provided for @setupDemoPolizei.
+  ///
+  /// In de, this message translates to:
+  /// **'Polizei'**
+  String get setupDemoPolizei;
+
+  /// No description provided for @setupDemoPolizeiHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wachalltag, Material und Dienstgruppe'**
+  String get setupDemoPolizeiHint;
+
+  /// No description provided for @demoBannerLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Demo-Modus'**
+  String get demoBannerLabel;
+
+  /// No description provided for @demoBannerRettungsdienst.
+  ///
+  /// In de, this message translates to:
+  /// **'Rettungsdienst'**
+  String get demoBannerRettungsdienst;
+
+  /// No description provided for @demoBannerFeuerwehr.
+  ///
+  /// In de, this message translates to:
+  /// **'Feuerwehr'**
+  String get demoBannerFeuerwehr;
+
+  /// No description provided for @demoBannerPolizei.
+  ///
+  /// In de, this message translates to:
+  /// **'Polizei'**
+  String get demoBannerPolizei;
+
   /// No description provided for @qrScanTitle.
   ///
   /// In de, this message translates to:

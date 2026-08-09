@@ -314,6 +314,49 @@ class AppLocalizationsEn extends AppLocalizations {
       'Play Store client: connects only to your self-hosted server. Production: HTTPS required.';
 
   @override
+  String get setupDemoButton => 'Try demo mode';
+
+  @override
+  String get setupDemoTitle => 'Choose a demo';
+
+  @override
+  String get setupDemoSubtitle =>
+      'Local sample data without a server — for EMS, fire service or police.';
+
+  @override
+  String get setupDemoRettungsdienst => 'Emergency medical services';
+
+  @override
+  String get setupDemoRettungsdienstHint =>
+      'Shift handover and equipment at the EMS station';
+
+  @override
+  String get setupDemoFeuerwehr => 'Fire service';
+
+  @override
+  String get setupDemoFeuerwehrHint =>
+      'Station house, vehicles and duty handover';
+
+  @override
+  String get setupDemoPolizei => 'Police';
+
+  @override
+  String get setupDemoPolizeiHint =>
+      'Station routines, equipment and duty group';
+
+  @override
+  String get demoBannerLabel => 'Demo mode';
+
+  @override
+  String get demoBannerRettungsdienst => 'EMS';
+
+  @override
+  String get demoBannerFeuerwehr => 'Fire service';
+
+  @override
+  String get demoBannerPolizei => 'Police';
+
+  @override
   String get qrScanTitle => 'Scan server QR';
 
   @override

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/api/client.dart';
+import 'package:wachbuch_mobile/demo/demo_api.dart';
+import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
@@ -7,6 +9,7 @@ import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
+import 'package:wachbuch_mobile/ui/demo_banner.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
@@ -81,6 +84,21 @@ class _HomeShellState extends State<HomeShell> {
       !_connectivity.isOnline ||
       _authState.lastError?.statusCode == 0 ||
       _handoverState.lastError?.statusCode == 0;
+
+  bool get _isDemo =>
+      widget.api is DemoWachbuchApi || DemoService.isDemoUrl(widget.api.baseUrl);
+
+  String? _demoServiceLabel(AppLocalizations l10n) {
+    final service = widget.api is DemoWachbuchApi
+        ? (widget.api as DemoWachbuchApi).profile.service
+        : DemoService.fromServerUrl(widget.api.baseUrl);
+    return switch (service) {
+      DemoService.rettungsdienst => l10n.demoBannerRettungsdienst,
+      DemoService.feuerwehr => l10n.demoBannerFeuerwehr,
+      DemoService.polizei => l10n.demoBannerPolizei,
+      null => null,
+    };
+  }
 
   String? _displayError(AppLocalizations l10n) {
     for (final error in [_authState.lastError, _handoverState.lastError]) {
@@ -162,8 +180,13 @@ class _HomeShellState extends State<HomeShell> {
         );
 
         final offlineBanner = OfflineBanner(
-          visible: offline,
+          visible: offline && !_isDemo,
           onRetry: loading ? () {} : _reload,
+        );
+        final demoBanner = DemoBanner(
+          visible: _isDemo,
+          label: l.demoBannerLabel,
+          serviceLabel: _demoServiceLabel(l),
         );
 
         if (tablet) {
@@ -171,6 +194,7 @@ class _HomeShellState extends State<HomeShell> {
             appBar: appBar,
             body: Column(
               children: [
+                demoBanner,
                 offlineBanner,
                 Expanded(
                   child: Row(
@@ -213,7 +237,7 @@ class _HomeShellState extends State<HomeShell> {
         return Scaffold(
           appBar: appBar,
           body: Column(
-            children: [offlineBanner, Expanded(child: pages)],
+            children: [demoBanner, offlineBanner, Expanded(child: pages)],
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _tab,

@@ -7,6 +7,8 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
 import 'package:wachbuch_mobile/api/server_links.dart';
 import 'package:wachbuch_mobile/auth/session_store.dart';
+import 'package:wachbuch_mobile/demo/demo_api.dart';
+import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 import 'package:wachbuch_mobile/screens/login_screen.dart';
 import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
@@ -118,7 +120,14 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     setState(() {
       _serverUrl = url;
       if (url != null && url.isNotEmpty && token != null && token.isNotEmpty) {
-        _api = WachbuchApi(baseUrl: url, token: token);
+        _api = createWachbuchApi(url, token: token);
+        _phase = _BootPhase.home;
+      } else if (url != null &&
+          url.isNotEmpty &&
+          DemoService.isDemoUrl(url)) {
+        // Resume demo without forcing a login form.
+        final service = DemoService.fromServerUrl(url)!;
+        _api = DemoWachbuchApi(profile: demoProfileFor(service));
         _phase = _BootPhase.home;
       } else if (url != null && url.isNotEmpty) {
         _phase = _BootPhase.login;
@@ -211,11 +220,33 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
   }
 
   Future<void> _onServerReady(String url) async {
+    if (DemoService.isDemoUrl(url)) {
+      final service = DemoService.fromServerUrl(url)!;
+      await _onDemoReady(service);
+      return;
+    }
     await widget.store.writeServerUrl(url);
     if (!mounted) return;
     setState(() {
       _serverUrl = url;
       _phase = _BootPhase.login;
+    });
+  }
+
+  Future<void> _onDemoReady(DemoService service) async {
+    final profile = demoProfileFor(service);
+    final token = '$demoTokenPrefix${service.id}';
+    await widget.store.writeServerUrl(service.serverUrl);
+    await widget.store.writeToken(
+      token,
+      expiresAt: DateTime.now().add(const Duration(days: 7)),
+    );
+    if (!mounted) return;
+    setState(() {
+      _serverUrl = service.serverUrl;
+      _api = DemoWachbuchApi(profile: profile, token: token);
+      _phase = _BootPhase.home;
+      _sessionNotice = null;
     });
   }
 
@@ -229,7 +260,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     if (!mounted) return;
     setState(() {
       _serverUrl = url;
-      _api = WachbuchApi(baseUrl: url, token: token);
+      _api = createWachbuchApi(url, token: token);
       _phase = _BootPhase.home;
       _sessionNotice = null;
     });
@@ -268,6 +299,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
         home = ServerSetupScreen(
           store: widget.store,
           onServerReady: _onServerReady,
+          onDemoReady: _onDemoReady,
         );
       case _BootPhase.login:
         home = LoginScreen(

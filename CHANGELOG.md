@@ -2,6 +2,16 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## Unreleased – Landingpage & Behörden-Demo
+
+### Neu
+
+- Statische Landingpage unter `landing/` mit Projektvorstellung und interaktivem
+  Demo-Modus für Rettungsdienst, Feuerwehr und Polizei.
+- Offline-Demo in der App: Startbildschirm → „Demo-Modus ausprobieren“ mit drei
+  Organisationsprofilen und Muster-Übergaben, Kalender, Kaffeekasse und Checklisten.
+- Gelbes Demo-Banner in der App-Shell, analog zum Server-Demo-Modus.
+
 ## Unreleased – Module API (Kalender, Kaffeekasse, Checklisten)
 
 ### Neu

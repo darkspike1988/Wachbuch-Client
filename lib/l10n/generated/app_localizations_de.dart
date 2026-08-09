@@ -315,6 +315,48 @@ class AppLocalizationsDe extends AppLocalizations {
       'Play-Store-Client: Verbindung nur zu Ihrem selbst gehosteten Server. Produktion: HTTPS erforderlich.';
 
   @override
+  String get setupDemoButton => 'Demo-Modus ausprobieren';
+
+  @override
+  String get setupDemoTitle => 'Demo-Modus wählen';
+
+  @override
+  String get setupDemoSubtitle =>
+      'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr oder Polizei.';
+
+  @override
+  String get setupDemoRettungsdienst => 'Rettungsdienst';
+
+  @override
+  String get setupDemoRettungsdienstHint =>
+      'Schichtübergabe & Material auf der Rettungswache';
+
+  @override
+  String get setupDemoFeuerwehr => 'Feuerwehr';
+
+  @override
+  String get setupDemoFeuerwehrHint =>
+      'Gerätehaus, Fahrzeuge und Dienstübergabe';
+
+  @override
+  String get setupDemoPolizei => 'Polizei';
+
+  @override
+  String get setupDemoPolizeiHint => 'Wachalltag, Material und Dienstgruppe';
+
+  @override
+  String get demoBannerLabel => 'Demo-Modus';
+
+  @override
+  String get demoBannerRettungsdienst => 'Rettungsdienst';
+
+  @override
+  String get demoBannerFeuerwehr => 'Feuerwehr';
+
+  @override
+  String get demoBannerPolizei => 'Polizei';
+
+  @override
   String get qrScanTitle => 'Server-QR scannen';
 
   @override
