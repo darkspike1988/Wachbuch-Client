@@ -87,5 +87,21 @@ void main() {
     expect(checkedOut.isOut, isTrue);
     final checkedIn = await api.inventoryCheckin(available.id);
     expect(checkedIn.isOut, isFalse);
+
+    final created = await api.createDefect({
+      'title': 'Neuer Demo-Mangel',
+      'priority': 'important',
+    });
+    expect(created.id, greaterThan(0));
+    expect(created.title, 'Neuer Demo-Mangel');
+    expect((await api.defects()).any((d) => d.id == created.id), isTrue);
+
+    final asset = (await api.assets()).first;
+    final updatedAsset = await api.updateAssetStatus(
+      asset.id,
+      status: 'workshop',
+      note: 'Test',
+    );
+    expect(updatedAsset.status, 'workshop');
   });
 }

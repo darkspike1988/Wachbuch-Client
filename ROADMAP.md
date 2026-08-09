@@ -4,13 +4,14 @@ Stand: 9. August 2026
 
 ## Behörden-Wachalltag (RD · Feuerwehr · FFW · Polizei)
 
-Fachlicher Fahrplan inkl. Webapp-Umsetzung:
+**Welle 1 (Demo):** [docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md)  
+**Welle 2 (Produktiv):** [docs/FAHRPLAN-PRODUKTIV.md](docs/FAHRPLAN-PRODUKTIV.md)
 
-→ **[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md)**
+Kurz Welle 2: Contract Freeze → Server Kern (Mängel/Assets/Ack) → Mobile E2E →
+Anhänge/Recurring → Inventar/Auswertung → Offline-Cache → Pilot.
 
-Kurz: Mängel-Workflow → Statusboard → Quittierung → Anhänge → wiederkehrende
-Checks → Schlüssel/Pools → Offline-Cache → Auswertung. Prototyp Phase A–D in
-`landing/app/`.
+Contract: [docs/openapi-wachalltag.yaml](docs/openapi-wachalltag.yaml) ·
+Handoff: [docs/SERVER-HANDOFF-WACHALLTAG.md](docs/SERVER-HANDOFF-WACHALLTAG.md)
 
 ## Android-Ziel: 10/10 Release Engineering
 

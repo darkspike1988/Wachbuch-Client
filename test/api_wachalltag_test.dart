@@ -59,6 +59,44 @@ void main() {
       expect(updated.status, 'waiting');
     });
 
+    test('POST create defect and asset status paths', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/defects/') {
+          expect(request.method, 'POST');
+          expect(jsonDecode(request.body)['title'], 'Neu');
+          return http.Response(
+            jsonEncode({'id': 42, 'title': 'Neu', 'status': 'open'}),
+            201,
+          );
+        }
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/assets/rtw-1/status/');
+        expect(jsonDecode(request.body), {
+          'status': 'limited',
+          'note': 'Akku',
+        });
+        return http.Response(
+          jsonEncode({
+            'id': 'rtw-1',
+            'label': 'RTW 1',
+            'status': 'limited',
+            'note': 'Akku',
+          }),
+          200,
+        );
+      });
+
+      final api = WachbuchApi(baseUrl: baseUrl, token: 't', client: client);
+      final created = await api.createDefect({'title': 'Neu'});
+      expect(created.id, 42);
+      final asset = await api.updateAssetStatus(
+        'rtw-1',
+        status: 'limited',
+        note: 'Akku',
+      );
+      expect(asset.status, 'limited');
+    });
+
     test('missing defects module (404) is non-retryable', () async {
       var calls = 0;
       final client = MockClient((_) async {

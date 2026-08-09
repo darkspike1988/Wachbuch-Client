@@ -30,8 +30,9 @@ cd landing && python3 -m http.server 4173
 # Webapp  → http://127.0.0.1:4173/app/
 ```
 
-Siehe [landing/README.md](landing/README.md) und den Behörden-Fahrplan
-[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md).
+Siehe [landing/README.md](landing/README.md), Demo-Fahrplan
+[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md) und Produktiv-Welle
+[docs/FAHRPLAN-PRODUKTIV.md](docs/FAHRPLAN-PRODUKTIV.md).
 
 ## Startflow
 
