@@ -36,18 +36,21 @@ class SecureApiCache implements ApiCache {
   final FlutterSecureStorage _storage;
   final Set<String> _knownKeys = <String>{};
 
-  String _key(String key) => 'wachbuch_cache_${namespace}_$key';
+  String get _prefix => 'wachbuch_cache_${namespace}_';
+  String _key(String key) => '$_prefix$key';
 
   @override
   Future<Map<String, dynamic>?> readJson(String key) async {
     final raw = await _storage.read(key: _key(key));
     if (raw == null || raw.isEmpty) return null;
+    _knownKeys.add(key);
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) return decoded;
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
     } on FormatException {
       await _storage.delete(key: _key(key));
+      _knownKeys.remove(key);
     }
     return null;
   }
@@ -60,8 +63,12 @@ class SecureApiCache implements ApiCache {
 
   @override
   Future<void> clear() async {
-    for (final key in _knownKeys) {
-      await _storage.delete(key: _key(key));
+    // Enumerate secure storage instead of relying only on this process' memory.
+    // This guarantees logout/server-change cleanup even after an app restart.
+    final all = await _storage.readAll();
+    final persistedKeys = all.keys.where((key) => key.startsWith(_prefix));
+    for (final storageKey in persistedKeys) {
+      await _storage.delete(key: storageKey);
     }
     _knownKeys.clear();
   }
