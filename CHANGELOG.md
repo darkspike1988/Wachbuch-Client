@@ -2,6 +2,34 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## Unreleased – Landingpage & Behörden-Demo
+
+### CI
+
+- Android-/Dependency-Workflows auf **JDK 21** (AGP 9.3 Lint braucht
+  `List.removeLast()`); `BidiSpoofing` in `lint.xml` abgesichert.
+
+### Neu
+
+- Statische Landingpage unter `landing/` mit Projektvorstellung und interaktivem
+  Demo-Modus für Rettungsdienst, Feuerwehr und Polizei.
+- Webapp unter `landing/app/` im Landingpage-Design: Organisationswahl, Übersicht,
+  Übergaben, Mängel-Workflow, Statusboard, Gerätepools, Quittierung, Kalender,
+  Kaffeekasse, Checklisten; Profile inkl. Freiwillige Feuerwehr.
+- Fachfahrplan `docs/FAHRPLAN-BEHOERDEN.md` (Phasen A–I, Server-/Mobile-Pfad).
+- Offline-Demo in der App: Startbildschirm → „Demo-Modus ausprobieren“ mit
+  Organisationsprofilen (RD, Feuerwehr, FFW, Polizei) und Muster-Übergaben,
+  Kalender, Kaffeekasse und Checklisten.
+- Flutter Phase A–D (Demo): Modelle `Defect` / `StationAsset` / `HandoverAck`,
+  Contract `docs/SCHEMA-WACHALLTAG.md`, Mängel-Screen, Statusboard auf der
+  Übersicht, Quittierung im Übergabe-Detail.
+- Flutter HTTP für `defects` / `assets` / `inventory` / `acks` verdrahtet
+  (404 = Modul nicht verfügbar); Demo-API + Inventar-Checkout; Checklisten mit
+  `interval` / `due_next` / `overdue`.
+- Webapp: Demo-Anhänge (Phase E), Fälligkeitsbereich Checklisten (F),
+  Auswertung (I), Inventar bereits unter Geräte (G).
+- Gelbes Demo-Banner in der App-Shell, analog zum Server-Demo-Modus.
+
 ## Unreleased – Module API (Kalender, Kaffeekasse, Checklisten)
 
 ### Neu

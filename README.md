@@ -20,10 +20,26 @@ Open-Source-Begleit-App für selbst gehostetes
 | 0.14.1 | 0.5.0+ | API v1, App-Tokens, MFA |
 | 0.14.0 | 0.5.0+ | Deutsche Alias-Pfade, Checklisten-Modul |
 
+## Landingpage & Webapp
+
+Statische Projektvorstellung plus Web-Demo im selben Design:
+
+```bash
+cd landing && python3 -m http.server 4173
+# Landing → http://127.0.0.1:4173/
+# Webapp  → http://127.0.0.1:4173/app/
+```
+
+Siehe [landing/README.md](landing/README.md) und den Behörden-Fahrplan
+[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md).
+
 ## Startflow
 
 1. **Adresse** der Wache eingeben **oder** QR scannen → **Bestätigen**
 2. **Benutzername** und **Passwort** (bei MFA: App-Token aus dem Web)
+
+Alternativ: **Demo-Modus ausprobieren** → Rettungsdienst, Feuerwehr oder Polizei
+mit lokalen Musterdaten (ohne Server).
 
 QR im Server-Web: Mein Konto → App-Tokens.
 
@@ -36,6 +52,7 @@ QR im Server-Web: Mein Konto → App-Tokens.
 - antippbare Übergabekarten mit Detailansicht über `GET /api/v1/handovers/{id}/`
 - kompakte Status- und Dringlichkeitsübersicht auf dem Dashboard
 - Schnellzugriff auf aktivierte Module: Kalender (`/api/v1/kalender/`), Kaffeekasse (`/api/v1/kaffeekasse/`) und Checklisten (`/api/v1/checklisten/`)
+- Offline-Demo-Profile für Rettungsdienst, Feuerwehr und Polizei
 - Phone: Bottom-Navigation · Tablet: NavigationRail + Grid
 - Material Design 3 mit responsivem Smartphone-/Tablet-Layout
 - automatisches Tag-/Nacht-Design nach lokal berechnetem Sonnenaufgang und Sonnenuntergang

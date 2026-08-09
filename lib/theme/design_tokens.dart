@@ -57,6 +57,7 @@ class WachbuchTokens {
     return switch (status) {
       'open' || 'new' => statusOpen,
       'in_progress' || 'active' => statusInProgress,
+      'waiting' || 'blocked' => important,
       'done' || 'closed' => statusDone,
       _ => normal,
     };

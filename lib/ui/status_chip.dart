@@ -42,6 +42,7 @@ class StatusChip extends StatelessWidget {
     return switch (s) {
       'open' || 'new' => 'Offen',
       'in_progress' || 'active' => 'In Arbeit',
+      'waiting' || 'blocked' => 'Wartend',
       'done' || 'closed' => 'Erledigt',
       _ => 'Unbekannt',
     };

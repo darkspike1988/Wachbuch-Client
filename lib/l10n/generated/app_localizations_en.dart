@@ -93,7 +93,118 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moduleChecklistsSubtitle => 'Tick off items and complete';
 
   @override
+  String get moduleDefectsTitle => 'Defects';
+
+  @override
+  String get moduleDefectsSubtitle => 'Open items with owner and due date';
+
+  @override
+  String get moduleAssetsTitle => 'Assets';
+
+  @override
+  String get moduleAssetsSubtitle =>
+      'Vehicle and equipment status at the station';
+
+  @override
   String get quickAccessTitle => 'Quick access';
+
+  @override
+  String get defectsTitle => 'Defects';
+
+  @override
+  String get defectsHint =>
+      'Open station items — keep status and ownership traceable.';
+
+  @override
+  String get defectsEmpty => 'No defects for this filter.';
+
+  @override
+  String get defectAssetLabel => 'Asset';
+
+  @override
+  String get defectOwnerLabel => 'Owner';
+
+  @override
+  String get defectDueLabel => 'Due';
+
+  @override
+  String get defectSetStatus => 'Set status';
+
+  @override
+  String get defectStatusWaiting => 'Waiting';
+
+  @override
+  String get assetsBoardTitle => 'Vehicle & equipment status';
+
+  @override
+  String get assetsScreenTitle => 'Assets & status';
+
+  @override
+  String get assetsEmpty => 'No assets or pools available.';
+
+  @override
+  String get assetStatusReady => 'Ready';
+
+  @override
+  String get assetStatusLimited => 'Limited';
+
+  @override
+  String get assetStatusOob => 'Out of service';
+
+  @override
+  String get assetStatusWorkshop => 'Workshop';
+
+  @override
+  String get inventoryTitle => 'Keys & pools';
+
+  @override
+  String get inventoryHint =>
+      'Checkout / check-in for pooled devices and keys.';
+
+  @override
+  String get inventoryAvailable => 'Available';
+
+  @override
+  String get inventoryHolderLabel => 'Held by';
+
+  @override
+  String get inventoryCheckout => 'Check out';
+
+  @override
+  String get inventoryCheckin => 'Check in';
+
+  @override
+  String get checklistIntervalDaily => 'Daily';
+
+  @override
+  String get checklistIntervalWeekly => 'Weekly';
+
+  @override
+  String get checklistIntervalMonthly => 'Monthly';
+
+  @override
+  String get checklistDueToday => 'Due today';
+
+  @override
+  String get checklistOverdue => 'Overdue';
+
+  @override
+  String get checklistDueSection => 'Due today / overdue';
+
+  @override
+  String get handoverAckButton => 'Acknowledged';
+
+  @override
+  String get handoverAckDone => 'Acknowledged by you';
+
+  @override
+  String get handoverAckListTitle => 'Acknowledgements';
+
+  @override
+  String get handoverAckEmpty => 'Not acknowledged yet.';
+
+  @override
+  String get handoverAckFailed => 'Acknowledgement failed.';
 
   @override
   String get handoverSearchHint => 'Search handovers';
@@ -312,6 +423,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get setupFooter =>
       'Play Store client: connects only to your self-hosted server. Production: HTTPS required.';
+
+  @override
+  String get setupDemoButton => 'Try demo mode';
+
+  @override
+  String get setupDemoTitle => 'Choose a demo';
+
+  @override
+  String get setupDemoSubtitle =>
+      'Local sample data without a server — for EMS, fire service, volunteer fire or police.';
+
+  @override
+  String get setupDemoRettungsdienst => 'Emergency medical services';
+
+  @override
+  String get setupDemoRettungsdienstHint =>
+      'Shift handover and equipment at the EMS station';
+
+  @override
+  String get setupDemoFeuerwehr => 'Fire service';
+
+  @override
+  String get setupDemoFeuerwehrHint =>
+      'Station house, vehicles and duty handover';
+
+  @override
+  String get setupDemoFfw => 'Volunteer fire service';
+
+  @override
+  String get setupDemoFfwHint =>
+      'Station house, vehicles and volunteer routines';
+
+  @override
+  String get setupDemoPolizei => 'Police';
+
+  @override
+  String get setupDemoPolizeiHint =>
+      'Station routines, equipment and duty group';
+
+  @override
+  String get demoBannerLabel => 'Demo mode';
+
+  @override
+  String get demoBannerRettungsdienst => 'EMS';
+
+  @override
+  String get demoBannerFeuerwehr => 'Fire service';
+
+  @override
+  String get demoBannerFfw => 'Volunteer fire';
+
+  @override
+  String get demoBannerPolizei => 'Police';
 
   @override
   String get qrScanTitle => 'Scan server QR';
