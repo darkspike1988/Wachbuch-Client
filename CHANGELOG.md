@@ -4,6 +4,11 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
 ## Unreleased – Landingpage & Behörden-Demo
 
+### CI
+
+- Android-/Dependency-Workflows auf **JDK 21** (AGP 9.3 Lint braucht
+  `List.removeLast()`); `BidiSpoofing` in `lint.xml` abgesichert.
+
 ### Neu
 
 - Statische Landingpage unter `landing/` mit Projektvorstellung und interaktivem
