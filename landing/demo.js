@@ -140,6 +140,8 @@ function setActiveTab(service) {
     tab.setAttribute("aria-selected", active ? "true" : "false");
   });
   renderProfile(service);
+  const openApp = document.getElementById("demo-open-app");
+  if (openApp) openApp.href = `app/?service=${service}`;
 }
 
 document.querySelectorAll(".demo-tab").forEach((tab) => {

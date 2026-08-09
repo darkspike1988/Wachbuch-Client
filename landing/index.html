@@ -8,6 +8,7 @@
       content="Wachbuch – selbst gehostetes Schichtbuch für Rettungsdienst, Feuerwehr und Polizei. Open Source, AGPL, mit Demo-Modus."
     />
     <title>Wachbuch – Digitales Schichtbuch für Blaulichtorganisationen</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -53,7 +54,7 @@
             und Polizei — offen, auditierbar, ohne Cloud-Zwang.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#demo">Demo-Modus starten</a>
+            <a class="btn btn-primary" href="app/">Demo-Modus starten</a>
             <a
               class="btn btn-ghost"
               href="https://github.com/darkspike1988/Rettungswache-Wachbuch"
@@ -72,7 +73,7 @@
             mit Inhalten, die zu Ihrem Alltag passen.
           </p>
           <div class="audience-rail" role="list">
-            <a class="audience-item" role="listitem" href="#demo" data-demo="rettungsdienst">
+            <a class="audience-item" role="listitem" href="app/?service=rettungsdienst">
               <span class="audience-mark rd" aria-hidden="true"></span>
               <h3>Rettungsdienst</h3>
               <p>
@@ -80,7 +81,7 @@
                 Schichtübergaben ohne Patientendaten.
               </p>
             </a>
-            <a class="audience-item" role="listitem" href="#demo" data-demo="feuerwehr">
+            <a class="audience-item" role="listitem" href="app/?service=feuerwehr">
               <span class="audience-mark fw" aria-hidden="true"></span>
               <h3>Feuerwehr</h3>
               <p>
@@ -88,7 +89,7 @@
                 und Übungsbetrieb.
               </p>
             </a>
-            <a class="audience-item" role="listitem" href="#demo" data-demo="polizei">
+            <a class="audience-item" role="listitem" href="app/?service=polizei">
               <span class="audience-mark pol" aria-hidden="true"></span>
               <h3>Polizei</h3>
               <p>
@@ -175,14 +176,11 @@
               Übergaben und Module.
             </p>
             <div class="demo-actions">
-              <a
-                class="btn btn-primary"
-                href="https://github.com/darkspike1988/Wachbuch-Client#start"
-                rel="noopener noreferrer"
-                >In der App öffnen</a
+              <a class="btn btn-primary" id="demo-open-app" href="app/"
+                >Webapp öffnen</a
               >
               <p class="demo-app-hint">
-                In der App: Startbildschirm →
+                Mobile App: Startbildschirm →
                 <strong>Demo-Modus ausprobieren</strong>
               </p>
             </div>

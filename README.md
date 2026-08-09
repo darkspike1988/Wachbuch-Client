@@ -20,13 +20,14 @@ Open-Source-Begleit-App für selbst gehostetes
 | 0.14.1 | 0.5.0+ | API v1, App-Tokens, MFA |
 | 0.14.0 | 0.5.0+ | Deutsche Alias-Pfade, Checklisten-Modul |
 
-## Landingpage
+## Landingpage & Webapp
 
-Statische Projektvorstellung mit interaktivem Demo-Modus:
+Statische Projektvorstellung plus Web-Demo im selben Design:
 
 ```bash
 cd landing && python3 -m http.server 4173
-# → http://127.0.0.1:4173/
+# Landing → http://127.0.0.1:4173/
+# Webapp  → http://127.0.0.1:4173/app/
 ```
 
 Siehe [landing/README.md](landing/README.md).

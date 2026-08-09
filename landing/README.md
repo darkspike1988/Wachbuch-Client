@@ -1,23 +1,33 @@
-# Wachbuch Landingpage
+# Wachbuch Landingpage & Webapp
 
-Statische Projekt-Vorstellung mit interaktivem Demo-Modus für
-Rettungsdienst, Feuerwehr und Polizei.
+Statische Projekt-Vorstellung plus vollwertige Web-Demo für
+Rettungsdienst, Feuerwehr und Polizei — im selben Design-System.
 
 ## Lokal ansehen
 
 ```bash
 cd landing
 python3 -m http.server 4173
-# → http://127.0.0.1:4173/
+# Landing:  http://127.0.0.1:4173/
+# Webapp:   http://127.0.0.1:4173/app/
 ```
 
-Deep-Links in die Demo-Vorschau:
+### Landing Deep-Links
 
 - `/?demo=rettungsdienst`
 - `/?demo=feuerwehr`
 - `/?demo=polizei`
 
-## App-Demo
+### Webapp Deep-Links
+
+- `/app/?service=rettungsdienst`
+- `/app/?service=feuerwehr`
+- `/app/?service=polizei`
+
+Die Webapp enthält Übersicht, Übergaben (Suche/Filter/Detail), Kalender,
+Kaffeekasse, Checklisten und Konto — offline mit Musterdaten.
+
+## Mobile App-Demo
 
 In der Mobile-App: Startbildschirm → **Demo-Modus ausprobieren**.
 Dort stehen dieselben drei Organisationsprofile als Offline-Musterdaten bereit.
