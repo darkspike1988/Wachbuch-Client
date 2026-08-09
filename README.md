@@ -1,28 +1,48 @@
 # Wachbuch Client (AGPL)
 
-Open-Source-Begleit-App für selbst gehostetes
-**[Wachbuch](https://github.com/darkspike1988/Rettungswache-Wachbuch)** (iOS & Android).
+Open-Source-Begleit-App für das selbst gehostete **[Wachbuch](https://github.com/darkspike1988/Rettungswache-Wachbuch)** auf iOS und Android.
 
 | | |
 | --- | --- |
-| **Dieses Repo** | https://github.com/darkspike1988/Wachbuch-Client |
+| **Client** | https://github.com/darkspike1988/Wachbuch-Client |
 | **Server** | https://github.com/darkspike1988/Rettungswache-Wachbuch |
 | **Lizenz** | AGPL-3.0-or-later |
-| **API** | `/api/v1/` (Token-Auth, Paperless/Nextcloud-Stil) |
-| **App-Version** | 0.5.1+ (kompatibel mit Server ≥ 0.14.1) |
+| **API** | `/api/v1/` · Token-Auth |
+| **App-Version** | `0.6.0+10` |
+| **Produktiv-Paarung** | Server `0.16.x` |
+| **E2E-Abnahme** | [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md) |
 | **Roadmap** | [ROADMAP.md](ROADMAP.md) |
 
-## Server-Versions-Paarung
+## Quelle der Wahrheit
 
-| Server | Client | API-Features |
-| --- | --- | --- |
-| 0.15.0 | 0.5.1+ | Demo-Modus, Kaffeekasse-Zahlungshinweise, App-Token-Härtung |
-| 0.14.1 | 0.5.0+ | API v1, App-Tokens, MFA |
-| 0.14.0 | 0.5.0+ | Deutsche Alias-Pfade, Checklisten-Modul |
+Dieses Repository ist die **kanonische Quelle** für den Flutter-/iOS-/Android-Client. Der historische Ordner `clients/wachbuch-mobile/` im Server-Repository darf diesen Stand nicht überschreiben.
 
-## Landingpage & Webapp
+## Was 0.6.x kann
 
-Statische Projektvorstellung plus Web-Demo im selben Design:
+- Serveradresse oder QR verbinden; App-Token sicher in Keychain/Keystore speichern
+- strukturierter API-Fehlervertrag mit `code`, `message` und `correlation_id`
+- MFA-Fehler `mfa_required` und `mfa_setup_required` sauber behandeln
+- Übergaben suchen/filtern, Details öffnen und pro Benutzer quittieren
+- Übergabe direkt als echten Mangel übernehmen
+- Mängel anlegen, priorisieren, zuordnen, terminieren und Status ändern
+- authentifizierte Mängelfotos aus Kamera/Mediathek hoch- und herunterladen
+- Foto-Schutz: JPEG/PNG/WebP, 2 MiB je Datei; Server begrenzt zusätzlich Anzahl/Gesamtmenge
+- Fahrzeug-/Gerätestatus anzeigen und bei berechtigter Rolle ändern
+- Schlüssel-/Poolgeräte ausgeben und zurückgeben
+- wiederkehrende Checklisten mit täglicher/wöchentlicher/monatlicher Fälligkeit
+- Auswertung für offene/überfällige Mängel, Checks, Einsatzklarquote, Pools und Quittierungen
+- token- und servergebundener verschlüsselter Offline-Lesecache
+- Offline-Fallback nur bei echten Netzwerkfehlern; 401/403 werden nie durch Cache verdeckt
+- Demo-Profile für Rettungsdienst, Feuerwehr, Freiwillige Feuerwehr und Polizei
+- Phone: Bottom-Navigation · Tablet: NavigationRail + Grid
+- Material Design 3, Dark/Light und große Textskalierung
+- Deutsch/Englisch für produktive Wachalltag-Oberflächen
+
+## Produktgrenze
+
+Wachbuch ist ein Werkzeug für den **Stations-/Wachalltag**. Nicht Teil des Modells sind insbesondere Patienten-, ePCR-, Einsatz-, Alarmierungs-, ELS-, Personalakten- oder vergleichbare sensible Fachdaten.
+
+## Landingpage & Web-Demo
 
 ```bash
 cd landing && python3 -m http.server 4173
@@ -30,113 +50,63 @@ cd landing && python3 -m http.server 4173
 # Webapp  → http://127.0.0.1:4173/app/
 ```
 
-Siehe [landing/README.md](landing/README.md) und den Behörden-Fahrplan
-[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md).
+Die Demo dient als Produkt-/UX-Vorschau. Die entsprechenden Kernfunktionen Mängel, Geräte, Inventar, Quittierungen, wiederkehrende Checks, Fotos und Auswertung besitzen in `0.6.x` reale Server-Endpunkte.
 
-## Startflow
-
-1. **Adresse** der Wache eingeben **oder** QR scannen → **Bestätigen**
-2. **Benutzername** und **Passwort** (bei MFA: App-Token aus dem Web)
-
-Alternativ: **Demo-Modus ausprobieren** → Rettungsdienst, Feuerwehr oder Polizei
-mit lokalen Musterdaten (ohne Server).
-
-QR im Server-Web: Mein Konto → App-Tokens.
-
-## Was die App macht
-
-- Token lokal im Keystore / Keychain
-- `GET /api/v1/me/` → eine Wache (keine Wachenauswahl in der App)
-- `GET /api/v1/handovers/` → aktive Übergaben
-- Volltextsuche, kombinierbare Status-/Prioritätsfilter und lokalisierte Chips
-- antippbare Übergabekarten mit Detailansicht über `GET /api/v1/handovers/{id}/`
-- kompakte Status- und Dringlichkeitsübersicht auf dem Dashboard
-- Schnellzugriff auf aktivierte Module: Kalender (`/api/v1/kalender/`), Kaffeekasse (`/api/v1/kaffeekasse/`) und Checklisten (`/api/v1/checklisten/`)
-- Offline-Demo-Profile für Rettungsdienst, Feuerwehr und Polizei
-- Phone: Bottom-Navigation · Tablet: NavigationRail + Grid
-- Material Design 3 mit responsivem Smartphone-/Tablet-Layout
-- automatisches Tag-/Nacht-Design nach lokal berechnetem Sonnenaufgang und Sonnenuntergang
-- dafür wird nur der ungefähre Gerätestandort während der App-Nutzung abgefragt; keine Standortdaten verlassen das Gerät
-- `wachbuch://connect?url=…` öffnet die Produktions-App und übernimmt nach Bestätigung eine neue Serveradresse
-
-## Start
+## Lokaler Start
 
 ```bash
 git clone https://github.com/darkspike1988/Wachbuch-Client.git
 cd Wachbuch-Client
 flutter pub get
 flutter test
-```
-
-Android lokal als eindeutig markierte interne Variante starten:
-
-```bash
 flutter run --flavor internal
 ```
 
-Auf iOS bleibt der normale Start ohne Android-Flavor bestehen:
-
-```bash
-flutter run -d ios
-```
-
-### Android Internal
-
-Die installierbare Testversion besitzt die separate Paket-ID
-`de.wachbuch.mobile.internal` und kann parallel zur Produktions-App installiert
-werden:
-
-```bash
-./scripts/build-apk.sh
-# → dist/internal-apk/*.apk + SHA256SUMS
-```
-
-### Android Production
-
-Ein Produktionsbuild benötigt einen eigenen Upload-Key und fällt niemals auf
-den Debug-Key zurück:
-
-```bash
-cp android/key.properties.example android/key.properties
-BUILD_NAME=0.5.2 BUILD_NUMBER=11 bash scripts/build-aab.sh
-```
-
-Alternativ erstellt der geschützte Workflow **Android Signed Release** ein
-signiertes AAB, signierte ABI-APKs, Hashes, Zertifikatsberichte und
-Obfuskationssymbole.
-
-### iOS
-
-Ein lokaler Simulator-Build benötigt macOS, Xcode und Flutter Stable:
+Auf iOS:
 
 ```bash
 flutter pub get
 flutter build ios --simulator --debug
 ```
 
-Für jeden Pull Request prüft GitHub Actions zusätzlich einen iOS-Simulator-Build
-und einen signierfreien Release-Build. Der manuelle TestFlight-Workflow wird erst
-nach Einrichtung der geschützten Apple-Secrets verwendet.
+## Android Internal
 
-Siehe [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md),
-[docs/PLAY-STORE.md](docs/PLAY-STORE.md),
-[docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md) und
-[docs/MARKET-RESEARCH.md](docs/MARKET-RESEARCH.md).
+Die interne Variante besitzt die separate Paket-ID `de.wachbuch.mobile.internal` und kann parallel zur Produktions-App installiert werden:
 
-## Kopplung zum Server
+```bash
+./scripts/build-apk.sh
+```
 
-Vertrag und OpenAPI liegen im Server-Repo:
+## Android Production
 
-- https://github.com/darkspike1988/Rettungswache-Wachbuch/blob/main/docs/API.md
-- https://github.com/darkspike1988/Rettungswache-Wachbuch/blob/main/docs/CLIENT.md
+Ein Produktionsbuild benötigt einen eigenen Upload-Key und fällt niemals auf einen Debug-Key zurück:
 
-Spiegel im Server-Monorepo (Entwicklung/CI): `clients/wachbuch-mobile/`
-Synchronisation: `./scripts/publish-mobile-client-repo.sh` im Server-Repo.
+```bash
+cp android/key.properties.example android/key.properties
+BUILD_NAME=0.6.0 BUILD_NUMBER=10 bash scripts/build-aab.sh
+```
 
-## Vorbilder (Ideen, kein Code-Copy)
+Der Release-Workflow erzeugt zusätzlich Hashes, Zertifikatsberichte, Obfuskationssymbole und eine CycloneDX-SBOM.
 
-- [Paperless-go](https://github.com/bearyjd/paperless-go) – Flutter + Token + Secure Storage
-- Nextcloud – Server-URL zuerst, dann Login
+## Server-Kopplung
+
+Der Vertrag liegt im Server-Repository unter `docs/API.md`, `docs/CLIENT.md` und `docs/openapi.yaml`. Die Kopplung erfolgt ausschließlich über den versionierten API-Vertrag – nicht durch Kopieren eines Client-Quellbaums in das Server-Repository.
+
+## Qualitätsgates
+
+Vor Freigabe müssen mindestens bestehen:
+
+- `flutter analyze`
+- vollständige Flutter-Tests
+- Android Internal APKs
+- Production-AAB ohne Publishing-Credentials
+- Android Lint
+- Berechtigungs-/Signatur-/SDK-/Größen-Gates
+- SBOM-Erzeugung
+- iOS Simulator/Release-Build ohne Signierung
+- Dependency-Security
+
+Siehe zusätzlich [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md), [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md).
 
 ## Rechtliches
 
