@@ -79,5 +79,13 @@ void main() {
     final again = await api.acknowledgeHandover(handoverId);
     expect(again.at, ack.at);
     expect((await api.handoverAcks(handoverId)).length, 1);
+
+    final inventory = await api.inventory();
+    expect(inventory, isNotEmpty);
+    final available = inventory.firstWhere((item) => !item.isOut);
+    final checkedOut = await api.inventoryCheckout(available.id);
+    expect(checkedOut.isOut, isTrue);
+    final checkedIn = await api.inventoryCheckin(available.id);
+    expect(checkedIn.isOut, isFalse);
   });
 }

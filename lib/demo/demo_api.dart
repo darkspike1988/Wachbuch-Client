@@ -7,6 +7,7 @@ import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
+import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
@@ -40,8 +41,10 @@ class DemoWachbuchApi extends WachbuchApi {
     required this.profile,
     String? token,
     List<Defect>? defects,
+    List<InventoryItem>? inventory,
     Map<int, List<HandoverAck>>? acks,
   })  : _defects = List<Defect>.from(defects ?? profile.defects),
+        _inventory = List<InventoryItem>.from(inventory ?? profile.inventory),
         _acks = {
           for (final entry in (acks ?? const <int, List<HandoverAck>>{}).entries)
             entry.key: List<HandoverAck>.from(entry.value),
@@ -55,6 +58,7 @@ class DemoWachbuchApi extends WachbuchApi {
   final DemoProfile profile;
   final Set<int> _completedChecklists = {};
   final List<Defect> _defects;
+  final List<InventoryItem> _inventory;
   final Map<int, List<HandoverAck>> _acks;
 
   bool get isDemo => true;
@@ -169,6 +173,37 @@ class DemoWachbuchApi extends WachbuchApi {
   }
 
   @override
+  Future<List<InventoryItem>> inventory() async {
+    return List<InventoryItem>.unmodifiable(_inventory);
+  }
+
+  @override
+  Future<InventoryItem> inventoryCheckout(String id) async {
+    final index = _inventory.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Inventar nicht gefunden.');
+    }
+    final updated = _inventory[index].copyWith(
+      holder: profile.username,
+      since: DateTime.now(),
+      sinceLabel: 'gerade eben',
+    );
+    _inventory[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<InventoryItem> inventoryCheckin(String id) async {
+    final index = _inventory.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Inventar nicht gefunden.');
+    }
+    final updated = _inventory[index].copyWith(clearHolder: true);
+    _inventory[index] = updated;
+    return updated;
+  }
+
+  @override
   Future<List<HandoverAck>> handoverAcks(int id) async {
     return List<HandoverAck>.unmodifiable(_acks[id] ?? const []);
   }
@@ -196,6 +231,7 @@ class DemoWachbuchApi extends WachbuchApi {
       profile: profile,
       token: newToken,
       defects: _defects,
+      inventory: _inventory,
       acks: _acks,
     );
   }

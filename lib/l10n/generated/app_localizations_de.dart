@@ -136,6 +136,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get assetsBoardTitle => 'Fahrzeug- & Gerätestatus';
 
   @override
+  String get assetsScreenTitle => 'Geräte & Status';
+
+  @override
+  String get assetsEmpty => 'Keine Geräte oder Pools verfügbar.';
+
+  @override
   String get assetStatusReady => 'Einsatzklar';
 
   @override
@@ -146,6 +152,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get assetStatusWorkshop => 'Werkstatt';
+
+  @override
+  String get inventoryTitle => 'Schlüssel & Pools';
+
+  @override
+  String get inventoryHint =>
+      'Checkout / Checkin für Pool-Geräte und Schlüssel.';
+
+  @override
+  String get inventoryAvailable => 'Verfügbar';
+
+  @override
+  String get inventoryHolderLabel => 'Bei';
+
+  @override
+  String get inventoryCheckout => 'Ausgeben';
+
+  @override
+  String get inventoryCheckin => 'Zurückgeben';
+
+  @override
+  String get checklistIntervalDaily => 'Täglich';
+
+  @override
+  String get checklistIntervalWeekly => 'Wöchentlich';
+
+  @override
+  String get checklistIntervalMonthly => 'Monatlich';
+
+  @override
+  String get checklistDueToday => 'Fällig heute';
+
+  @override
+  String get checklistOverdue => 'Überfällig';
+
+  @override
+  String get checklistDueSection => 'Fällig heute / überfällig';
 
   @override
   String get handoverAckButton => 'Übernommen';

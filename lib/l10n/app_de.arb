@@ -56,10 +56,26 @@
   "defectStatusWaiting": "Wartend",
 
   "assetsBoardTitle": "Fahrzeug- & Gerätestatus",
+  "assetsScreenTitle": "Geräte & Status",
+  "assetsEmpty": "Keine Geräte oder Pools verfügbar.",
   "assetStatusReady": "Einsatzklar",
   "assetStatusLimited": "Eingeschränkt",
   "assetStatusOob": "Außer Betrieb",
   "assetStatusWorkshop": "Werkstatt",
+
+  "inventoryTitle": "Schlüssel & Pools",
+  "inventoryHint": "Checkout / Checkin für Pool-Geräte und Schlüssel.",
+  "inventoryAvailable": "Verfügbar",
+  "inventoryHolderLabel": "Bei",
+  "inventoryCheckout": "Ausgeben",
+  "inventoryCheckin": "Zurückgeben",
+
+  "checklistIntervalDaily": "Täglich",
+  "checklistIntervalWeekly": "Wöchentlich",
+  "checklistIntervalMonthly": "Monatlich",
+  "checklistDueToday": "Fällig heute",
+  "checklistOverdue": "Überfällig",
+  "checklistDueSection": "Fällig heute / überfällig",
 
   "handoverAckButton": "Übernommen",
   "handoverAckDone": "Von Ihnen quittiert",

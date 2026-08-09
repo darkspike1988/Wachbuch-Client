@@ -307,5 +307,14 @@ Spiegel: API-Doku im Server-Repo; Client erst nach Contract-Freeze.
 
 ## Nächster Schritt
 
-Phase **A–D** in Webapp + Flutter-Demo erledigt (dieser Branch).  
-Als Nächstes: Server-OpenAPI für `defects` / `assets` / `ack` einfrieren und echte HTTP-Pfade im Client verdrahten.
+Client-seitig erledigt auf diesem Branch:
+
+- Phase **A–D** Webapp + Flutter-Demo  
+- Phase **E** Webapp-Demo-Anhänge (objectURL, kein Upload)  
+- Phase **F** Intervalle/`due_next` in Webapp + Flutter-Modell/UI  
+- Phase **G** Inventar-Checkout Webapp + Flutter  
+- Phase **I** Webapp-Auswertung (Client-Aggregation)  
+- Flutter-HTTP für `defects` / `assets` / `inventory` / `acks` (404 = Modul aus)
+
+Als Nächstes im **Server-Repo**: OpenAPI einfrieren und echte Endpoints liefern.  
+Phase **H** (Offline-Lesecache) bleibt Mobile-Folgearbeit.

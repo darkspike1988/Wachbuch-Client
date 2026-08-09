@@ -34,7 +34,7 @@ class DefectState extends ChangeNotifier {
     } on ApiException catch (error) {
       _lastError = error;
       _error = error.message;
-      if (error.statusCode == 501) {
+      if (WachbuchApi.isModuleUnavailable(error)) {
         _items = const [];
       }
     } catch (error) {

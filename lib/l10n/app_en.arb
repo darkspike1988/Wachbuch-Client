@@ -46,10 +46,26 @@
   "defectStatusWaiting": "Waiting",
 
   "assetsBoardTitle": "Vehicle & equipment status",
+  "assetsScreenTitle": "Assets & status",
+  "assetsEmpty": "No assets or pools available.",
   "assetStatusReady": "Ready",
   "assetStatusLimited": "Limited",
   "assetStatusOob": "Out of service",
   "assetStatusWorkshop": "Workshop",
+
+  "inventoryTitle": "Keys & pools",
+  "inventoryHint": "Checkout / check-in for pooled devices and keys.",
+  "inventoryAvailable": "Available",
+  "inventoryHolderLabel": "Held by",
+  "inventoryCheckout": "Check out",
+  "inventoryCheckin": "Check in",
+
+  "checklistIntervalDaily": "Daily",
+  "checklistIntervalWeekly": "Weekly",
+  "checklistIntervalMonthly": "Monthly",
+  "checklistDueToday": "Due today",
+  "checklistOverdue": "Overdue",
+  "checklistDueSection": "Due today / overdue",
 
   "handoverAckButton": "Acknowledged",
   "handoverAckDone": "Acknowledged by you",

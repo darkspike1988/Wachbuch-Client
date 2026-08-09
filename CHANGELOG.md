@@ -17,7 +17,12 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
   Kalender, Kaffeekasse und Checklisten.
 - Flutter Phase A–D (Demo): Modelle `Defect` / `StationAsset` / `HandoverAck`,
   Contract `docs/SCHEMA-WACHALLTAG.md`, Mängel-Screen, Statusboard auf der
-  Übersicht, Quittierung im Übergabe-Detail; API-Stubs mit HTTP 501 bis Server.
+  Übersicht, Quittierung im Übergabe-Detail.
+- Flutter HTTP für `defects` / `assets` / `inventory` / `acks` verdrahtet
+  (404 = Modul nicht verfügbar); Demo-API + Inventar-Checkout; Checklisten mit
+  `interval` / `due_next` / `overdue`.
+- Webapp: Demo-Anhänge (Phase E), Fälligkeitsbereich Checklisten (F),
+  Auswertung (I), Inventar bereits unter Geräte (G).
 - Gelbes Demo-Banner in der App-Shell, analog zum Server-Demo-Modus.
 
 ## Unreleased – Module API (Kalender, Kaffeekasse, Checklisten)

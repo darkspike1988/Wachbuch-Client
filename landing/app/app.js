@@ -132,6 +132,7 @@
       check: "☑",
       defect: "⚠",
       asset: "▣",
+      chart: "▥",
     };
     return `<span class="icon" aria-hidden="true">${labels[name] || "•"}</span>`;
   }
@@ -170,6 +171,7 @@
       { id: "handovers", label: "Übergaben", glyph: "list" },
       { id: "defects", label: "Mängel", glyph: "defect" },
       { id: "assets", label: "Geräte", glyph: "asset" },
+      { id: "reports", label: "Auswertung", glyph: "chart" },
       { id: "account", label: "Konto", glyph: "user" },
     ];
     const html = items
@@ -233,11 +235,11 @@
         <button type="button" class="module-tile" data-view="assets">
           ${icon("asset")}<strong>Geräte</strong><span>Status & Pools</span>
         </button>
-        <button type="button" class="module-tile" data-view="calendar">
-          ${icon("cal")}<strong>Kalender</strong><span>Termine</span>
-        </button>
         <button type="button" class="module-tile" data-view="checklists">
           ${icon("check")}<strong>Checklisten</strong><span>Wiederkehrend</span>
+        </button>
+        <button type="button" class="module-tile" data-view="reports">
+          ${icon("chart")}<strong>Auswertung</strong><span>Ampel & Owner</span>
         </button>
       </div>
       <h2 class="section-label">Aktuelle Hinweise</h2>
@@ -448,31 +450,113 @@
     `;
   }
 
+  function intervalLabel(interval) {
+    if (interval === "weekly") return "Wöchentlich";
+    if (interval === "monthly") return "Monatlich";
+    if (interval === "daily") return "Täglich";
+    return "";
+  }
+
+  function renderChecklistCard(list, listIndex) {
+    const dueBadge = list.overdue
+      ? '<span class="badge-overdue">Überfällig</span>'
+      : list.due_next === "heute"
+        ? '<span class="badge-due">Fällig heute</span>'
+        : "";
+    return `
+      <article class="panel-block">
+        <h3>${list.title}</h3>
+        <p class="interval-tag">${intervalLabel(list.interval)} ${dueBadge}</p>
+        ${list.items
+          .map(
+            (item, itemIndex) => `
+          <label class="check-item">
+            <input type="checkbox" data-list="${listIndex}" data-item="${itemIndex}" ${
+              item.checked ? "checked" : ""
+            } />
+            <span>${item.text}</span>
+          </label>`,
+          )
+          .join("")}
+      </article>`;
+  }
+
   function renderChecklists() {
     const lists = profile().checklists;
+    const due = lists
+      .map((list, index) => ({ list, index }))
+      .filter(({ list }) => list.overdue || list.due_next === "heute");
+    const rest = lists
+      .map((list, index) => ({ list, index }))
+      .filter(({ list }) => !list.overdue && list.due_next !== "heute");
     els.main.innerHTML = `
       <h1 class="section-label">Checklisten</h1>
-      <p class="hint-line">Intervalle (Phase F-Vorschau): daily / weekly — fällig im Wachalltag.</p>
-      ${lists
-        .map(
-          (list, listIndex) => `
-        <article class="panel-block">
-          <h3>${list.title}</h3>
-          <p class="interval-tag">${list.interval === "weekly" ? "Wöchentlich" : "Täglich"}</p>
-          ${list.items
-            .map(
-              (item, itemIndex) => `
-            <label class="check-item">
-              <input type="checkbox" data-list="${listIndex}" data-item="${itemIndex}" ${
-                item.checked ? "checked" : ""
-              } />
-              <span>${item.text}</span>
-            </label>`,
-            )
-            .join("")}
-        </article>`,
-        )
-        .join("")}
+      <p class="hint-line">Wiederkehrende Checks (Phase F): Intervalle mit Fälligkeit — Demo ohne Server-Scheduler.</p>
+      ${
+        due.length
+          ? `<h2 class="section-label">Fällig heute / überfällig</h2>${due
+              .map(({ list, index }) => renderChecklistCard(list, index))
+              .join("")}`
+          : ""
+      }
+      ${
+        rest.length
+          ? `<h2 class="section-label">Weitere</h2>${rest
+              .map(({ list, index }) => renderChecklistCard(list, index))
+              .join("")}`
+          : ""
+      }
+      <button type="button" class="btn btn-ghost" data-view="overview">← Zur Übersicht</button>
+    `;
+  }
+
+  function reportStats() {
+    const p = profile();
+    const defects = p.defects || [];
+    const assets = p.assets || [];
+    const lists = p.checklists || [];
+    const openDefects = defects.filter((d) => d.status !== "done");
+    const byOwner = {};
+    openDefects.forEach((d) => {
+      const key = d.owner || "ohne Owner";
+      byOwner[key] = (byOwner[key] || 0) + 1;
+    });
+    const ready = assets.filter((a) => a.status === "ready").length;
+    const ampQuote = assets.length
+      ? Math.round((ready / assets.length) * 100)
+      : 0;
+    const overdueChecks = lists.filter((c) => c.overdue).length;
+    return { openDefects, byOwner, ampQuote, overdueChecks, assets, ready };
+  }
+
+  function renderReports() {
+    const stats = reportStats();
+    const ownerRows = Object.entries(stats.byOwner)
+      .map(
+        ([owner, count]) =>
+          `<li><strong>${count}</strong> · ${owner}</li>`,
+      )
+      .join("");
+    els.main.innerHTML = `
+      <h1 class="section-label">Auswertung</h1>
+      <p class="hint-line">Leichte Client-Aggregation über Demo-Daten (Phase I) — kein Server-Report.</p>
+      <div class="metrics metrics-3" aria-label="Auswertung">
+        <div class="metric ${stats.openDefects.length ? "is-urgent" : ""}">
+          <strong>${stats.openDefects.length}</strong><span>offene Mängel</span>
+        </div>
+        <div class="metric ${stats.overdueChecks ? "is-urgent" : ""}">
+          <strong>${stats.overdueChecks}</strong><span>Checks überfällig</span>
+        </div>
+        <div class="metric">
+          <strong>${stats.ampQuote}%</strong><span>Assets einsatzklar</span>
+        </div>
+      </div>
+      <h2 class="section-label">Offene Mängel nach Owner</h2>
+      <ul class="report-list">
+        ${ownerRows || "<li>Keine offenen Mängel.</li>"}
+      </ul>
+      <h2 class="section-label">Asset-Ampel</h2>
+      <p class="hint-line">${stats.ready} von ${stats.assets.length} Fahrzeugen/Geräten einsatzklar.</p>
       <button type="button" class="btn btn-ghost" data-view="overview">← Zur Übersicht</button>
     `;
   }
@@ -589,6 +673,16 @@
       els.dialog.innerHTML = "";
       return;
     }
+    if (!Array.isArray(item.attachments)) item.attachments = [];
+    const previews = item.attachments
+      .map(
+        (file) => `
+        <figure class="attach-preview">
+          <img src="${file.url}" alt="${file.name}" />
+          <figcaption>${file.name}</figcaption>
+        </figure>`,
+      )
+      .join("");
     els.dialog.classList.remove("app-hidden");
     els.dialog.innerHTML = `
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="defect-title">
@@ -608,12 +702,26 @@
             )
             .join("")}
         </div>
+        <h3 class="section-label">Anhänge (Demo)</h3>
+        <p class="hint-line">Phase E: lokale Vorschau per objectURL — kein Server-Upload.</p>
+        <div class="attach-grid">${previews || "<p class='empty'>Noch keine Fotos.</p>"}</div>
+        <label class="btn btn-ghost attach-label">
+          Foto / Datei wählen
+          <input id="defect-attach" type="file" accept="image/*" hidden />
+        </label>
         <div class="dialog-actions">
           <button type="button" class="btn btn-cta" id="close-detail">Schließen</button>
         </div>
       </div>
     `;
     document.getElementById("close-detail")?.addEventListener("click", closeDialogs);
+    document.getElementById("defect-attach")?.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      item.attachments.push({ name: file.name, url });
+      renderDefectDetail();
+    });
     els.dialog.onclick = (event) => {
       if (event.target === els.dialog) closeDialogs();
     };
@@ -652,6 +760,9 @@
         break;
       case "checklists":
         renderChecklists();
+        break;
+      case "reports":
+        renderReports();
         break;
       case "account":
         renderAccount();

@@ -5,6 +5,7 @@ import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
+import 'package:wachbuch_mobile/screens/assets_screen.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
@@ -155,6 +156,7 @@ class _HomeShellState extends State<HomeShell> {
             _HandoversTab(
               api: widget.api,
               handoverState: _handoverState,
+              currentUsername: _authState.username,
               error: error,
               onRefresh: _reload,
             ),
@@ -614,6 +616,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['assets'] == true || modules['inventory'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-assets',
+          icon: Icons.directions_car_outlined,
+          title: l.moduleAssetsTitle,
+          subtitle: l.moduleAssetsSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -659,6 +671,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = ChecklistenScreen(api: api);
       case 'module-tile-defects':
         screen = DefectsScreen(api: api);
+      case 'module-tile-assets':
+        screen = AssetsScreen(api: api);
       default:
         return;
     }
@@ -802,12 +816,14 @@ class _HandoversTab extends StatefulWidget {
   const _HandoversTab({
     required this.api,
     required this.handoverState,
+    required this.currentUsername,
     required this.error,
     required this.onRefresh,
   });
 
   final WachbuchApi api;
   final HandoverState handoverState;
+  final String? currentUsername;
   final String? error;
   final Future<void> Function() onRefresh;
 
@@ -838,6 +854,7 @@ class _HandoversTabState extends State<_HandoversTab> {
       builder: (context) => _HandoverDetailSheet(
         api: widget.api,
         handoverId: id,
+        currentUsername: widget.currentUsername,
         future: detailFuture,
         fallback: item,
       ),
@@ -1184,12 +1201,14 @@ class _HandoverDetailSheet extends StatefulWidget {
   const _HandoverDetailSheet({
     required this.api,
     required this.handoverId,
+    required this.currentUsername,
     required this.future,
     required this.fallback,
   });
 
   final WachbuchApi api;
   final int handoverId;
+  final String? currentUsername;
   final Future<Map<String, dynamic>> future;
   final Map<String, dynamic> fallback;
 
@@ -1219,7 +1238,7 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      if (error.statusCode == 501) {
+      if (WachbuchApi.isModuleUnavailable(error)) {
         setState(() => _acksSupported = false);
         return;
       }
@@ -1288,9 +1307,10 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
           final authorName = author?['display_name']?.toString();
           final details = item['details']?.toString().trim();
           final version = item['version'];
-          final me = widget.api is DemoWachbuchApi
-              ? (widget.api as DemoWachbuchApi).profile.username
-              : null;
+          final me = widget.currentUsername ??
+              (widget.api is DemoWachbuchApi
+                  ? (widget.api as DemoWachbuchApi).profile.username
+                  : null);
           final alreadyAcked =
               me != null && _acks.any((ack) => ack.by == me);
           return SingleChildScrollView(

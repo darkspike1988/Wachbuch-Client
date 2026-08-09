@@ -50,15 +50,16 @@ void main() {
     state.dispose();
   });
 
-  test('501 clears items without crashing', () async {
+  test('404/501 module missing clears items without crashing', () async {
     final api = _FakeDefectApi(
-      error: ApiException(501, 'nicht verfügbar'),
+      error: ApiException(404, 'nicht verfügbar'),
     );
     final state = DefectState(api: api);
     await state.reload();
 
     expect(state.items, isEmpty);
-    expect(state.lastError?.statusCode, 501);
+    expect(state.lastError?.statusCode, 404);
+    expect(WachbuchApi.isModuleUnavailable(state.lastError!), isTrue);
     state.dispose();
   });
 

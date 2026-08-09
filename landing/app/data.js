@@ -113,6 +113,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Fahrzeugcheck RTW 1",
         interval: "daily",
+        due_next: "heute",
+        overdue: false,
         items: [
           { text: "Sauerstoffflasche voll", checked: true },
           { text: "Trage gereinigt", checked: true },
@@ -122,6 +124,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Wachabschluss",
         interval: "daily",
+        due_next: "heute",
+        overdue: false,
         items: [
           { text: "Müll entsorgt", checked: false },
           { text: "Schlüsselübergabe", checked: false },
@@ -228,6 +232,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Fahrzeugcheck HLF 20",
         interval: "daily",
+        due_next: "heute",
+        overdue: false,
         items: [
           { text: "Pumpe Funktionstest", checked: true },
           { text: "Atemschutz vollzählig", checked: false },
@@ -237,6 +243,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Wochencheck Gerätehaus",
         interval: "weekly",
+        due_next: "gestern",
+        overdue: true,
         items: [
           { text: "Notstromaggregat geprüft", checked: false },
           { text: "Schlauchlager Ordnung", checked: false },
@@ -342,6 +350,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Gerätehaus-Wochenheck",
         interval: "weekly",
+        due_next: "gestern",
+        overdue: true,
         items: [
           { text: "Tore / Heizung ok", checked: false },
           { text: "Notstrom Sichtprüfung", checked: false },
@@ -351,6 +361,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Übungsvorbereitung",
         interval: "weekly",
+        due_next: "gestern",
+        overdue: true,
         items: [
           { text: "Materialliste komplett", checked: false },
           { text: "Teilnehmer informiert", checked: true },
@@ -472,6 +484,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Fahrzeugcheck FuStW 3",
         interval: "daily",
+        due_next: "heute",
+        overdue: false,
         items: [
           { text: "Blaulicht / Folgetonhorn", checked: true },
           { text: "Bodycams geladen", checked: false },
@@ -481,6 +495,8 @@ window.WACHBUCH_DEMO = {
       {
         title: "Wachrundgang",
         interval: "daily",
+        due_next: "heute",
+        overdue: false,
         items: [
           { text: "Eingänge gesichert", checked: false },
           { text: "Funkraum aufgeräumt", checked: false },

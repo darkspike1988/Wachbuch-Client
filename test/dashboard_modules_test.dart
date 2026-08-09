@@ -5,6 +5,7 @@ import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 
@@ -56,6 +57,11 @@ class _ModulesApi extends WachbuchApi {
   @override
   Future<List<StationAsset>> assets() async => const [
         StationAsset(id: 'rtw-1', label: 'RTW 1', kind: 'vehicle'),
+      ];
+
+  @override
+  Future<List<InventoryItem>> inventory() async => const [
+        InventoryItem(id: 'funk-a', label: 'Funkgerät A'),
       ];
 }
 
@@ -120,5 +126,10 @@ void main() {
 
     await openTile(const Key('module-tile-defects'));
     expect(find.text('Defi-Akku'), findsOneWidget);
+    await _popTopRoute(tester);
+
+    await openTile(const Key('module-tile-assets'));
+    expect(find.text('Schlüssel & Pools'), findsOneWidget);
+    expect(find.text('Funkgerät A'), findsOneWidget);
   });
 }

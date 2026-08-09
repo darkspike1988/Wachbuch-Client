@@ -137,6 +137,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsBoardTitle => 'Vehicle & equipment status';
 
   @override
+  String get assetsScreenTitle => 'Assets & status';
+
+  @override
+  String get assetsEmpty => 'No assets or pools available.';
+
+  @override
   String get assetStatusReady => 'Ready';
 
   @override
@@ -147,6 +153,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetStatusWorkshop => 'Workshop';
+
+  @override
+  String get inventoryTitle => 'Keys & pools';
+
+  @override
+  String get inventoryHint =>
+      'Checkout / check-in for pooled devices and keys.';
+
+  @override
+  String get inventoryAvailable => 'Available';
+
+  @override
+  String get inventoryHolderLabel => 'Held by';
+
+  @override
+  String get inventoryCheckout => 'Check out';
+
+  @override
+  String get inventoryCheckin => 'Check in';
+
+  @override
+  String get checklistIntervalDaily => 'Daily';
+
+  @override
+  String get checklistIntervalWeekly => 'Weekly';
+
+  @override
+  String get checklistIntervalMonthly => 'Monthly';
+
+  @override
+  String get checklistDueToday => 'Due today';
+
+  @override
+  String get checklistOverdue => 'Overdue';
+
+  @override
+  String get checklistDueSection => 'Due today / overdue';
 
   @override
   String get handoverAckButton => 'Acknowledged';

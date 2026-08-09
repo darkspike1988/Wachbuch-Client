@@ -3,6 +3,7 @@
 library;
 
 import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
 enum DemoService {
@@ -43,6 +44,7 @@ class DemoProfile {
     required this.checklists,
     this.defects = const [],
     this.assets = const [],
+    this.inventory = const [],
   });
 
   final DemoService service;
@@ -56,9 +58,11 @@ class DemoProfile {
   final List<Map<String, dynamic>> checklists;
   final List<Defect> defects;
   final List<StationAsset> assets;
+  final List<InventoryItem> inventory;
 
   Map<String, dynamic> get me => {
         'username': username,
+        'user': {'username': username},
         'membership': {
           'role_label': roleLabel,
           'station': {
@@ -70,6 +74,7 @@ class DemoProfile {
               'birthdays': true,
               'defects': true,
               'assets': true,
+              'inventory': true,
             },
           },
         },
@@ -148,6 +153,16 @@ final _rettungsdienst = DemoProfile(
     StationAsset(id: 'rtw-2', label: 'RTW 2', kind: 'vehicle', status: 'ready'),
     StationAsset(id: 'ktw-1', label: 'KTW 1', kind: 'vehicle', status: 'ready'),
     StationAsset(id: 'funk-wache', label: 'Funk Wachzimmer', kind: 'device', status: 'limited', note: 'Kanal 4'),
+  ],
+  inventory: const [
+    InventoryItem(id: 'funk-a', label: 'Funkgerät A', kind: 'device'),
+    InventoryItem(
+      id: 'funk-b',
+      label: 'Funkgerät B',
+      kind: 'device',
+      holder: 'demo-mitglied',
+      sinceLabel: 'heute 06:10',
+    ),
   ],
   defects: [
     Defect(
@@ -229,6 +244,9 @@ final _rettungsdienst = DemoProfile(
       'id': 1,
       'title': 'Fahrzeugcheck RTW 1',
       'completed': false,
+      'interval': 'daily',
+      'due_next': _iso(_now),
+      'overdue': false,
       'items': [
         {'id': 1, 'text': 'Sauerstoffflasche voll', 'checked': true},
         {'id': 2, 'text': 'Trage gereinigt', 'checked': true},
@@ -239,6 +257,9 @@ final _rettungsdienst = DemoProfile(
       'id': 2,
       'title': 'Wachabschluss',
       'completed': false,
+      'interval': 'daily',
+      'due_next': _iso(_now.subtract(const Duration(days: 1))),
+      'overdue': true,
       'items': [
         {'id': 4, 'text': 'Müll entsorgt', 'checked': false},
         {'id': 5, 'text': 'Schlüsselübergabe', 'checked': false},
@@ -306,6 +327,16 @@ final _feuerwehr = DemoProfile(
     StationAsset(id: 'as-3', label: 'Atemschutz 3', kind: 'device', status: 'oob', note: 'Werkstatt'),
     StationAsset(id: 'as-4', label: 'Atemschutz 4', kind: 'device', status: 'ready', note: 'Ersatz'),
   ],
+  inventory: const [
+    InventoryItem(
+      id: 'key-halle',
+      label: 'Schlüssel Fahrzeughalle',
+      kind: 'key',
+      holder: 'demo-waf',
+      sinceLabel: 'heute 06:00',
+    ),
+    InventoryItem(id: 'as-reserve', label: 'Atemschutz Reserve', kind: 'device'),
+  ],
   defects: const [
     Defect(
       id: 111,
@@ -368,6 +399,8 @@ final _feuerwehr = DemoProfile(
       'id': 11,
       'title': 'Fahrzeugcheck HLF 20',
       'completed': false,
+      'interval': 'daily',
+      'due_next': _iso(_now),
       'items': [
         {'id': 11, 'text': 'Pumpe Funktionstest', 'checked': true},
         {'id': 12, 'text': 'Atemschutz vollzählig', 'checked': false},
@@ -378,6 +411,9 @@ final _feuerwehr = DemoProfile(
       'id': 12,
       'title': 'Wochencheck Gerätehaus',
       'completed': false,
+      'interval': 'weekly',
+      'due_next': _iso(_now.subtract(const Duration(days: 2))),
+      'overdue': true,
       'items': [
         {'id': 14, 'text': 'Notstromaggregat geprüft', 'checked': false},
         {'id': 15, 'text': 'Schlauchlager Ordnung', 'checked': false},
@@ -431,6 +467,16 @@ final _ffw = DemoProfile(
     StationAsset(id: 'lf-kat', label: 'LF-KatS', kind: 'vehicle', status: 'ready'),
     StationAsset(id: 'ts', label: 'TS', kind: 'vehicle', status: 'limited', note: 'Batterie schwach'),
     StationAsset(id: 'heizung', label: 'Heizung Gerätehaus', kind: 'device', status: 'limited', note: 'Geräusche'),
+  ],
+  inventory: const [
+    InventoryItem(id: 'key-gh', label: 'Ersatzschlüssel Gerätehaus', kind: 'key'),
+    InventoryItem(
+      id: 'tablet-ausbildung',
+      label: 'Ausbildungstablet',
+      kind: 'device',
+      holder: 'demo-ausbilder',
+      sinceLabel: 'gestern',
+    ),
   ],
   defects: const [
     Defect(
@@ -496,6 +542,9 @@ final _ffw = DemoProfile(
       'id': 31,
       'title': 'Gerätehaus-Wochenheck',
       'completed': false,
+      'interval': 'weekly',
+      'due_next': _iso(_now),
+      'overdue': false,
       'items': [
         {'id': 31, 'text': 'Tore / Heizung ok', 'checked': false},
         {'id': 32, 'text': 'Notstrom Sichtprüfung', 'checked': false},
@@ -562,6 +611,22 @@ final _polizei = DemoProfile(
     StationAsset(id: 'fustw-3', label: 'FuStW 3', kind: 'vehicle', status: 'limited', note: 'Reifen vorne links'),
     StationAsset(id: 'fustw-1', label: 'FuStW 1', kind: 'vehicle', status: 'ready'),
     StationAsset(id: 'body-dock', label: 'Bodycam-Dock', kind: 'device', status: 'limited', note: 'Dock 2/4 leer'),
+  ],
+  inventory: const [
+    InventoryItem(
+      id: 'key-zelle',
+      label: 'Zellenschlüssel',
+      kind: 'key',
+      note: 'Rückgabe überfällig',
+    ),
+    InventoryItem(
+      id: 'bodycam-7',
+      label: 'Bodycam 7',
+      kind: 'device',
+      holder: 'demo-mitglied',
+      sinceLabel: 'heute 05:50',
+    ),
+    InventoryItem(id: 'bodycam-8', label: 'Bodycam 8', kind: 'device'),
   ],
   defects: const [
     Defect(
@@ -643,6 +708,8 @@ final _polizei = DemoProfile(
       'id': 21,
       'title': 'Fahrzeugcheck FuStW 3',
       'completed': false,
+      'interval': 'daily',
+      'due_next': _iso(_now),
       'items': [
         {'id': 21, 'text': 'Blaulicht / Folgetonhorn', 'checked': true},
         {'id': 22, 'text': 'Bodycams geladen', 'checked': false},
@@ -653,6 +720,9 @@ final _polizei = DemoProfile(
       'id': 22,
       'title': 'Wachrundgang',
       'completed': false,
+      'interval': 'daily',
+      'due_next': _iso(_now.subtract(const Duration(days: 1))),
+      'overdue': true,
       'items': [
         {'id': 24, 'text': 'Eingänge gesichert', 'checked': false},
         {'id': 25, 'text': 'Funkraum aufgeräumt', 'checked': false},

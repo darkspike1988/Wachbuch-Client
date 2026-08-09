@@ -73,25 +73,55 @@ GET    /api/v1/handovers/{id}/acks/
 POST   /api/v1/handovers/{id}/ack/    # idempotent pro User
 ```
 
+## `inventory` (Schlüssel / Pool)
+
+| Feld | Typ | Pflicht | Beschreibung |
+| --- | --- | --- | --- |
+| `id` | string | ja | Stabiler Schlüssel |
+| `label` | string | ja | Anzeigename |
+| `kind` | `key` \| `device` \| `vehicle` | ja | Default `device` |
+| `holder` | string \| null | nein | Aktueller Benutzer |
+| `since` | ISO-8601 \| null | nein | Checkout-Zeit |
+| `since_label` | string | nein | Demo-Anzeigehilfe |
+| `note` | string | nein | Hinweis (z. B. überfällig) |
+
+### Geplante Endpoints
+
+```
+GET    /api/v1/inventory/
+POST   /api/v1/inventory/{id}/checkout/
+POST   /api/v1/inventory/{id}/checkin/
+```
+
+## Checklist-Erweiterung (Phase F)
+
+| Feld | Typ | Beschreibung |
+| --- | --- | --- |
+| `interval` | `daily` \| `weekly` \| `monthly` \| `""` | Wiederkehr |
+| `due_next` | ISO-8601 \| null | Nächste Fälligkeit |
+| `overdue` | bool | Server- oder Client-Ableitung |
+
 ## Modul-Flags in `/me/` → `station.modules`
 
 | Key | Bedeutung |
 | --- | --- |
 | `defects` | Mängel-Modul sichtbar |
 | `assets` | Statusboard / Geräte sichtbar |
+| `inventory` | Schlüssel- & Pool-Checkout sichtbar |
 
-Demo-Profile setzen beide auf `true`.
+Demo-Profile setzen diese Flags auf `true`.
 
 ## Implementierungsstand
 
 | Schicht | Status |
 | --- | --- |
-| Webapp Demo | umgesetzt (`landing/app/`) |
-| Flutter Modelle + Demo-API + UI | umgesetzt (Demo-Profile inkl. FFW) |
+| Webapp Demo | A–D + E (objectURL) + F + G + I |
+| Flutter Modelle + Demo-API + UI | A–D + F-Felder + G Inventar; HTTP-Client verdrahtet |
 | Server API | offen (Contract hier) |
 
 ## Abnahme
 
 - [x] Feldnamen Webapp ↔ Dokument deckungsgleich
 - [x] Flutter `fromJson` mit Unit-Tests für Alias/Müll-Eingaben
+- [x] Flutter HTTP-Client für defects/assets/inventory/acks (404 = Modul aus)
 - [ ] Server OpenAPI-Spiegel nach Freeze

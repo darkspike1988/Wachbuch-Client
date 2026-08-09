@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
+import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
@@ -36,7 +37,9 @@ Future<T> _withRetry<T>(
       if (attempt == maxAttempts) rethrow;
     } on ApiException catch (error) {
       final isConnectionError = error.statusCode == 0;
-      final isServerError = error.statusCode >= 500;
+      // 501 = Not Implemented / optional module — do not burn retries.
+      final isServerError =
+          error.statusCode >= 500 && error.statusCode != 501;
       if (!isConnectionError && !isServerError) rethrow;
       if (attempt == maxAttempts) rethrow;
     }
@@ -279,31 +282,128 @@ class WachbuchApi {
   }
 
   /// GET /api/v1/defects/ — Mängel (Modul `defects`, Contract: SCHEMA-WACHALLTAG).
-  ///
-  /// Default: not available until the server ships the endpoint.
   Future<List<Defect>> defects() async {
-    throw ApiException(501, 'Mängel-Modul auf diesem Server nicht verfügbar.');
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(_uri('/api/v1/defects/'), headers: _headers()),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return _readList(body).map(Defect.fromJson).toList(growable: false);
+    });
   }
 
   /// POST /api/v1/defects/{id}/status/ — Statuswechsel (append-only).
   Future<Defect> updateDefectStatus(int id, String status) async {
-    throw ApiException(501, 'Mängel-Modul auf diesem Server nicht verfügbar.');
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/defects/$id/status/'),
+          headers: _headers(),
+          body: jsonEncode({'status': status}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return Defect.fromJson(body.isEmpty ? {'id': id, 'status': status} : body);
+    });
   }
 
   /// GET /api/v1/assets/ — Fahrzeug-/Gerätestatus (Modul `assets`).
   Future<List<StationAsset>> assets() async {
-    throw ApiException(501, 'Geräte-Modul auf diesem Server nicht verfügbar.');
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(_uri('/api/v1/assets/'), headers: _headers()),
+      );
+      final body = _decode(_requireModule(response, 'Geräte'));
+      return _readList(body)
+          .map(StationAsset.fromJson)
+          .toList(growable: false);
+    });
+  }
+
+  /// GET /api/v1/inventory/ — Schlüssel-/Pool-Geräte (Modul `inventory`).
+  Future<List<InventoryItem>> inventory() async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(_uri('/api/v1/inventory/'), headers: _headers()),
+      );
+      final body = _decode(_requireModule(response, 'Inventar'));
+      return _readList(body)
+          .map(InventoryItem.fromJson)
+          .toList(growable: false);
+    });
+  }
+
+  /// POST /api/v1/inventory/{id}/checkout/
+  Future<InventoryItem> inventoryCheckout(String id) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/inventory/$id/checkout/'),
+          headers: _headers(),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Inventar'));
+      return InventoryItem.fromJson(body.isEmpty ? {'id': id} : body);
+    });
+  }
+
+  /// POST /api/v1/inventory/{id}/checkin/
+  Future<InventoryItem> inventoryCheckin(String id) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/inventory/$id/checkin/'),
+          headers: _headers(),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Inventar'));
+      return InventoryItem.fromJson(body.isEmpty ? {'id': id} : body);
+    });
   }
 
   /// GET /api/v1/handovers/{id}/acks/
   Future<List<HandoverAck>> handoverAcks(int id) async {
-    throw ApiException(501, 'Quittierung auf diesem Server nicht verfügbar.');
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(_uri('/api/v1/handovers/$id/acks/'), headers: _headers()),
+      );
+      final body = _decode(_requireModule(response, 'Quittierung'));
+      return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
+    });
   }
 
   /// POST /api/v1/handovers/{id}/ack/ — idempotent pro Benutzer.
   Future<HandoverAck> acknowledgeHandover(int id) async {
-    throw ApiException(501, 'Quittierung auf diesem Server nicht verfügbar.');
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/handovers/$id/ack/'),
+          headers: _headers(),
+          body: jsonEncode(const <String, dynamic>{}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Quittierung'));
+      if (body.isEmpty) {
+        return HandoverAck(handoverId: id, by: '', at: DateTime.now());
+      }
+      return HandoverAck.fromJson({...body, 'handover_id': body['handover_id'] ?? id});
+    });
   }
+
+  /// Turns module-disabled 404 into a clear, non-retryable ApiException.
+  http.Response _requireModule(http.Response response, String label) {
+    if (response.statusCode == 404) {
+      throw ApiException(
+        404,
+        '$label-Modul auf diesem Server nicht verfügbar.',
+      );
+    }
+    return response;
+  }
+
+  /// Optional modules that are not installed on older servers.
+  static bool isModuleUnavailable(ApiException error) =>
+      error.statusCode == 404 || error.statusCode == 501;
 
   List<Map<String, dynamic>> _readList(Map<String, dynamic> body) {
     final results = body['results'] ?? body['entries'] ?? body['termine'];
@@ -378,6 +478,7 @@ String moduleLabel(String key) {
     'tasks': 'Aufgaben',
     'defects': 'Mängel',
     'assets': 'Geräte',
+    'inventory': 'Schlüssel & Pools',
   };
   return labels[key] ?? key;
 }

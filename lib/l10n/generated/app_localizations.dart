@@ -338,6 +338,18 @@ abstract class AppLocalizations {
   /// **'Fahrzeug- & Gerätestatus'**
   String get assetsBoardTitle;
 
+  /// No description provided for @assetsScreenTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Geräte & Status'**
+  String get assetsScreenTitle;
+
+  /// No description provided for @assetsEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Geräte oder Pools verfügbar.'**
+  String get assetsEmpty;
+
   /// No description provided for @assetStatusReady.
   ///
   /// In de, this message translates to:
@@ -361,6 +373,78 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Werkstatt'**
   String get assetStatusWorkshop;
+
+  /// No description provided for @inventoryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schlüssel & Pools'**
+  String get inventoryTitle;
+
+  /// No description provided for @inventoryHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Checkout / Checkin für Pool-Geräte und Schlüssel.'**
+  String get inventoryHint;
+
+  /// No description provided for @inventoryAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Verfügbar'**
+  String get inventoryAvailable;
+
+  /// No description provided for @inventoryHolderLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bei'**
+  String get inventoryHolderLabel;
+
+  /// No description provided for @inventoryCheckout.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausgeben'**
+  String get inventoryCheckout;
+
+  /// No description provided for @inventoryCheckin.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurückgeben'**
+  String get inventoryCheckin;
+
+  /// No description provided for @checklistIntervalDaily.
+  ///
+  /// In de, this message translates to:
+  /// **'Täglich'**
+  String get checklistIntervalDaily;
+
+  /// No description provided for @checklistIntervalWeekly.
+  ///
+  /// In de, this message translates to:
+  /// **'Wöchentlich'**
+  String get checklistIntervalWeekly;
+
+  /// No description provided for @checklistIntervalMonthly.
+  ///
+  /// In de, this message translates to:
+  /// **'Monatlich'**
+  String get checklistIntervalMonthly;
+
+  /// No description provided for @checklistDueToday.
+  ///
+  /// In de, this message translates to:
+  /// **'Fällig heute'**
+  String get checklistDueToday;
+
+  /// No description provided for @checklistOverdue.
+  ///
+  /// In de, this message translates to:
+  /// **'Überfällig'**
+  String get checklistOverdue;
+
+  /// No description provided for @checklistDueSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Fällig heute / überfällig'**
+  String get checklistDueSection;
 
   /// No description provided for @handoverAckButton.
   ///
