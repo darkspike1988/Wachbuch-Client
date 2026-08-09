@@ -3,14 +3,18 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:wachbuch_mobile/api/api_cache.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/defect_attachment.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/report_stats.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
 typedef WachbuchApiFactory = WachbuchApi Function(String baseUrl);
@@ -19,9 +23,8 @@ WachbuchApi defaultWachbuchApiFactory(String baseUrl) {
   return WachbuchApi(baseUrl: baseUrl);
 }
 
-/// Retries [fn] on transient network failures (timeouts, connection errors,
-/// 5xx responses) with exponential backoff. Non-retryable errors are rethrown
-/// immediately.
+/// Retries transient network failures (timeouts, connection errors and 5xx)
+/// with exponential backoff. Contract errors are never retried.
 Future<T> _withRetry<T>(
   Future<T> Function() fn, {
   int maxAttempts = 3,
@@ -37,30 +40,40 @@ Future<T> _withRetry<T>(
       if (attempt == maxAttempts) rethrow;
     } on ApiException catch (error) {
       final isConnectionError = error.statusCode == 0;
-      // 501 = Not Implemented / optional module — do not burn retries.
-      final isServerError =
-          error.statusCode >= 500 && error.statusCode != 501;
+      final isServerError = error.statusCode >= 500 && error.statusCode != 501;
       if (!isConnectionError && !isServerError) rethrow;
       if (attempt == maxAttempts) rethrow;
     }
     await Future.delayed(delay);
     delay *= 2;
   }
-  throw Exception('Unreachable');
+  throw StateError('Unreachable retry state');
 }
 
 class ApiException implements Exception {
-  ApiException(this.statusCode, this.message, {this.code});
+  ApiException(
+    this.statusCode,
+    this.message, {
+    this.code,
+    this.correlationId,
+  });
 
   final int statusCode;
   final String message;
   final String? code;
+  final String? correlationId;
 
   bool get isMfaRequired =>
-      statusCode == 403 && (code == 'mfa_required' || message.contains('MFA'));
+      statusCode == 403 &&
+      (code == 'mfa_required' || message.toUpperCase().contains('MFA'));
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() {
+    final correlation = correlationId == null || correlationId!.isEmpty
+        ? ''
+        : ' [$correlationId]';
+    return 'ApiException($statusCode${code == null ? '' : ', $code'}): $message$correlation';
+  }
 }
 
 class AuthToken {
@@ -76,13 +89,16 @@ class WachbuchApi {
     this.token,
     http.Client? client,
     this.requestTimeout = const Duration(seconds: 20),
-  }) : _client = client ?? http.Client();
+    ApiCache? cache,
+  })  : _client = client ?? http.Client(),
+        _cache = cache;
 
   /// Origin only, e.g. https://wache.example.org (no trailing slash).
   final String baseUrl;
   final String? token;
   final Duration requestTimeout;
   final http.Client _client;
+  final ApiCache? _cache;
 
   Uri _uri(String path) {
     final root = baseUrl.endsWith('/')
@@ -122,6 +138,8 @@ class WachbuchApi {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
           body = decoded;
+        } else if (decoded is Map) {
+          body = Map<String, dynamic>.from(decoded);
         } else {
           throw const FormatException('JSON object expected');
         }
@@ -139,14 +157,78 @@ class WachbuchApi {
       }
     }
     if (response.statusCode >= 400) {
+      final error = body['error'];
+      String? message;
+      String? code;
+      String? correlationId;
+      if (error is Map) {
+        final mapped = Map<String, dynamic>.from(error);
+        message = mapped['message']?.toString();
+        code = mapped['code']?.toString();
+        correlationId = mapped['correlation_id']?.toString();
+      } else if (error is String) {
+        // Backwards compatibility with server <= 0.14.x.
+        message = error;
+      }
+      message ??= body['message']?.toString();
+      code ??= body['code']?.toString();
+      correlationId ??= body['correlation_id']?.toString();
       throw ApiException(
         response.statusCode,
-        (body['error'] as String?) ??
-            'Anfrage fehlgeschlagen (${response.statusCode})',
-        code: body['code'] as String?,
+        message?.isNotEmpty == true
+            ? message!
+            : 'Anfrage fehlgeschlagen (${response.statusCode})',
+        code: code,
+        correlationId: correlationId,
       );
     }
     return body;
+  }
+
+  Future<void> _cacheWrite(String key, Map<String, dynamic> body) async {
+    final cache = _cache;
+    if (cache == null) return;
+    try {
+      await cache.writeJson(key, body);
+    } catch (_) {
+      // Cache failure must never turn a successful online request into an error.
+    }
+  }
+
+  Future<Map<String, dynamic>?> _cacheRead(String key) async {
+    final cache = _cache;
+    if (cache == null) return null;
+    try {
+      return await cache.readJson(key);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getJson(
+    String path, {
+    String? cacheKey,
+    String? moduleLabel,
+  }) async {
+    try {
+      final body = await _withRetry(() async {
+        final response = await _send(
+          _client.get(_uri(path), headers: _headers()),
+        );
+        final checked = moduleLabel == null
+            ? response
+            : _requireModule(response, moduleLabel);
+        return _decode(checked);
+      });
+      if (cacheKey != null) await _cacheWrite(cacheKey, body);
+      return body;
+    } on ApiException catch (error) {
+      if (error.statusCode == 0 && cacheKey != null) {
+        final cached = await _cacheRead(cacheKey);
+        if (cached != null) return cached;
+      }
+      rethrow;
+    }
   }
 
   /// GET /api/v1/ – discovery without auth.
@@ -191,80 +273,41 @@ class WachbuchApi {
     });
   }
 
-  /// GET /api/v1/me/
-  Future<Map<String, dynamic>> me() async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/me/'), headers: _headers()),
-      );
-      return _decode(response);
-    });
-  }
+  /// GET /api/v1/me/ with encrypted offline fallback.
+  Future<Map<String, dynamic>> me() =>
+      _getJson('/api/v1/me/', cacheKey: 'me');
 
-  /// GET /api/v1/handovers/
+  /// GET /api/v1/handovers/ with encrypted offline fallback.
   Future<List<Map<String, dynamic>>> handovers() async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/handovers/'), headers: _headers()),
-      );
-      final body = _decode(response);
-      final results = body['results'];
-      if (results is! List) {
-        return <Map<String, dynamic>>[];
-      }
-      return results
-          .whereType<Map>()
-          .map((entry) => Map<String, dynamic>.from(entry))
-          .toList();
-    });
+    final body = await _getJson('/api/v1/handovers/', cacheKey: 'handovers');
+    return _readList(body);
   }
 
   /// GET /api/v1/handovers/{id}/
-  Future<Map<String, dynamic>> handoverDetail(int id) async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/handovers/$id/'), headers: _headers()),
+  Future<Map<String, dynamic>> handoverDetail(int id) => _getJson(
+        '/api/v1/handovers/$id/',
+        cacheKey: 'handover_$id',
       );
-      return _decode(response);
-    });
-  }
 
-  /// GET /api/v1/kalender/ — Wachenkalender (Modul `calendar`).
+  /// GET /api/v1/kalender/
   Future<List<KalenderEntry>> kalender() async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/kalender/'), headers: _headers()),
-      );
-      final body = _decode(response);
-      return _readList(body)
-          .map(KalenderEntry.fromJson)
-          .toList(growable: false);
-    });
+    final body = await _getJson('/api/v1/kalender/', cacheKey: 'calendar');
+    return _readList(body).map(KalenderEntry.fromJson).toList(growable: false);
   }
 
-  /// GET /api/v1/kaffeekasse/ — Kassenstand und Ledger (Modul `coffee`).
+  /// GET /api/v1/kaffeekasse/
   Future<Kaffeekasse> kaffeekasse() async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/kaffeekasse/'), headers: _headers()),
-      );
-      final body = _decode(response);
-      return Kaffeekasse.fromJson(body);
-    });
+    final body = await _getJson('/api/v1/kaffeekasse/', cacheKey: 'coffee');
+    return Kaffeekasse.fromJson(body);
   }
 
-  /// GET /api/v1/checklisten/ — Checklisten (Modul `checklists`).
+  /// GET /api/v1/checklisten/
   Future<List<Checklist>> checklisten() async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/checklisten/'), headers: _headers()),
-      );
-      final body = _decode(response);
-      return _readList(body).map(Checklist.fromJson).toList(growable: false);
-    });
+    final body = await _getJson('/api/v1/checklisten/', cacheKey: 'checklists');
+    return _readList(body).map(Checklist.fromJson).toList(growable: false);
   }
 
-  /// POST /api/v1/checklisten/{id}/abschluss/ — Checkliste abschließen (append-only).
+  /// POST /api/v1/checklisten/{id}/abschluss/
   Future<Checklist> checklisteAbschluss(int id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -274,25 +317,71 @@ class WachbuchApi {
         ),
       );
       final body = _decode(response);
-      if (body.isEmpty) {
-        return Checklist(id: id, title: '', completed: true);
-      }
-      return Checklist.fromJson({...body, 'completed': true});
+      if (body.isEmpty) return Checklist(id: id, title: '', completed: true);
+      return Checklist.fromJson({...body, 'id': body['checklist'] ?? id, 'completed': true});
     });
   }
 
-  /// GET /api/v1/defects/ — Mängel (Modul `defects`, Contract: SCHEMA-WACHALLTAG).
-  Future<List<Defect>> defects() async {
+  Future<Map<String, dynamic>> setChecklistSchedule(
+    int id, {
+    required String interval,
+    DateTime? dueNext,
+  }) async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/defects/'), headers: _headers()),
+        _client.put(
+          _uri('/api/v1/checklisten/$id/schedule/'),
+          headers: _headers(),
+          body: jsonEncode({
+            'interval': interval,
+            'due_next': dueNext?.toUtc().toIso8601String(),
+          }),
+        ),
       );
-      final body = _decode(_requireModule(response, 'Mängel'));
-      return _readList(body).map(Defect.fromJson).toList(growable: false);
+      return _decode(response);
     });
   }
 
-  /// POST /api/v1/defects/{id}/status/ — Statuswechsel (append-only).
+  /// GET /api/v1/defects/
+  Future<List<Defect>> defects() async {
+    final body = await _getJson(
+      '/api/v1/defects/',
+      cacheKey: 'defects',
+      moduleLabel: 'Mängel',
+    );
+    return _readList(body).map(Defect.fromJson).toList(growable: false);
+  }
+
+  Future<Defect> createDefect({
+    required String title,
+    String description = '',
+    String assetRef = '',
+    String priority = 'normal',
+    String category = 'task',
+    String? owner,
+    DateTime? dueAt,
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/defects/'),
+          headers: _headers(),
+          body: jsonEncode({
+            'title': title,
+            'description': description,
+            'asset_ref': assetRef,
+            'priority': priority,
+            'category': category,
+            if (owner != null && owner.isNotEmpty) 'owner': owner,
+            if (dueAt != null) 'due_at': dueAt.toUtc().toIso8601String(),
+          }),
+        ),
+      );
+      return Defect.fromJson(_decode(_requireModule(response, 'Mängel')));
+    });
+  }
+
+  /// POST /api/v1/defects/{id}/status/
   Future<Defect> updateDefectStatus(int id, String status) async {
     return _withRetry(() async {
       final response = await _send(
@@ -307,33 +396,131 @@ class WachbuchApi {
     });
   }
 
-  /// GET /api/v1/assets/ — Fahrzeug-/Gerätestatus (Modul `assets`).
+  Future<List<DefectAttachment>> defectAttachments(int defectId) async {
+    final body = await _getJson(
+      '/api/v1/defects/$defectId/attachments/',
+      cacheKey: 'defect_${defectId}_attachments',
+      moduleLabel: 'Mängel',
+    );
+    return _readList(body)
+        .map(DefectAttachment.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<DefectAttachment> uploadDefectAttachment(
+    int defectId, {
+    required String filename,
+    required String contentType,
+    required Uint8List bytes,
+  }) async {
+    if (bytes.length > 2 * 1024 * 1024) {
+      throw ApiException(413, 'Bild darf maximal 2 MiB groß sein.');
+    }
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/defects/$defectId/attachments/'),
+          headers: _headers(),
+          body: jsonEncode({
+            'filename': filename,
+            'content_type': contentType,
+            'data_base64': base64Encode(bytes),
+          }),
+        ),
+      );
+      return DefectAttachment.fromJson(
+        _decode(_requireModule(response, 'Mängel')),
+      );
+    });
+  }
+
+  Future<Uint8List> downloadAttachment(int id) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(_uri('/api/v1/attachments/$id/'), headers: _headers()),
+      );
+      if (response.statusCode >= 400) {
+        _decode(response);
+      }
+      return response.bodyBytes;
+    });
+  }
+
+  /// GET /api/v1/assets/
   Future<List<StationAsset>> assets() async {
+    final body = await _getJson(
+      '/api/v1/assets/',
+      cacheKey: 'assets',
+      moduleLabel: 'Geräte',
+    );
+    return _readList(body)
+        .map(StationAsset.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<StationAsset> createAsset({
+    required String id,
+    required String label,
+    String kind = 'device',
+  }) async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/assets/'), headers: _headers()),
+        _client.post(
+          _uri('/api/v1/assets/'),
+          headers: _headers(),
+          body: jsonEncode({'id': id, 'label': label, 'kind': kind}),
+        ),
       );
-      final body = _decode(_requireModule(response, 'Geräte'));
-      return _readList(body)
-          .map(StationAsset.fromJson)
-          .toList(growable: false);
+      return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
     });
   }
 
-  /// GET /api/v1/inventory/ — Schlüssel-/Pool-Geräte (Modul `inventory`).
+  Future<StationAsset> updateAssetStatus(
+    String id, {
+    required String status,
+    String note = '',
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/assets/$id/status/'),
+          headers: _headers(),
+          body: jsonEncode({'status': status, 'note': note}),
+        ),
+      );
+      return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
+    });
+  }
+
+  /// GET /api/v1/inventory/
   Future<List<InventoryItem>> inventory() async {
+    final body = await _getJson(
+      '/api/v1/inventory/',
+      cacheKey: 'inventory',
+      moduleLabel: 'Inventar',
+    );
+    return _readList(body)
+        .map(InventoryItem.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<InventoryItem> createInventoryItem({
+    required String id,
+    required String label,
+    String kind = 'device',
+  }) async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/inventory/'), headers: _headers()),
+        _client.post(
+          _uri('/api/v1/inventory/'),
+          headers: _headers(),
+          body: jsonEncode({'id': id, 'label': label, 'kind': kind}),
+        ),
       );
-      final body = _decode(_requireModule(response, 'Inventar'));
-      return _readList(body)
-          .map(InventoryItem.fromJson)
-          .toList(growable: false);
+      return InventoryItem.fromJson(_decode(_requireModule(response, 'Inventar')));
     });
   }
 
-  /// POST /api/v1/inventory/{id}/checkout/
   Future<InventoryItem> inventoryCheckout(String id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -347,7 +534,6 @@ class WachbuchApi {
     });
   }
 
-  /// POST /api/v1/inventory/{id}/checkin/
   Future<InventoryItem> inventoryCheckin(String id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -361,18 +547,15 @@ class WachbuchApi {
     });
   }
 
-  /// GET /api/v1/handovers/{id}/acks/
   Future<List<HandoverAck>> handoverAcks(int id) async {
-    return _withRetry(() async {
-      final response = await _send(
-        _client.get(_uri('/api/v1/handovers/$id/acks/'), headers: _headers()),
-      );
-      final body = _decode(_requireModule(response, 'Quittierung'));
-      return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
-    });
+    final body = await _getJson(
+      '/api/v1/handovers/$id/acks/',
+      cacheKey: 'handover_${id}_acks',
+      moduleLabel: 'Quittierung',
+    );
+    return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
   }
 
-  /// POST /api/v1/handovers/{id}/ack/ — idempotent pro Benutzer.
   Future<HandoverAck> acknowledgeHandover(int id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -386,13 +569,31 @@ class WachbuchApi {
       if (body.isEmpty) {
         return HandoverAck(handoverId: id, by: '', at: DateTime.now());
       }
-      return HandoverAck.fromJson({...body, 'handover_id': body['handover_id'] ?? id});
+      return HandoverAck.fromJson({
+        ...body,
+        'handover_id': body['handover_id'] ?? id,
+      });
     });
+  }
+
+  Future<WachalltagReport> reportStats() async {
+    final body = await _getJson(
+      '/api/v1/reports/',
+      cacheKey: 'reports',
+      moduleLabel: 'Auswertung',
+    );
+    return WachalltagReport.fromJson(body);
   }
 
   /// Turns module-disabled 404 into a clear, non-retryable ApiException.
   http.Response _requireModule(http.Response response, String label) {
     if (response.statusCode == 404) {
+      // Preserve a server-provided canonical error when possible.
+      try {
+        _decode(response);
+      } on ApiException catch (error) {
+        if (error.message.isNotEmpty) rethrow;
+      }
       throw ApiException(
         404,
         '$label-Modul auf diesem Server nicht verfügbar.',
@@ -466,9 +667,8 @@ String normalizeServerUrl(String input) {
   return value;
 }
 
-/// German labels for station module keys from `/me/`.
-String moduleLabel(String key) {
-  const labels = <String, String>{
+String moduleLabel(String key, {String languageCode = 'de'}) {
+  const de = <String, String>{
     'calendar': 'Kalender',
     'birthdays': 'Geburtstage',
     'coffee': 'Kaffeekasse',
@@ -479,6 +679,23 @@ String moduleLabel(String key) {
     'defects': 'Mängel',
     'assets': 'Geräte',
     'inventory': 'Schlüssel & Pools',
+    'reports': 'Auswertung',
+    'attachments': 'Fotos',
   };
+  const en = <String, String>{
+    'calendar': 'Calendar',
+    'birthdays': 'Birthdays',
+    'coffee': 'Coffee fund',
+    'feeds': 'News & traffic',
+    'checklists': 'Checklists',
+    'messaging': 'Messages',
+    'tasks': 'Tasks',
+    'defects': 'Defects',
+    'assets': 'Assets',
+    'inventory': 'Keys & pools',
+    'reports': 'Reports',
+    'attachments': 'Photos',
+  };
+  final labels = languageCode == 'en' ? en : de;
   return labels[key] ?? key;
 }
