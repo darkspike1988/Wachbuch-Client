@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/ui/priority_badge.dart';
 
@@ -8,6 +9,7 @@ void main() {
       return MaterialApp(
         locale: locale,
         supportedLocales: const [Locale('de'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: Scaffold(body: Center(child: child)),
       );
     }
