@@ -105,6 +105,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get moduleAssetsSubtitle => 'Fahrzeug- und Gerätestatus der Wache';
 
   @override
+  String get moduleReportsTitle => 'Auswertung';
+
+  @override
+  String get moduleReportsSubtitle =>
+      'Offene Mängel, Ampel-Quote, überfällige Checks';
+
+  @override
   String get quickAccessTitle => 'Schnellzugriff';
 
   @override
@@ -133,6 +140,53 @@ class AppLocalizationsDe extends AppLocalizations {
   String get defectStatusWaiting => 'Wartend';
 
   @override
+  String get defectCreateAction => 'Mangel';
+
+  @override
+  String get defectCreateTitle => 'Mangel anlegen';
+
+  @override
+  String get defectCreateTitleField => 'Titel';
+
+  @override
+  String get defectCreateDescriptionField => 'Beschreibung';
+
+  @override
+  String get defectCreatePriority => 'Priorität';
+
+  @override
+  String get defectCreateSubmit => 'Anlegen';
+
+  @override
+  String get defectCreateSuccess => 'Mangel angelegt.';
+
+  @override
+  String get defectModuleUnavailable =>
+      'Mängel-Modul auf diesem Server nicht verfügbar.';
+
+  @override
+  String get defectAttachmentsTitle => 'Belege';
+
+  @override
+  String get defectAttachmentsHint =>
+      'Demo: lokaler Platzhalter ohne Kamera. Upload folgt mit Server-Multipart.';
+
+  @override
+  String get defectAttachmentsEmpty => 'Keine Belege hinterlegt.';
+
+  @override
+  String get defectAttachmentLocal => 'Lokal (Demo)';
+
+  @override
+  String get defectAddAttachmentDemo => 'Demo-Beleg hinzufügen';
+
+  @override
+  String get defectAttachmentFailed => 'Beleg konnte nicht hinzugefügt werden.';
+
+  @override
+  String get handoverToDefect => 'Als Mangel';
+
+  @override
   String get assetsBoardTitle => 'Fahrzeug- & Gerätestatus';
 
   @override
@@ -152,6 +206,55 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get assetStatusWorkshop => 'Werkstatt';
+
+  @override
+  String get assetSetStatus => 'Status setzen';
+
+  @override
+  String get assetNoteLabel => 'Notiz';
+
+  @override
+  String get assetStatusSave => 'Status speichern';
+
+  @override
+  String get reportsTitle => 'Auswertung';
+
+  @override
+  String get reportsHint =>
+      'Leichte Client-Aggregation über geladene Listen — kein Server-Report.';
+
+  @override
+  String get reportsOpenDefects => 'offene Mängel';
+
+  @override
+  String get reportsOverdueChecks => 'Checks überfällig';
+
+  @override
+  String get reportsAmpQuote => 'Assets einsatzklar';
+
+  @override
+  String get reportsByOwnerTitle => 'Offene Mängel nach Owner';
+
+  @override
+  String get reportsNoOpenDefects => 'Keine offenen Mängel.';
+
+  @override
+  String reportsOwnerCount(int count) {
+    return '$count offen';
+  }
+
+  @override
+  String get reportsAssetsTitle => 'Asset-Ampel';
+
+  @override
+  String reportsAssetsReady(int ready, int total) {
+    return '$ready von $total Fahrzeugen/Geräten einsatzklar.';
+  }
+
+  @override
+  String offlineCacheLabel(String timestamp) {
+    return 'Offline-Stand: $timestamp';
+  }
 
   @override
   String get inventoryTitle => 'Schlüssel & Pools';

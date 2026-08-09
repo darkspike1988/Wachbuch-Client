@@ -135,6 +135,64 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /defects/{id}/attachments/:
+    parameters:
+      - $ref: "#/components/parameters/DefectId"
+    get:
+      tags: [defects]
+      summary: List defect attachments (Phase 3)
+      operationId: listDefectAttachments
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefectAttachmentList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [defects]
+      summary: Register attachment metadata (JSON) or multipart upload
+      description: |
+        Servers SHOULD accept multipart/form-data with a file field for binary
+        uploads. Clients MAY send JSON metadata first for demo / local-only
+        placeholders (`name`, `content_type`, optional `size_bytes`).
+        Max size guidance: 8 MiB per file; image/jpeg|png|webp; delete via
+        future DELETE (not in v1-draft).
+      operationId: addDefectAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefectAttachmentCreate"
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefectAttachment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /assets/:
     get:
       tags: [assets]
@@ -395,6 +453,51 @@ components:
           description: Display helper for demos; servers may omit
         category:
           $ref: "#/components/schemas/DefectCategory"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/DefectAttachment"
+
+    DefectAttachment:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        content_type:
+          type: string
+          default: application/octet-stream
+        size_bytes:
+          type: integer
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        local_only:
+          type: boolean
+          description: Demo clients may set true for placeholders never uploaded
+
+    DefectAttachmentCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        content_type:
+          type: string
+        size_bytes:
+          type: integer
+
+    DefectAttachmentList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/DefectAttachment"
 
     DefectCreate:
       type: object

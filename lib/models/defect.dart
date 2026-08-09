@@ -1,3 +1,5 @@
+import 'package:wachbuch_mobile/models/defect_attachment.dart';
+
 /// Station defect / Mangel — see docs/SCHEMA-WACHALLTAG.md.
 class Defect {
   const Defect({
@@ -11,6 +13,7 @@ class Defect {
     this.dueAt,
     this.dueLabel = '',
     this.category = 'task',
+    this.attachments = const [],
   });
 
   factory Defect.fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,7 @@ class Defect {
           .toString()
           .trim(),
       category: _readCategory(json['category']),
+      attachments: _readAttachments(json['attachments']),
     );
   }
 
@@ -40,6 +44,7 @@ class Defect {
   final DateTime? dueAt;
   final String dueLabel;
   final String category;
+  final List<DefectAttachment> attachments;
 
   bool get isOpen => status != 'done';
 
@@ -63,6 +68,9 @@ class Defect {
         if (dueAt != null) 'due_at': dueAt!.toUtc().toIso8601String(),
         if (dueLabel.isNotEmpty) 'due_label': dueLabel,
         'category': category,
+        if (attachments.isNotEmpty)
+          'attachments':
+              attachments.map((item) => item.toJson()).toList(growable: false),
       };
 
   Defect copyWith({
@@ -76,6 +84,7 @@ class Defect {
     DateTime? dueAt,
     String? dueLabel,
     String? category,
+    List<DefectAttachment>? attachments,
   }) {
     return Defect(
       id: id ?? this.id,
@@ -88,6 +97,7 @@ class Defect {
       dueAt: dueAt ?? this.dueAt,
       dueLabel: dueLabel ?? this.dueLabel,
       category: category ?? this.category,
+      attachments: attachments ?? this.attachments,
     );
   }
 
@@ -141,4 +151,12 @@ DateTime? _readDate(Object? value) {
 int _readInt(Object? value) {
   if (value is int) return value;
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+List<DefectAttachment> _readAttachments(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<Map>()
+      .map((item) => DefectAttachment.fromJson(Map<String, dynamic>.from(item)))
+      .toList(growable: false);
 }

@@ -106,6 +106,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vehicle and equipment status at the station';
 
   @override
+  String get moduleReportsTitle => 'Reports';
+
+  @override
+  String get moduleReportsSubtitle =>
+      'Open defects, readiness quote, overdue checks';
+
+  @override
   String get quickAccessTitle => 'Quick access';
 
   @override
@@ -134,6 +141,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defectStatusWaiting => 'Waiting';
 
   @override
+  String get defectCreateAction => 'Defect';
+
+  @override
+  String get defectCreateTitle => 'Create defect';
+
+  @override
+  String get defectCreateTitleField => 'Title';
+
+  @override
+  String get defectCreateDescriptionField => 'Description';
+
+  @override
+  String get defectCreatePriority => 'Priority';
+
+  @override
+  String get defectCreateSubmit => 'Create';
+
+  @override
+  String get defectCreateSuccess => 'Defect created.';
+
+  @override
+  String get defectModuleUnavailable =>
+      'Defects module is not available on this server.';
+
+  @override
+  String get defectAttachmentsTitle => 'Attachments';
+
+  @override
+  String get defectAttachmentsHint =>
+      'Demo: local placeholder without camera. Upload follows server multipart.';
+
+  @override
+  String get defectAttachmentsEmpty => 'No attachments yet.';
+
+  @override
+  String get defectAttachmentLocal => 'Local (demo)';
+
+  @override
+  String get defectAddAttachmentDemo => 'Add demo attachment';
+
+  @override
+  String get defectAttachmentFailed => 'Could not add attachment.';
+
+  @override
+  String get handoverToDefect => 'As defect';
+
+  @override
   String get assetsBoardTitle => 'Vehicle & equipment status';
 
   @override
@@ -153,6 +207,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetStatusWorkshop => 'Workshop';
+
+  @override
+  String get assetSetStatus => 'Set status';
+
+  @override
+  String get assetNoteLabel => 'Note';
+
+  @override
+  String get assetStatusSave => 'Save status';
+
+  @override
+  String get reportsTitle => 'Reports';
+
+  @override
+  String get reportsHint =>
+      'Lightweight client aggregation over loaded lists — no server report.';
+
+  @override
+  String get reportsOpenDefects => 'open defects';
+
+  @override
+  String get reportsOverdueChecks => 'checks overdue';
+
+  @override
+  String get reportsAmpQuote => 'assets ready';
+
+  @override
+  String get reportsByOwnerTitle => 'Open defects by owner';
+
+  @override
+  String get reportsNoOpenDefects => 'No open defects.';
+
+  @override
+  String reportsOwnerCount(int count) {
+    return '$count open';
+  }
+
+  @override
+  String get reportsAssetsTitle => 'Asset readiness';
+
+  @override
+  String reportsAssetsReady(int ready, int total) {
+    return '$ready of $total vehicles/devices ready.';
+  }
+
+  @override
+  String offlineCacheLabel(String timestamp) {
+    return 'Offline snapshot: $timestamp';
+  }
 
   @override
   String get inventoryTitle => 'Keys & pools';

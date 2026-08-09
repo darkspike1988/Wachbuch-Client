@@ -278,6 +278,18 @@ abstract class AppLocalizations {
   /// **'Fahrzeug- und Gerätestatus der Wache'**
   String get moduleAssetsSubtitle;
 
+  /// No description provided for @moduleReportsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auswertung'**
+  String get moduleReportsTitle;
+
+  /// No description provided for @moduleReportsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Mängel, Ampel-Quote, überfällige Checks'**
+  String get moduleReportsSubtitle;
+
   /// No description provided for @quickAccessTitle.
   ///
   /// In de, this message translates to:
@@ -332,6 +344,96 @@ abstract class AppLocalizations {
   /// **'Wartend'**
   String get defectStatusWaiting;
 
+  /// No description provided for @defectCreateAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Mangel'**
+  String get defectCreateAction;
+
+  /// No description provided for @defectCreateTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mangel anlegen'**
+  String get defectCreateTitle;
+
+  /// No description provided for @defectCreateTitleField.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel'**
+  String get defectCreateTitleField;
+
+  /// No description provided for @defectCreateDescriptionField.
+  ///
+  /// In de, this message translates to:
+  /// **'Beschreibung'**
+  String get defectCreateDescriptionField;
+
+  /// No description provided for @defectCreatePriority.
+  ///
+  /// In de, this message translates to:
+  /// **'Priorität'**
+  String get defectCreatePriority;
+
+  /// No description provided for @defectCreateSubmit.
+  ///
+  /// In de, this message translates to:
+  /// **'Anlegen'**
+  String get defectCreateSubmit;
+
+  /// No description provided for @defectCreateSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Mangel angelegt.'**
+  String get defectCreateSuccess;
+
+  /// No description provided for @defectModuleUnavailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Mängel-Modul auf diesem Server nicht verfügbar.'**
+  String get defectModuleUnavailable;
+
+  /// No description provided for @defectAttachmentsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Belege'**
+  String get defectAttachmentsTitle;
+
+  /// No description provided for @defectAttachmentsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Demo: lokaler Platzhalter ohne Kamera. Upload folgt mit Server-Multipart.'**
+  String get defectAttachmentsHint;
+
+  /// No description provided for @defectAttachmentsEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Belege hinterlegt.'**
+  String get defectAttachmentsEmpty;
+
+  /// No description provided for @defectAttachmentLocal.
+  ///
+  /// In de, this message translates to:
+  /// **'Lokal (Demo)'**
+  String get defectAttachmentLocal;
+
+  /// No description provided for @defectAddAttachmentDemo.
+  ///
+  /// In de, this message translates to:
+  /// **'Demo-Beleg hinzufügen'**
+  String get defectAddAttachmentDemo;
+
+  /// No description provided for @defectAttachmentFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Beleg konnte nicht hinzugefügt werden.'**
+  String get defectAttachmentFailed;
+
+  /// No description provided for @handoverToDefect.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Mangel'**
+  String get handoverToDefect;
+
   /// No description provided for @assetsBoardTitle.
   ///
   /// In de, this message translates to:
@@ -373,6 +475,90 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Werkstatt'**
   String get assetStatusWorkshop;
+
+  /// No description provided for @assetSetStatus.
+  ///
+  /// In de, this message translates to:
+  /// **'Status setzen'**
+  String get assetSetStatus;
+
+  /// No description provided for @assetNoteLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Notiz'**
+  String get assetNoteLabel;
+
+  /// No description provided for @assetStatusSave.
+  ///
+  /// In de, this message translates to:
+  /// **'Status speichern'**
+  String get assetStatusSave;
+
+  /// No description provided for @reportsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auswertung'**
+  String get reportsTitle;
+
+  /// No description provided for @reportsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Leichte Client-Aggregation über geladene Listen — kein Server-Report.'**
+  String get reportsHint;
+
+  /// No description provided for @reportsOpenDefects.
+  ///
+  /// In de, this message translates to:
+  /// **'offene Mängel'**
+  String get reportsOpenDefects;
+
+  /// No description provided for @reportsOverdueChecks.
+  ///
+  /// In de, this message translates to:
+  /// **'Checks überfällig'**
+  String get reportsOverdueChecks;
+
+  /// No description provided for @reportsAmpQuote.
+  ///
+  /// In de, this message translates to:
+  /// **'Assets einsatzklar'**
+  String get reportsAmpQuote;
+
+  /// No description provided for @reportsByOwnerTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Mängel nach Owner'**
+  String get reportsByOwnerTitle;
+
+  /// No description provided for @reportsNoOpenDefects.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine offenen Mängel.'**
+  String get reportsNoOpenDefects;
+
+  /// No description provided for @reportsOwnerCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} offen'**
+  String reportsOwnerCount(int count);
+
+  /// No description provided for @reportsAssetsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Asset-Ampel'**
+  String get reportsAssetsTitle;
+
+  /// No description provided for @reportsAssetsReady.
+  ///
+  /// In de, this message translates to:
+  /// **'{ready} von {total} Fahrzeugen/Geräten einsatzklar.'**
+  String reportsAssetsReady(int ready, int total);
+
+  /// No description provided for @offlineCacheLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline-Stand: {timestamp}'**
+  String offlineCacheLabel(String timestamp);
 
   /// No description provided for @inventoryTitle.
   ///

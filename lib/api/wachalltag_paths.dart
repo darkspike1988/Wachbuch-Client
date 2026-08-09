@@ -9,6 +9,8 @@ abstract final class WachalltagPaths {
   static const defects = '$apiPrefix/defects/';
   static String defectDetail(int id) => '$apiPrefix/defects/$id/';
   static String defectStatus(int id) => '$apiPrefix/defects/$id/status/';
+  static String defectAttachments(int id) =>
+      '$apiPrefix/defects/$id/attachments/';
 
   static const assets = '$apiPrefix/assets/';
   static String assetStatus(String id) => '$apiPrefix/assets/$id/status/';

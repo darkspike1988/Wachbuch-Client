@@ -12,6 +12,7 @@ import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/screens/home_shell.dart';
 import 'package:wachbuch_mobile/screens/login_screen.dart';
 import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
+import 'package:wachbuch_mobile/services/offline_read_cache.dart';
 import 'package:wachbuch_mobile/theme/app_theme.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
 
@@ -268,6 +269,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
 
   Future<void> _logout({String? notice}) async {
     await widget.store.clearToken();
+    await OfflineReadCache.clearAll();
     if (!mounted) return;
     setState(() {
       _api = null;
@@ -280,6 +282,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
 
   Future<void> _changeServer() async {
     await widget.store.clearAll();
+    await OfflineReadCache.clearAll();
     if (!mounted) return;
     setState(() {
       _api = null;

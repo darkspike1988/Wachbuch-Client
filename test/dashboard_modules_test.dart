@@ -131,5 +131,9 @@ void main() {
     await openTile(const Key('module-tile-assets'));
     expect(find.text('Schlüssel & Pools'), findsOneWidget);
     expect(find.text('Funkgerät A'), findsOneWidget);
+    await _popTopRoute(tester);
+
+    await openTile(const Key('module-tile-reports'));
+    expect(find.text('Auswertung'), findsWidgets);
   });
 }

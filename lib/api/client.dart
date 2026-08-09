@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:wachbuch_mobile/api/wachalltag_paths.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/defect_attachment.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
@@ -320,6 +321,58 @@ class WachbuchApi {
       );
       final body = _decode(_requireModule(response, 'Mängel'));
       return Defect.fromJson(body.isEmpty ? {'id': id, 'status': status} : body);
+    });
+  }
+
+  /// GET /api/v1/defects/{id}/attachments/ — Belege (Modul `defects`, Phase 3).
+  Future<List<DefectAttachment>> defectAttachments(int id) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.get(
+          _uri(WachalltagPaths.defectAttachments(id)),
+          headers: _headers(),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return _readList(body)
+          .map(DefectAttachment.fromJson)
+          .toList(growable: false);
+    });
+  }
+
+  /// POST /api/v1/defects/{id}/attachments/ — Metadaten / Demo-Beleg anlegen.
+  ///
+  /// Multipart binary upload follows once the server implements it; clients may
+  /// send JSON metadata (`name`, `content_type`, optional `size_bytes`).
+  Future<DefectAttachment> addDefectAttachment(
+    int id, {
+    required String name,
+    String contentType = 'image/jpeg',
+    int sizeBytes = 0,
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri(WachalltagPaths.defectAttachments(id)),
+          headers: _headers(),
+          body: jsonEncode({
+            'name': name,
+            'content_type': contentType,
+            if (sizeBytes > 0) 'size_bytes': sizeBytes,
+          }),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return DefectAttachment.fromJson(
+        body.isEmpty
+            ? {
+                'id': 'local-$id',
+                'name': name,
+                'content_type': contentType,
+                'size_bytes': sizeBytes,
+              }
+            : body,
+      );
     });
   }
 

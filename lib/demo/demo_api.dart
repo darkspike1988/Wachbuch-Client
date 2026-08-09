@@ -6,6 +6,7 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/defect_attachment.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
@@ -184,6 +185,41 @@ class DemoWachbuchApi extends WachbuchApi {
     });
     _defects[index] = updated;
     return updated;
+  }
+
+  @override
+  Future<List<DefectAttachment>> defectAttachments(int id) async {
+    final index = _defects.indexWhere((defect) => defect.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Mangel nicht gefunden.');
+    }
+    return List<DefectAttachment>.unmodifiable(_defects[index].attachments);
+  }
+
+  @override
+  Future<DefectAttachment> addDefectAttachment(
+    int id, {
+    required String name,
+    String contentType = 'image/jpeg',
+    int sizeBytes = 0,
+  }) async {
+    final index = _defects.indexWhere((defect) => defect.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Mangel nicht gefunden.');
+    }
+    final existing = _defects[index];
+    final attachment = DefectAttachment(
+      id: 'att-${id}-${existing.attachments.length + 1}',
+      name: name.trim().isEmpty ? 'beleg-demo.jpg' : name.trim(),
+      contentType: contentType,
+      sizeBytes: sizeBytes > 0 ? sizeBytes : 12 * 1024,
+      createdAt: DateTime.now(),
+      localOnly: true,
+    );
+    _defects[index] = existing.copyWith(
+      attachments: [...existing.attachments, attachment],
+    );
+    return attachment;
   }
 
   @override

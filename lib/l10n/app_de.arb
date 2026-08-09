@@ -44,6 +44,8 @@
   "moduleDefectsSubtitle": "Offene Punkte mit Owner und Frist",
   "moduleAssetsTitle": "Geräte",
   "moduleAssetsSubtitle": "Fahrzeug- und Gerätestatus der Wache",
+  "moduleReportsTitle": "Auswertung",
+  "moduleReportsSubtitle": "Offene Mängel, Ampel-Quote, überfällige Checks",
   "quickAccessTitle": "Schnellzugriff",
 
   "defectsTitle": "Mängel",
@@ -54,6 +56,21 @@
   "defectDueLabel": "Frist",
   "defectSetStatus": "Status setzen",
   "defectStatusWaiting": "Wartend",
+  "defectCreateAction": "Mangel",
+  "defectCreateTitle": "Mangel anlegen",
+  "defectCreateTitleField": "Titel",
+  "defectCreateDescriptionField": "Beschreibung",
+  "defectCreatePriority": "Priorität",
+  "defectCreateSubmit": "Anlegen",
+  "defectCreateSuccess": "Mangel angelegt.",
+  "defectModuleUnavailable": "Mängel-Modul auf diesem Server nicht verfügbar.",
+  "defectAttachmentsTitle": "Belege",
+  "defectAttachmentsHint": "Demo: lokaler Platzhalter ohne Kamera. Upload folgt mit Server-Multipart.",
+  "defectAttachmentsEmpty": "Keine Belege hinterlegt.",
+  "defectAttachmentLocal": "Lokal (Demo)",
+  "defectAddAttachmentDemo": "Demo-Beleg hinzufügen",
+  "defectAttachmentFailed": "Beleg konnte nicht hinzugefügt werden.",
+  "handoverToDefect": "Als Mangel",
 
   "assetsBoardTitle": "Fahrzeug- & Gerätestatus",
   "assetsScreenTitle": "Geräte & Status",
@@ -62,6 +79,37 @@
   "assetStatusLimited": "Eingeschränkt",
   "assetStatusOob": "Außer Betrieb",
   "assetStatusWorkshop": "Werkstatt",
+  "assetSetStatus": "Status setzen",
+  "assetNoteLabel": "Notiz",
+  "assetStatusSave": "Status speichern",
+
+  "reportsTitle": "Auswertung",
+  "reportsHint": "Leichte Client-Aggregation über geladene Listen — kein Server-Report.",
+  "reportsOpenDefects": "offene Mängel",
+  "reportsOverdueChecks": "Checks überfällig",
+  "reportsAmpQuote": "Assets einsatzklar",
+  "reportsByOwnerTitle": "Offene Mängel nach Owner",
+  "reportsNoOpenDefects": "Keine offenen Mängel.",
+  "reportsOwnerCount": "{count} offen",
+  "@reportsOwnerCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "reportsAssetsTitle": "Asset-Ampel",
+  "reportsAssetsReady": "{ready} von {total} Fahrzeugen/Geräten einsatzklar.",
+  "@reportsAssetsReady": {
+    "placeholders": {
+      "ready": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "offlineCacheLabel": "Offline-Stand: {timestamp}",
+  "@offlineCacheLabel": {
+    "placeholders": {
+      "timestamp": {"type": "String"}
+    }
+  },
 
   "inventoryTitle": "Schlüssel & Pools",
   "inventoryHint": "Checkout / Checkin für Pool-Geräte und Schlüssel.",

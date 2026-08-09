@@ -11,6 +11,9 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
   `docs/SERVER-HANDOFF-WACHALLTAG.md`.
 - Client-Pfadkonstanten `WachalltagPaths`; API `createDefect` /
   `updateAssetStatus` (Demo + HTTP).
+- Phase 2–5 Client: Mangel anlegen, Asset-Status UI, „Als Mangel“,
+  Demo-Belege, Auswertung-Screen, verschlüsselter Offline-Lesecache,
+  E2E-/Pilot-Doku. Server-Phase 1 bleibt im Wachbuch-Server-Repo.
 
 ### CI
 

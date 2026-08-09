@@ -31,8 +31,10 @@ cd landing && python3 -m http.server 4173
 ```
 
 Siehe [landing/README.md](landing/README.md), Demo-Fahrplan
-[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md) und Produktiv-Welle
-[docs/FAHRPLAN-PRODUKTIV.md](docs/FAHRPLAN-PRODUKTIV.md).
+[docs/FAHRPLAN-BEHOERDEN.md](docs/FAHRPLAN-BEHOERDEN.md), Produktiv-Welle
+[docs/FAHRPLAN-PRODUKTIV.md](docs/FAHRPLAN-PRODUKTIV.md),
+E2E [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md) und Pilot
+[docs/PILOT-WACHALLTAG.md](docs/PILOT-WACHALLTAG.md).
 
 ## Startflow
 

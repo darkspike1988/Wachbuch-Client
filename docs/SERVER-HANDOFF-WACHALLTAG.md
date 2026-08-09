@@ -71,10 +71,21 @@ Auth unverändert: `Authorization: Token <wb_…>`.
 | Asset-Status setzen | optional nein | ja |
 | Übergabe quittieren | ja | ja |
 
+## Phase 3 (nach Kern) — Attachments
+
+Contract bereits im OpenAPI-Draft:
+
+| Methode | Pfad | Bemerkung |
+| --- | --- | --- |
+| GET | `/api/v1/defects/{id}/attachments/` | Liste Metadaten |
+| POST | `/api/v1/defects/{id}/attachments/` | JSON-Metadaten und/oder multipart `file` |
+
+Client hat Demo-Platzhalter + HTTP-Metadaten-POST; Multipart/Kamera folgt nach Server.
+
 ## Nicht in Phase 1
 
-- Attachments / Foto-Upload  
-- Inventory Checkout  
+- Attachments / Foto-Upload (siehe Phase 3 oben)  
+- Inventory Checkout (Client fertig; Server Audit)  
 - Checklist-Intervalle serverseitig  
 - Push  
 

@@ -5,9 +5,14 @@ import 'package:wachbuch_mobile/theme/design_tokens.dart';
 
 /// Compact vehicle/device status board for the overview tab.
 class AssetStatusBoard extends StatelessWidget {
-  const AssetStatusBoard({super.key, required this.assets});
+  const AssetStatusBoard({
+    super.key,
+    required this.assets,
+    this.onAssetTap,
+  });
 
   final List<StationAsset> assets;
+  final ValueChanged<StationAsset>? onAssetTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +41,12 @@ class AssetStatusBoard extends StatelessWidget {
                 for (final asset in assets)
                   SizedBox(
                     width: width,
-                    child: _AssetCard(asset: asset),
+                    child: _AssetCard(
+                      asset: asset,
+                      onTap: onAssetTap == null
+                          ? null
+                          : () => onAssetTap!(asset),
+                    ),
                   ),
               ],
             );
@@ -48,9 +58,10 @@ class AssetStatusBoard extends StatelessWidget {
 }
 
 class _AssetCard extends StatelessWidget {
-  const _AssetCard({required this.asset});
+  const _AssetCard({required this.asset, this.onTap});
 
   final StationAsset asset;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -67,49 +78,61 @@ class _AssetCard extends StatelessWidget {
       _ => l.assetStatusOob,
     };
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              asset.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+    final content = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            asset.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
+            ),
+            child: Text(
+              statusLabel,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: accent,
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
-              ),
-              child: Text(
-                statusLabel,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w700,
-                    ),
+          ),
+          if (asset.note.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              asset.note,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? content
+          : InkWell(
+              onTap: onTap,
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(minHeight: WachbuchTokens.touchTarget),
+                child: content,
               ),
             ),
-            if (asset.note.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                asset.note,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

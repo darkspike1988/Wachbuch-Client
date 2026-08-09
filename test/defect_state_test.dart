@@ -4,18 +4,32 @@ import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/state/defect_state.dart';
 
 class _FakeDefectApi extends WachbuchApi {
-  _FakeDefectApi({this.items, this.error, this.onUpdate})
+  _FakeDefectApi({this.items, this.error, this.onUpdate, this.onCreate})
       : super(baseUrl: 'https://wache.example.org', token: 'wb_test');
 
   List<Defect>? items;
   ApiException? error;
   Defect Function(int id, String status)? onUpdate;
+  Defect Function(Map<String, dynamic> payload)? onCreate;
 
   @override
   Future<List<Defect>> defects() async {
     final err = error;
     if (err != null) throw err;
     return List<Defect>.from(items ?? const []);
+  }
+
+  @override
+  Future<Defect> createDefect(Map<String, dynamic> payload) async {
+    final err = error;
+    if (err != null) throw err;
+    final handler = onCreate;
+    if (handler != null) return handler(payload);
+    return Defect(
+      id: 99,
+      title: (payload['title'] ?? '').toString(),
+      status: 'open',
+    );
   }
 
   @override
@@ -74,6 +88,20 @@ void main() {
     final ok = await state.setStatus(1, 'waiting');
     expect(ok, isTrue);
     expect(state.items.single.status, 'waiting');
+    state.dispose();
+  });
+
+  test('create prepends the new defect', () async {
+    final api = _FakeDefectApi(
+      items: const [Defect(id: 1, title: 'Alt', status: 'open')],
+    );
+    final state = DefectState(api: api);
+    await state.reload();
+
+    final ok = await state.create({'title': 'Neu'});
+    expect(ok, isTrue);
+    expect(state.items.first.title, 'Neu');
+    expect(state.items.length, 2);
     state.dispose();
   });
 }

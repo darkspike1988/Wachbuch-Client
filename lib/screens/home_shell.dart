@@ -10,7 +10,9 @@ import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/screens/reports_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
+import 'package:wachbuch_mobile/services/offline_read_cache.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
 import 'package:wachbuch_mobile/ui/asset_status_board.dart';
@@ -26,11 +28,15 @@ class HomeShell extends StatefulWidget {
     required this.api,
     required this.onLogout,
     required this.onChangeServer,
+    this.offlineCache,
   });
 
   final WachbuchApi api;
   final Future<void> Function() onLogout;
   final Future<void> Function() onChangeServer;
+
+  /// Optional override (tests inject an in-memory cache).
+  final OfflineReadCache? offlineCache;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -39,6 +45,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
   int _reloadGeneration = 0;
+  late final OfflineReadCache _offlineCache;
   late final HandoverState _handoverState;
   late final AuthState _authState;
   late final ConnectivityService _connectivity;
@@ -48,7 +55,9 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _handoverState = HandoverState(api: widget.api);
+    _offlineCache = widget.offlineCache ??
+        OfflineReadCache(serverUrl: widget.api.baseUrl);
+    _handoverState = HandoverState(api: widget.api, cache: _offlineCache);
     _authState = AuthState(api: widget.api);
     _connectivity = ConnectivityService();
     _listenable = Listenable.merge([_handoverState, _authState, _connectivity]);
@@ -144,6 +153,7 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             _OverviewTab(
               api: widget.api,
+              cache: _offlineCache,
               stationName: stationName,
               roleLabel: _authState.roleLabel,
               modules: _authState.modules,
@@ -151,6 +161,12 @@ class _HomeShellState extends State<HomeShell> {
               loading: loading,
               hasData: _authState.hasData,
               error: error,
+              cacheLabel: _handoverState.fromCache &&
+                      _handoverState.cacheUpdatedAt != null
+                  ? l.offlineCacheLabel(
+                      _formatCacheStamp(_handoverState.cacheUpdatedAt!),
+                    )
+                  : null,
               onRefresh: _reload,
             ),
             _HandoversTab(
@@ -273,6 +289,7 @@ class _HomeShellState extends State<HomeShell> {
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
     required this.api,
+    required this.cache,
     required this.stationName,
     required this.roleLabel,
     required this.modules,
@@ -280,10 +297,12 @@ class _OverviewTab extends StatelessWidget {
     required this.loading,
     required this.hasData,
     required this.error,
+    required this.cacheLabel,
     required this.onRefresh,
   });
 
   final WachbuchApi api;
+  final OfflineReadCache cache;
   final String stationName;
   final String roleLabel;
   final Map<String, dynamic> modules;
@@ -291,6 +310,7 @@ class _OverviewTab extends StatelessWidget {
   final bool loading;
   final bool hasData;
   final String? error;
+  final String? cacheLabel;
   final Future<void> Function() onRefresh;
 
   @override
@@ -370,9 +390,18 @@ class _OverviewTab extends StatelessWidget {
                   );
                 },
               ),
+              if (cacheLabel != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  cacheLabel!,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                ),
+              ],
               if (modules['assets'] == true) ...[
                 const SizedBox(height: 24),
-                _OverviewAssetBoard(api: api),
+                _OverviewAssetBoard(api: api, cache: cache),
               ],
               const SizedBox(height: 24),
               _SectionTitle(
@@ -395,7 +424,7 @@ class _OverviewTab extends StatelessWidget {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              _ModuleTiles(api: api, modules: modules),
+              _ModuleTiles(api: api, cache: cache, modules: modules),
               const SizedBox(height: 24),
               Material(
                 color: Theme.of(context).colorScheme.primaryContainer,
@@ -567,9 +596,14 @@ class _DashboardMetric extends StatelessWidget {
 }
 
 class _ModuleTiles extends StatelessWidget {
-  const _ModuleTiles({required this.api, required this.modules});
+  const _ModuleTiles({
+    required this.api,
+    required this.cache,
+    required this.modules,
+  });
 
   final WachbuchApi api;
+  final OfflineReadCache cache;
   final Map<String, dynamic> modules;
 
   @override
@@ -626,6 +660,18 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['defects'] == true ||
+        modules['assets'] == true ||
+        modules['checklists'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-reports',
+          icon: Icons.insights_outlined,
+          title: l.moduleReportsTitle,
+          subtitle: l.moduleReportsSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -670,9 +716,11 @@ class _ModuleTiles extends StatelessWidget {
       case 'module-tile-checklists':
         screen = ChecklistenScreen(api: api);
       case 'module-tile-defects':
-        screen = DefectsScreen(api: api);
+        screen = DefectsScreen(api: api, cache: cache);
       case 'module-tile-assets':
-        screen = AssetsScreen(api: api);
+        screen = AssetsScreen(api: api, cache: cache);
+      case 'module-tile-reports':
+        screen = ReportsScreen(api: api);
       default:
         return;
     }
@@ -682,9 +730,10 @@ class _ModuleTiles extends StatelessWidget {
 
 /// Loads station assets for the overview board; hides on 501 / empty.
 class _OverviewAssetBoard extends StatefulWidget {
-  const _OverviewAssetBoard({required this.api});
+  const _OverviewAssetBoard({required this.api, required this.cache});
 
   final WachbuchApi api;
+  final OfflineReadCache cache;
 
   @override
   State<_OverviewAssetBoard> createState() => _OverviewAssetBoardState();
@@ -717,12 +766,13 @@ class _OverviewAssetBoardState extends State<_OverviewAssetBoard> {
         _assets = assets;
         _loading = false;
       });
+      // Do not block UI on secure-storage I/O.
+      widget.cache.write(assets: assets);
     } on ApiException catch (_) {
-      // 501 or other errors: keep board empty; overview already surfaces
-      // auth/network problems elsewhere.
+      final snapshot = await widget.cache.read();
       if (!mounted) return;
       setState(() {
-        _assets = const [];
+        _assets = snapshot?.assets ?? const [];
         _loading = false;
       });
     } catch (_) {
@@ -734,6 +784,102 @@ class _OverviewAssetBoardState extends State<_OverviewAssetBoard> {
     }
   }
 
+  Future<void> _editStatus(StationAsset asset) async {
+    final l = AppLocalizations.of(context)!;
+    final noteController = TextEditingController(text: asset.note);
+    var status = asset.status;
+    final apply = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                8,
+                24,
+                24 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    asset.label,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(l.assetSetStatus),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final value in const [
+                        'ready',
+                        'limited',
+                        'workshop',
+                        'oob',
+                      ])
+                        ChoiceChip(
+                          label: Text(switch (value) {
+                            'ready' => l.assetStatusReady,
+                            'limited' => l.assetStatusLimited,
+                            'workshop' => l.assetStatusWorkshop,
+                            _ => l.assetStatusOob,
+                          }),
+                          selected: status == value,
+                          onSelected: (_) =>
+                              setModalState(() => status = value),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    decoration: InputDecoration(labelText: l.assetNoteLabel),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(l.assetStatusSave),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    final note = noteController.text.trim();
+    noteController.dispose();
+    if (apply != true) return;
+    try {
+      final updated = await widget.api.updateAssetStatus(
+        asset.id,
+        status: status,
+        note: note,
+      );
+      if (!mounted) return;
+      setState(() {
+        _assets = [
+          for (final item in _assets)
+            if (item.id == asset.id) updated else item,
+        ];
+      });
+      await widget.cache.write(assets: _assets);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading && _assets.isEmpty) {
@@ -742,7 +888,10 @@ class _OverviewAssetBoardState extends State<_OverviewAssetBoard> {
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
-    return AssetStatusBoard(assets: _assets);
+    return AssetStatusBoard(
+      assets: _assets,
+      onAssetTap: _editStatus,
+    );
   }
 }
 
@@ -1220,6 +1369,7 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
   List<HandoverAck> _acks = const [];
   bool _acksSupported = true;
   bool _acking = false;
+  bool _creatingDefect = false;
   String? _ackError;
 
   @override
@@ -1277,6 +1427,59 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
         _ackError = l.handoverAckFailed;
       });
     }
+  }
+
+  Future<void> _createDefectFromHandover(
+    AppLocalizations l,
+    Map<String, dynamic> item,
+  ) async {
+    setState(() => _creatingDefect = true);
+    try {
+      final title =
+          (item['title']?.toString().trim().isNotEmpty == true
+                  ? item['title'].toString().trim()
+                  : l.handoverFallback);
+      final details = item['details']?.toString().trim() ?? '';
+      await widget.api.createDefect({
+        'title': title,
+        'description': details,
+        'priority': _mapHandoverPriority(item['priority']),
+        'status': 'open',
+        'category': 'task',
+      });
+      if (!mounted) return;
+      setState(() => _creatingDefect = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.defectCreateSuccess)),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _creatingDefect = false);
+      if (WachbuchApi.isModuleUnavailable(error)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.defectModuleUnavailable)),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _creatingDefect = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.detailsLoadFailed)),
+      );
+    }
+  }
+
+  String _mapHandoverPriority(Object? value) {
+    final raw = value?.toString().trim().toLowerCase() ?? '';
+    return switch (raw) {
+      'urgent' || 'high' => 'urgent',
+      'important' || 'medium' => 'important',
+      _ => 'normal',
+    };
   }
 
   @override
@@ -1420,6 +1623,21 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('handover-to-defect'),
+                  onPressed: _creatingDefect
+                      ? null
+                      : () => _createDefectFromHandover(l, item),
+                  icon: _creatingDefect
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.report_problem_outlined),
+                  label: Text(l.handoverToDefect),
+                ),
               ],
             ),
           );
@@ -1517,6 +1735,13 @@ String _formatTimestamp(Object? value) {
   String two(int number) => number.toString().padLeft(2, '0');
   return '${two(parsed.day)}.${two(parsed.month)}.${parsed.year}, '
       '${two(parsed.hour)}:${two(parsed.minute)} Uhr';
+}
+
+String _formatCacheStamp(DateTime value) {
+  final local = value.toLocal();
+  String two(int number) => number.toString().padLeft(2, '0');
+  return '${two(local.day)}.${two(local.month)}.${local.year} '
+      '${two(local.hour)}:${two(local.minute)}';
 }
 
 class _AccountTab extends StatelessWidget {

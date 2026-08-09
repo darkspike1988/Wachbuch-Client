@@ -97,6 +97,31 @@ void main() {
       expect(asset.status, 'limited');
     });
 
+    test('POST defect attachment metadata path', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/defects/3/attachments/');
+        expect(jsonDecode(request.body)['name'], 'foto.jpg');
+        return http.Response(
+          jsonEncode({
+            'id': 'att-1',
+            'name': 'foto.jpg',
+            'content_type': 'image/jpeg',
+          }),
+          201,
+        );
+      });
+
+      final attachment = await WachbuchApi(
+        baseUrl: baseUrl,
+        token: 't',
+        client: client,
+      ).addDefectAttachment(3, name: 'foto.jpg');
+
+      expect(attachment.id, 'att-1');
+      expect(attachment.name, 'foto.jpg');
+    });
+
     test('missing defects module (404) is non-retryable', () async {
       var calls = 0;
       final client = MockClient((_) async {

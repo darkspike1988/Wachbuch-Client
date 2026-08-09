@@ -34,6 +34,8 @@
   "moduleDefectsSubtitle": "Open items with owner and due date",
   "moduleAssetsTitle": "Assets",
   "moduleAssetsSubtitle": "Vehicle and equipment status at the station",
+  "moduleReportsTitle": "Reports",
+  "moduleReportsSubtitle": "Open defects, readiness quote, overdue checks",
   "quickAccessTitle": "Quick access",
 
   "defectsTitle": "Defects",
@@ -44,6 +46,21 @@
   "defectDueLabel": "Due",
   "defectSetStatus": "Set status",
   "defectStatusWaiting": "Waiting",
+  "defectCreateAction": "Defect",
+  "defectCreateTitle": "Create defect",
+  "defectCreateTitleField": "Title",
+  "defectCreateDescriptionField": "Description",
+  "defectCreatePriority": "Priority",
+  "defectCreateSubmit": "Create",
+  "defectCreateSuccess": "Defect created.",
+  "defectModuleUnavailable": "Defects module is not available on this server.",
+  "defectAttachmentsTitle": "Attachments",
+  "defectAttachmentsHint": "Demo: local placeholder without camera. Upload follows server multipart.",
+  "defectAttachmentsEmpty": "No attachments yet.",
+  "defectAttachmentLocal": "Local (demo)",
+  "defectAddAttachmentDemo": "Add demo attachment",
+  "defectAttachmentFailed": "Could not add attachment.",
+  "handoverToDefect": "As defect",
 
   "assetsBoardTitle": "Vehicle & equipment status",
   "assetsScreenTitle": "Assets & status",
@@ -52,6 +69,37 @@
   "assetStatusLimited": "Limited",
   "assetStatusOob": "Out of service",
   "assetStatusWorkshop": "Workshop",
+  "assetSetStatus": "Set status",
+  "assetNoteLabel": "Note",
+  "assetStatusSave": "Save status",
+
+  "reportsTitle": "Reports",
+  "reportsHint": "Lightweight client aggregation over loaded lists — no server report.",
+  "reportsOpenDefects": "open defects",
+  "reportsOverdueChecks": "checks overdue",
+  "reportsAmpQuote": "assets ready",
+  "reportsByOwnerTitle": "Open defects by owner",
+  "reportsNoOpenDefects": "No open defects.",
+  "reportsOwnerCount": "{count} open",
+  "@reportsOwnerCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "reportsAssetsTitle": "Asset readiness",
+  "reportsAssetsReady": "{ready} of {total} vehicles/devices ready.",
+  "@reportsAssetsReady": {
+    "placeholders": {
+      "ready": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "offlineCacheLabel": "Offline snapshot: {timestamp}",
+  "@offlineCacheLabel": {
+    "placeholders": {
+      "timestamp": {"type": "String"}
+    }
+  },
 
   "inventoryTitle": "Keys & pools",
   "inventoryHint": "Checkout / check-in for pooled devices and keys.",

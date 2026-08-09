@@ -3,7 +3,8 @@
 Stand: 9. August 2026  
 Vorgänger: [FAHRPLAN-BEHOERDEN.md](FAHRPLAN-BEHOERDEN.md) (Demo A–I, Client-Vertrag)  
 Contract: [SCHEMA-WACHALLTAG.md](SCHEMA-WACHALLTAG.md) · [openapi-wachalltag.yaml](openapi-wachalltag.yaml)  
-Server-Handoff: [SERVER-HANDOFF-WACHALLTAG.md](SERVER-HANDOFF-WACHALLTAG.md)
+Server-Handoff: [SERVER-HANDOFF-WACHALLTAG.md](SERVER-HANDOFF-WACHALLTAG.md)  
+Pilot: [PILOT-WACHALLTAG.md](PILOT-WACHALLTAG.md) · E2E: [E2E-WACHALLTAG.md](E2E-WACHALLTAG.md)
 
 ## Ziel
 
@@ -35,7 +36,7 @@ flowchart LR
 | Webapp Demo | A–G, I lokal |
 | Flutter Demo + HTTP | verdrahtet, 404/501 tolerant |
 | Schema | dokumentiert |
-| Server API Wachalltag | **offen** — Schwerpunkt dieser Welle |
+| Server API Wachalltag | **offen** — Schwerpunkt dieser Welle (anderes Repo) |
 
 ---
 
@@ -47,6 +48,7 @@ flowchart LR
 - [x] Handoff-Checkliste `docs/SERVER-HANDOFF-WACHALLTAG.md`
 - [x] Client-Pfadkonstanten `lib/api/wachalltag_paths.dart` + Tests
 - [x] Client: `createDefect` / `updateAssetStatus` gegen Contract verdrahtet
+- [x] Anhänge-Pfade im Contract (`/defects/{id}/attachments/`)
 - [ ] Review / Freeze-Tag im Server-Repo (`api-wachalltag-v1-draft` o. Ä.)
 
 **Abnahme:** Contract reviewbar, Pfade und Enums stabil, keine Einsatzdaten in Beispielen.
@@ -68,24 +70,35 @@ Rollen (Minimal): Mitglied anlegen/übernehmen; Schichtleitung schließt ab / se
 
 **Abnahme:** Staging-Wache legt Mangel an, wechselt Status, quittiert Übergabe (curl oder Web).
 
+**Status Client-Workspace:** blockiert (`NO_SERVER_REPO`) — Umsetzung nur im Server-Repo.
+
 ---
 
 ## Phase 2 — Mobile gegen echte API (Prio 1)
 
 **Repo:** Client
 
-- Demo-Hosts bleiben; Produktionspfad ohne Sonderfälle
-- E2E-Checkliste manuell: Login → Übersicht → Mängel → Status → Quittierung
-- Optional: Integrationstest gegen Staging, wenn Secrets vorhanden
+- [x] Demo-Hosts bleiben; Produktionspfad ohne Sonderfälle
+- [x] UI: Mangel anlegen (`DefectsScreen` FAB) + Status
+- [x] UI: Asset-Status setzen (Board tippen, Übersicht + Geräte)
+- [x] „Als Mangel“ aus Übergabe-Detail
+- [x] E2E-Checkliste `docs/E2E-WACHALLTAG.md` (manuell gegen Demo; Staging wenn Secrets)
+- [ ] Integrationstest gegen Staging, wenn Secrets vorhanden
 
 **Abnahme:** App gegen Staging ohne `demo-*.wachbuch.local` nutzbar; Module nur bei Flag.
+Gegen Demo-Hosts bereits abnehmbar; Staging hängt an Phase 1.
 
 ---
 
 ## Phase 3 — Belege & Pflicht (Prio 2)
 
-1. **Anhänge** — Upload-Vertrag (Typ/Größe/Rechte/Löschung) → Client Kamera/Galerie  
-2. **Recurring Checks** — `interval` / `due_next` / `overdue` vom Server
+1. **Anhänge**
+   - [x] Upload-Vertrag in OpenAPI (JSON-Metadaten + Multipart-Hinweis)
+   - [x] Demo/lokal: Beleg-Platzhalter ohne `image_picker`
+   - [ ] Server Multipart + Client Kamera/Galerie (nach Server)
+2. **Recurring Checks**
+   - [x] Client zeigt `interval` / `due_next` / `overdue`
+   - [ ] Serverseitige Fälligkeit
 
 **Abnahme:** Mangel mit Foto; „fällig heute“ serverseitig.
 
@@ -93,30 +106,31 @@ Rollen (Minimal): Mitglied anlegen/übernehmen; Schichtleitung schließt ab / se
 
 ## Phase 4 — Pools & Lagebild (Prio 3)
 
-1. Inventar Checkout/Checkin + Audit  
-2. Auswertung in der Flutter-App (Owner, Ampel-Quote, überfällige Checks)
+1. [x] Inventar Checkout/Checkin (Client + Demo; Server Audit offen)
+2. [x] Auswertung in der Flutter-App (Owner, Ampel-Quote, überfällige Checks)
 
-**Abnahme:** Pool-Gerät nachvollziehbar; Schichtleitung sieht Kennzahlen in der App.
+**Abnahme:** Pool-Gerät nachvollziehbar; Schichtleitung sieht Kennzahlen in der App (Demo/Staging).
 
 ---
 
 ## Phase 5 — Offline-Lesecache (Prio Feld)
 
-- Verschlüsselter Read-Cache (Übergaben, Mängel, Assets)
-- Zeitstempel „zuletzt aktualisiert“
-- Invalidierung bei Logout / Serverwechsel
-- v1 bewusst **read-only** offline (kein blinder Write)
+- [x] Verschlüsselter Read-Cache (Übergaben, Mängel, Assets) via Secure Storage
+- [x] Zeitstempel „zuletzt aktualisiert“ / Offline-Stand
+- [x] Invalidierung bei Logout / Serverwechsel
+- [x] v1 bewusst **read-only** offline (kein blinder Write)
 
-**Abnahme:** Letzte Lage ohne Netz sichtbar; nach Reconnect konsistent.
+**Abnahme:** Letzte Lage ohne Netz sichtbar; nach Reconnect konsistent (Demo + Unit-Tests).
 
 ---
 
 ## Phase 6 — Pilot & Betrieb
 
-- Eine Partnerwache 2–4 Wochen
-- Backup/Restore- und Update-Doku Server↔Client
-- Optional: stille Push nur als Zähler
-- Play/TestFlight-Externals nur nach stabilem Pilot
+- [x] Prozess-Doku `docs/PILOT-WACHALLTAG.md`
+- [ ] Eine Partnerwache 2–4 Wochen (Betrieb, nicht Code)
+- [ ] Backup/Restore- und Update-Doku Server↔Client (Server-Repo)
+- [ ] Optional: stille Push nur als Zähler
+- [ ] Play/TestFlight-Externals nur nach stabilem Pilot
 
 ---
 
@@ -131,12 +145,12 @@ Abrechnung, Chat als Kernfeature.
 
 - [ ] OpenAPI im Server-Repo gespiegelt und versioniert
 - [ ] Phase-1-Endpoints auf Staging grün
-- [ ] Flutter E2E gegen Staging ohne Demo-API
+- [x] Flutter E2E gegen Demo; Staging nach Phase 1
 - [ ] Mindestens eine Org-Pilot abgeschlossen
-- [ ] Keine sensiblen Einsatzdaten in Fixtures/Logs
+- [x] Keine sensiblen Einsatzdaten in Fixtures/Logs (Client-Fixtures geprüft)
 
 ## Nächster konkreter Schritt
 
-1. Dieses Dokument + OpenAPI mergen (Client).  
+1. OpenAPI + dieses Dokument mergen (Client).  
 2. OpenAPI ins Server-Repo kopieren und Phase 1 implementieren.  
-3. Client Phase 2 gegen Staging verdrahten/prüfen.
+3. Client gegen Staging mit `docs/E2E-WACHALLTAG.md` abnehmen.

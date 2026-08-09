@@ -120,8 +120,8 @@ Demo-Profile setzen diese Flags auf `true`.
 | Schicht | Status |
 | --- | --- |
 | Webapp Demo | A–D + E (objectURL) + F + G + I |
-| Flutter Modelle + Demo-API + UI | verdrahtet inkl. createDefect / asset status |
-| OpenAPI Draft | `openapi-wachalltag.yaml` (Welle 2 Phase 0) |
+| Flutter Modelle + Demo-API + UI | create/status UI, Asset-Status, Demo-Belege, Auswertung, Offline-Cache |
+| OpenAPI Draft | `openapi-wachalltag.yaml` (inkl. Attachments) |
 | Server API | offen — siehe SERVER-HANDOFF |
 
 ## Abnahme

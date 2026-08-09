@@ -103,5 +103,15 @@ void main() {
       note: 'Test',
     );
     expect(updatedAsset.status, 'workshop');
+
+    final attachment = await api.addDefectAttachment(
+      created.id,
+      name: 'beleg-demo.jpg',
+    );
+    expect(attachment.localOnly, isTrue);
+    expect(
+      (await api.defectAttachments(created.id)).any((a) => a.id == attachment.id),
+      isTrue,
+    );
   });
 }
