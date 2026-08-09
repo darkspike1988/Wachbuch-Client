@@ -1,6 +1,7 @@
 (() => {
   const PROFILES = window.WACHBUCH_DEMO;
   const STORAGE_KEY = "wachbuch-demo-service";
+  const ACK_KEY = "wachbuch-demo-acks";
 
   const PRIORITY_LABEL = {
     urgent: "Dringend",
@@ -12,7 +13,15 @@
   const STATUS_LABEL = {
     open: "Offen",
     in_progress: "In Bearbeitung",
+    waiting: "Wartend",
     done: "Erledigt",
+  };
+
+  const ASSET_STATUS = {
+    ready: "Einsatzklar",
+    limited: "Eingeschränkt",
+    oob: "Außer Betrieb",
+    workshop: "Werkstatt",
   };
 
   const state = {
@@ -21,7 +30,10 @@
     query: "",
     statusFilter: null,
     priorityFilter: null,
+    defectStatusFilter: null,
     detailId: null,
+    defectId: null,
+    acks: loadAcks(),
   };
 
   const els = {
@@ -37,8 +49,28 @@
     switchBtn: document.getElementById("btn-switch"),
   };
 
+  function loadAcks() {
+    try {
+      return JSON.parse(localStorage.getItem(ACK_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function saveAcks() {
+    localStorage.setItem(ACK_KEY, JSON.stringify(state.acks));
+  }
+
   function profile() {
     return PROFILES[state.service];
+  }
+
+  function ackKey(handoverId) {
+    return `${state.service}:${handoverId}`;
+  }
+
+  function acksFor(handoverId) {
+    return state.acks[ackKey(handoverId)] || [];
   }
 
   function metrics(handovers) {
@@ -47,6 +79,24 @@
       progress: handovers.filter((h) => h.status === "in_progress").length,
       urgent: handovers.filter((h) => h.priority === "urgent").length,
     };
+  }
+
+  function defectMetrics() {
+    const defects = profile().defects || [];
+    return {
+      open: defects.filter((d) => d.status !== "done").length,
+      urgent: defects.filter((d) => d.priority === "urgent" && d.status !== "done")
+        .length,
+    };
+  }
+
+  function unackedUrgentCount() {
+    return profile().handovers.filter(
+      (h) =>
+        h.priority === "urgent" &&
+        h.status !== "done" &&
+        acksFor(h.id).length === 0,
+    ).length;
   }
 
   function filteredHandovers() {
@@ -66,6 +116,12 @@
     });
   }
 
+  function filteredDefects() {
+    const defects = profile().defects || [];
+    if (!state.defectStatusFilter) return defects;
+    return defects.filter((d) => d.status === state.defectStatusFilter);
+  }
+
   function icon(name) {
     const labels = {
       home: "⌂",
@@ -74,33 +130,54 @@
       cal: "▦",
       coffee: "♨",
       check: "☑",
+      defect: "⚠",
+      asset: "▣",
     };
     return `<span class="icon" aria-hidden="true">${labels[name] || "•"}</span>`;
   }
 
   function chipsFor(item) {
+    const statusClass =
+      item.status === "done"
+        ? "done-status"
+        : item.status === "waiting"
+          ? "waiting"
+          : item.status;
     return `
-      <span class="chip chip-${item.priority}">${PRIORITY_LABEL[item.priority]}</span>
-      <span class="chip chip-${item.status === "done" ? "done-status" : item.status}">${STATUS_LABEL[item.status]}</span>
+      <span class="chip chip-${item.priority}">${PRIORITY_LABEL[item.priority] || item.priority}</span>
+      <span class="chip chip-${statusClass}">${STATUS_LABEL[item.status] || item.status}</span>
     `;
+  }
+
+  function assetChip(status) {
+    return `<span class="asset-chip asset-${status}">${ASSET_STATUS[status] || status}</span>`;
+  }
+
+  function isNavCurrent(id) {
+    if (state.view === id) return true;
+    if (
+      ["calendar", "coffee", "checklists"].includes(state.view) &&
+      id === "overview"
+    ) {
+      return true;
+    }
+    return false;
   }
 
   function renderNav() {
     const items = [
       { id: "overview", label: "Übersicht", glyph: "home" },
       { id: "handovers", label: "Übergaben", glyph: "list" },
+      { id: "defects", label: "Mängel", glyph: "defect" },
+      { id: "assets", label: "Geräte", glyph: "asset" },
       { id: "account", label: "Konto", glyph: "user" },
     ];
     const html = items
       .map(
         (item) => `
       <button type="button" class="nav-btn" data-view="${item.id}" aria-current="${
-          state.view === item.id ||
-          (["calendar", "coffee", "checklists"].includes(state.view) &&
-            item.id === "overview")
-            ? "page"
-            : "false"
-        }">
+        isNavCurrent(item.id) ? "page" : "false"
+      }">
         ${icon(item.glyph)}
         <span>${item.label}</span>
       </button>`,
@@ -110,36 +187,57 @@
     els.bottom.innerHTML = html;
   }
 
+  function renderAssetBoard() {
+    const assets = profile().assets || [];
+    if (!assets.length) return "";
+    return `
+      <h2 class="section-label">Statusboard</h2>
+      <div class="asset-board">
+        ${assets
+          .map(
+            (a) => `
+          <button type="button" class="asset-card asset-${a.status}" data-view="assets">
+            <strong>${a.label}</strong>
+            ${assetChip(a.status)}
+            <span>${a.note || "—"}</span>
+          </button>`,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
   function renderOverview() {
     const p = profile();
     const m = metrics(p.handovers);
+    const dm = defectMetrics();
+    const unacked = unackedUrgentCount();
     els.main.innerHTML = `
       <section class="station-hero" aria-labelledby="station-name">
         <h1 id="station-name">${p.station}</h1>
         <p>${p.role} · ${p.tagline}</p>
       </section>
-      <h2 class="section-label">Aktive Übergaben</h2>
-      <div class="metrics" aria-label="Kennzahlen">
-        <div class="metric"><strong>${m.open}</strong><span>offen</span></div>
-        <div class="metric"><strong>${m.progress}</strong><span>in Bearbeitung</span></div>
+      <h2 class="section-label">Lage auf einen Blick</h2>
+      <div class="metrics metrics-4" aria-label="Kennzahlen">
+        <div class="metric"><strong>${m.open}</strong><span>Übergaben offen</span></div>
         <div class="metric ${m.urgent ? "is-urgent" : ""}"><strong>${m.urgent}</strong><span>dringend</span></div>
+        <div class="metric ${dm.open ? "is-urgent" : ""}"><strong>${dm.open}</strong><span>Mängel offen</span></div>
+        <div class="metric"><strong>${unacked}</strong><span>unquittiert</span></div>
       </div>
+      ${renderAssetBoard()}
       <h2 class="section-label">Schnellzugriff</h2>
-      <div class="module-row">
-        <button type="button" class="module-tile" data-view="calendar">
-          ${icon("cal")}
-          <strong>Kalender</strong>
-          <span>Wachentermine und Dienste</span>
+      <div class="module-row module-row-4">
+        <button type="button" class="module-tile" data-view="defects">
+          ${icon("defect")}<strong>Mängel</strong><span>Owner, Frist, Status</span>
         </button>
-        <button type="button" class="module-tile" data-view="coffee">
-          ${icon("coffee")}
-          <strong>Kaffeekasse</strong>
-          <span>Kassenstand und Buchungen</span>
+        <button type="button" class="module-tile" data-view="assets">
+          ${icon("asset")}<strong>Geräte</strong><span>Status & Pools</span>
+        </button>
+        <button type="button" class="module-tile" data-view="calendar">
+          ${icon("cal")}<strong>Kalender</strong><span>Termine</span>
         </button>
         <button type="button" class="module-tile" data-view="checklists">
-          ${icon("check")}
-          <strong>Checklisten</strong>
-          <span>Punkte abhaken und abschließen</span>
+          ${icon("check")}<strong>Checklisten</strong><span>Wiederkehrend</span>
         </button>
       </div>
       <h2 class="section-label">Aktuelle Hinweise</h2>
@@ -150,7 +248,11 @@
           .map(
             (item, index) => `
           <button type="button" class="handover" data-detail="${item.id}" style="animation-delay:${index * 50}ms">
-            <div class="meta">${chipsFor(item)}</div>
+            <div class="meta">${chipsFor(item)}${
+              acksFor(item.id).length
+                ? '<span class="chip chip-ack">Quittiert</span>'
+                : ""
+            }</div>
             <h3>${item.title}</h3>
             <p class="sub">${item.category} · ${item.updated}</p>
           </button>`,
@@ -168,7 +270,11 @@
       .map(
         (item, index) => `
       <button type="button" class="handover" data-detail="${item.id}" style="animation-delay:${index * 40}ms">
-        <div class="meta">${chipsFor(item)}</div>
+        <div class="meta">${chipsFor(item)}${
+          acksFor(item.id).length
+            ? '<span class="chip chip-ack">Quittiert</span>'
+            : ""
+        }</div>
         <h3>${item.title}</h3>
         <p class="sub">${item.category} · ${item.author} · ${item.updated}</p>
       </button>`,
@@ -227,9 +333,76 @@
           .join("")}
       </div>
       <p class="sub" id="handover-count" style="margin:0 0 0.85rem;color:var(--text-muted)">${items.length} von ${profile().handovers.length} Übergaben</p>
-      <div class="list" id="handover-list">
-        ${handoverListHtml(items)}
+      <div class="list" id="handover-list">${handoverListHtml(items)}</div>
+    `;
+  }
+
+  function renderDefects() {
+    const items = filteredDefects();
+    els.main.innerHTML = `
+      <h1 class="section-label">Mängel</h1>
+      <p class="hint-line">Owner, Frist und Status — schichtübergreifend, ohne Einsatzdaten.</p>
+      <div class="filters" style="margin-bottom:1rem" aria-label="Mangel-Status">
+        ${["open", "in_progress", "waiting", "done"]
+          .map(
+            (s) => `
+          <button type="button" class="chip-btn" data-defect-status="${s}" aria-pressed="${
+            state.defectStatusFilter === s
+          }">${STATUS_LABEL[s]}</button>`,
+          )
+          .join("")}
       </div>
+      <div class="list">
+        ${
+          items.length
+            ? items
+                .map(
+                  (d, index) => `
+          <button type="button" class="handover" data-defect="${d.id}" style="animation-delay:${index * 40}ms">
+            <div class="meta">${chipsFor(d)}</div>
+            <h3>${d.title}</h3>
+            <p class="sub">${d.asset_ref} · ${d.owner} · fällig ${d.due}</p>
+          </button>`,
+                )
+                .join("")
+            : `<p class="empty">Keine Mängel für diesen Filter.</p>`
+        }
+      </div>
+    `;
+  }
+
+  function renderAssets() {
+    const p = profile();
+    const assets = p.assets || [];
+    const inventory = p.inventory || [];
+    els.main.innerHTML = `
+      <h1 class="section-label">Geräte & Status</h1>
+      ${renderAssetBoard()}
+      <h2 class="section-label">Schlüssel & Pools</h2>
+      <p class="hint-line">Checkout / Checkin — Demo speichert nur lokal in dieser Sitzung.</p>
+      <div class="list">
+        ${inventory
+          .map(
+            (item) => `
+          <article class="panel-block inventory-row">
+            <div>
+              <h3>${item.label}</h3>
+              <p>${
+                item.holder
+                  ? `Bei <strong>${item.holder}</strong> seit ${item.since}${item.note ? ` · ${item.note}` : ""}`
+                  : item.note
+                    ? `<span class="warn-text">${item.note}</span> · verfügbar`
+                    : "Verfügbar"
+              }</p>
+            </div>
+            <button type="button" class="btn ${item.holder ? "btn-ghost" : "btn-cta"} btn-compact" data-inventory="${item.id}">
+              ${item.holder ? "Zurückgeben" : "Ausgeben"}
+            </button>
+          </article>`,
+          )
+          .join("")}
+      </div>
+      <button type="button" class="btn btn-ghost" data-view="overview">← Zur Übersicht</button>
     `;
   }
 
@@ -279,11 +452,13 @@
     const lists = profile().checklists;
     els.main.innerHTML = `
       <h1 class="section-label">Checklisten</h1>
+      <p class="hint-line">Intervalle (Phase F-Vorschau): daily / weekly — fällig im Wachalltag.</p>
       ${lists
         .map(
           (list, listIndex) => `
         <article class="panel-block">
           <h3>${list.title}</h3>
+          <p class="interval-tag">${list.interval === "weekly" ? "Wöchentlich" : "Täglich"}</p>
           ${list.items
             .map(
               (item, itemIndex) => `
@@ -304,30 +479,39 @@
 
   function renderAccount() {
     const p = profile();
+    const dm = defectMetrics();
     els.main.innerHTML = `
       <h1 class="section-label">Konto</h1>
       <dl class="panel-block">
         <div class="account-row"><dt>Angemeldet als</dt><dd>${p.username}</dd></div>
         <div class="account-row"><dt>Rolle</dt><dd>${p.role}</dd></div>
         <div class="account-row"><dt>Organisation</dt><dd>${p.label}</dd></div>
+        <div class="account-row"><dt>Offene Mängel</dt><dd>${dm.open}</dd></div>
         <div class="account-row"><dt>Server</dt><dd>Demo (offline)</dd></div>
-        <div class="account-row"><dt>Lizenz</dt><dd>AGPL-3.0</dd></div>
+        <div class="account-row"><dt>Fahrplan</dt><dd>Phase A–D Prototyp</dd></div>
       </dl>
       <div class="toolbar">
         <button type="button" class="btn btn-cta" id="btn-exit-demo">Demo beenden</button>
+        <a class="btn btn-ghost" href="../docs-hint.html" hidden></a>
         <button type="button" class="btn btn-ghost" data-view="overview">Zur Übersicht</button>
       </div>
+      <p class="hint-line">Produktfahrplan: <code>docs/FAHRPLAN-BEHOERDEN.md</code> im Repo.</p>
     `;
     document.getElementById("btn-exit-demo")?.addEventListener("click", showSetup);
   }
 
   function renderDetail() {
+    if (state.defectId != null) {
+      renderDefectDetail();
+      return;
+    }
     const item = profile().handovers.find((h) => h.id === state.detailId);
     if (!item) {
       els.dialog.classList.add("app-hidden");
       els.dialog.innerHTML = "";
       return;
     }
+    const acks = acksFor(item.id);
     els.dialog.classList.remove("app-hidden");
     els.dialog.innerHTML = `
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
@@ -337,21 +521,109 @@
         <p><strong>Kategorie:</strong> ${item.category}</p>
         <p><strong>Autor:</strong> ${item.author}</p>
         <p><strong>Aktualisiert:</strong> ${item.updated}</p>
+        <h3 class="section-label" style="margin-top:1rem">Quittierung</h3>
+        ${
+          acks.length
+            ? `<ul class="ack-list">${acks
+                .map((a) => `<li>${a.by} · ${a.at}</li>`)
+                .join("")}</ul>`
+            : `<p class="hint-line">Noch nicht quittiert.</p>`
+        }
+        <div class="dialog-actions dialog-actions-split">
+          <button type="button" class="btn btn-ghost" id="btn-to-defect">Als Mangel</button>
+          <button type="button" class="btn btn-cta" id="btn-ack">Übernommen</button>
+          <button type="button" class="btn btn-ghost" id="close-detail">Schließen</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("close-detail")?.addEventListener("click", closeDialogs);
+    document.getElementById("btn-ack")?.addEventListener("click", () => {
+      const key = ackKey(item.id);
+      const list = state.acks[key] || [];
+      const by = profile().username;
+      if (!list.some((a) => a.by === by)) {
+        list.push({
+          by,
+          at: new Date().toLocaleString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+          }),
+        });
+        state.acks[key] = list;
+        saveAcks();
+      }
+      renderDetail();
+      if (state.view === "overview" || state.view === "handovers") renderView();
+    });
+    document.getElementById("btn-to-defect")?.addEventListener("click", () => {
+      const defects = profile().defects;
+      const nextId = Math.max(0, ...defects.map((d) => d.id)) + 1;
+      defects.unshift({
+        id: nextId,
+        title: item.title,
+        description: item.description,
+        asset_ref: item.category,
+        priority: item.priority === "done" ? "normal" : item.priority,
+        status: "open",
+        owner: profile().username,
+        due: "offen",
+        category: "task",
+      });
+      state.detailId = null;
+      state.defectId = nextId;
+      state.view = "defects";
+      renderView();
+      renderDetail();
+    });
+    els.dialog.onclick = (event) => {
+      if (event.target === els.dialog) closeDialogs();
+    };
+  }
+
+  function renderDefectDetail() {
+    const item = (profile().defects || []).find((d) => d.id === state.defectId);
+    if (!item) {
+      els.dialog.classList.add("app-hidden");
+      els.dialog.innerHTML = "";
+      return;
+    }
+    els.dialog.classList.remove("app-hidden");
+    els.dialog.innerHTML = `
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="defect-title">
+        <div class="meta">${chipsFor(item)}</div>
+        <h2 id="defect-title">${item.title}</h2>
+        <p>${item.description}</p>
+        <p><strong>Bezug:</strong> ${item.asset_ref}</p>
+        <p><strong>Owner:</strong> ${item.owner}</p>
+        <p><strong>Fällig:</strong> ${item.due}</p>
+        <div class="filters" style="margin:1rem 0" aria-label="Status setzen">
+          ${["open", "in_progress", "waiting", "done"]
+            .map(
+              (s) => `
+            <button type="button" class="chip-btn" data-set-defect-status="${s}" aria-pressed="${
+              item.status === s
+            }">${STATUS_LABEL[s]}</button>`,
+            )
+            .join("")}
+        </div>
         <div class="dialog-actions">
           <button type="button" class="btn btn-cta" id="close-detail">Schließen</button>
         </div>
       </div>
     `;
-    document.getElementById("close-detail")?.addEventListener("click", () => {
-      state.detailId = null;
-      renderDetail();
-    });
+    document.getElementById("close-detail")?.addEventListener("click", closeDialogs);
     els.dialog.onclick = (event) => {
-      if (event.target === els.dialog) {
-        state.detailId = null;
-        renderDetail();
-      }
+      if (event.target === els.dialog) closeDialogs();
     };
+  }
+
+  function closeDialogs() {
+    state.detailId = null;
+    state.defectId = null;
+    els.dialog.classList.add("app-hidden");
+    els.dialog.innerHTML = "";
   }
 
   function renderView() {
@@ -365,6 +637,12 @@
     switch (state.view) {
       case "handovers":
         renderHandovers();
+        break;
+      case "defects":
+        renderDefects();
+        break;
+      case "assets":
+        renderAssets();
         break;
       case "calendar":
         renderCalendar();
@@ -381,7 +659,11 @@
       default:
         renderOverview();
     }
-    renderDetail();
+    if (state.detailId != null || state.defectId != null) renderDetail();
+    else {
+      els.dialog.classList.add("app-hidden");
+      els.dialog.innerHTML = "";
+    }
   }
 
   function enterService(serviceId) {
@@ -391,7 +673,9 @@
     state.query = "";
     state.statusFilter = null;
     state.priorityFilter = null;
+    state.defectStatusFilter = null;
     state.detailId = null;
+    state.defectId = null;
     localStorage.setItem(STORAGE_KEY, serviceId);
     const url = new URL(window.location.href);
     url.searchParams.set("service", serviceId);
@@ -410,11 +694,11 @@
     history.replaceState({}, "", url);
     els.shell.classList.add("app-hidden");
     els.setup.classList.remove("app-hidden");
-    els.dialog.classList.add("app-hidden");
+    closeDialogs();
   }
 
   function renderSetup() {
-    const order = ["rettungsdienst", "feuerwehr", "polizei"];
+    const order = ["rettungsdienst", "feuerwehr", "ffw", "polizei"];
     els.serviceList.innerHTML = order
       .map((id) => {
         const p = PROFILES[id];
@@ -438,17 +722,60 @@
       return;
     }
 
+    const setDefectStatus = event.target.closest("[data-set-defect-status]");
+    if (setDefectStatus && state.defectId != null) {
+      const defect = profile().defects.find((d) => d.id === state.defectId);
+      if (defect) {
+        defect.status = setDefectStatus.dataset.setDefectStatus;
+        renderDefectDetail();
+        if (state.view === "defects" || state.view === "overview") renderView();
+      }
+      return;
+    }
+
+    const inventoryBtn = event.target.closest("[data-inventory]");
+    if (inventoryBtn && state.service) {
+      const item = profile().inventory.find(
+        (i) => i.id === inventoryBtn.dataset.inventory,
+      );
+      if (item) {
+        if (item.holder) {
+          item.holder = null;
+          item.since = null;
+          if (item.note === "vermisst") item.note = "";
+        } else {
+          item.holder = profile().username;
+          item.since = new Date().toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        renderAssets();
+      }
+      return;
+    }
+
     const viewBtn = event.target.closest("[data-view]");
     if (viewBtn && state.service) {
       state.view = viewBtn.dataset.view;
       state.detailId = null;
+      state.defectId = null;
       renderView();
       return;
     }
 
     const detailBtn = event.target.closest("[data-detail]");
     if (detailBtn) {
+      state.defectId = null;
       state.detailId = Number(detailBtn.dataset.detail);
+      renderDetail();
+      return;
+    }
+
+    const defectBtn = event.target.closest("[data-defect]");
+    if (defectBtn) {
+      state.detailId = null;
+      state.defectId = Number(defectBtn.dataset.defect);
       renderDetail();
       return;
     }
@@ -466,6 +793,15 @@
       const value = priorityBtn.dataset.priority;
       state.priorityFilter = state.priorityFilter === value ? null : value;
       refreshHandoverResults();
+      return;
+    }
+
+    const defectStatusBtn = event.target.closest("[data-defect-status]");
+    if (defectStatusBtn) {
+      const value = defectStatusBtn.dataset.defectStatus;
+      state.defectStatusFilter =
+        state.defectStatusFilter === value ? null : value;
+      renderDefects();
     }
   }
 
@@ -489,10 +825,7 @@
   document.addEventListener("change", onChange);
   document.addEventListener("input", onInput);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.detailId != null) {
-      state.detailId = null;
-      renderDetail();
-    }
+    if (event.key === "Escape") closeDialogs();
   });
 
   renderSetup();

@@ -9,7 +9,9 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 - Statische Landingpage unter `landing/` mit Projektvorstellung und interaktivem
   Demo-Modus für Rettungsdienst, Feuerwehr und Polizei.
 - Webapp unter `landing/app/` im Landingpage-Design: Organisationswahl, Übersicht,
-  Übergaben mit Suche/Filter/Detail, Kalender, Kaffeekasse, Checklisten und Konto.
+  Übergaben, Mängel-Workflow, Statusboard, Gerätepools, Quittierung, Kalender,
+  Kaffeekasse, Checklisten; Profile inkl. Freiwillige Feuerwehr.
+- Fachfahrplan `docs/FAHRPLAN-BEHOERDEN.md` (Phasen A–I, Server-/Mobile-Pfad).
 - Offline-Demo in der App: Startbildschirm → „Demo-Modus ausprobieren“ mit drei
   Organisationsprofilen und Muster-Übergaben, Kalender, Kaffeekasse und Checklisten.
 - Gelbes Demo-Banner in der App-Shell, analog zum Server-Demo-Modus.

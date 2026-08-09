@@ -1,4 +1,4 @@
-/** Shared demo profiles for the Wachbuch web app. */
+/** Demo profiles + Phase A–D entities (defects, assets, inventory). */
 window.WACHBUCH_DEMO = {
   rettungsdienst: {
     id: "rettungsdienst",
@@ -52,17 +52,54 @@ window.WACHBUCH_DEMO = {
         updated: "gestern",
       },
     ],
+    assets: [
+      { id: "rtw-1", label: "RTW 1", kind: "vehicle", status: "limited", note: "Defi-Akku schwach" },
+      { id: "rtw-2", label: "RTW 2", kind: "vehicle", status: "ready", note: "Einsatzklar" },
+      { id: "ktw-1", label: "KTW 1", kind: "vehicle", status: "ready", note: "" },
+      { id: "funk-wache", label: "Funk Wachzimmer", kind: "device", status: "limited", note: "Störgeräusch Kanal 4" },
+    ],
+    defects: [
+      {
+        id: 101,
+        title: "Defi-Akku RTW 1 unter 40 %",
+        description: "Ersatz aus Materiallager, Gerät kalibrieren.",
+        asset_ref: "RTW 1",
+        priority: "urgent",
+        status: "open",
+        owner: "demo-schicht",
+        due: "heute 14:00",
+        category: "material",
+      },
+      {
+        id: 102,
+        title: "Kühlschrank-Temperaturlog fehlt",
+        description: "Heutige Werte nachtragen.",
+        asset_ref: "Medikamentenkühlung",
+        priority: "important",
+        status: "open",
+        owner: "demo-mitglied",
+        due: "heute 18:00",
+        category: "facility",
+      },
+      {
+        id: 103,
+        title: "Funkgerät Wachzimmer",
+        description: "IT informiert, Ersatzgerät Spind B.",
+        asset_ref: "Funk Wachzimmer",
+        priority: "important",
+        status: "in_progress",
+        owner: "demo-admin",
+        due: "morgen",
+        category: "device",
+      },
+    ],
+    inventory: [
+      { id: "funk-a", label: "Funkgerät A", kind: "device", holder: null, since: null },
+      { id: "funk-b", label: "Funkgerät B", kind: "device", holder: "demo-mitglied", since: "heute 06:10" },
+    ],
     calendar: [
-      {
-        title: "Geräteprüfung RTW",
-        when: "Heute · 12:00–13:00",
-        location: "Fahrzeughalle",
-      },
-      {
-        title: "Teambesprechung Hygiene",
-        when: "Morgen · 09:00–10:00",
-        location: "Wachzimmer",
-      },
+      { title: "Geräteprüfung RTW", when: "Heute · 12:00–13:00", location: "Fahrzeughalle" },
+      { title: "Teambesprechung Hygiene", when: "Morgen · 09:00–10:00", location: "Wachzimmer" },
     ],
     coffee: {
       balance: "42,50 €",
@@ -75,6 +112,7 @@ window.WACHBUCH_DEMO = {
     checklists: [
       {
         title: "Fahrzeugcheck RTW 1",
+        interval: "daily",
         items: [
           { text: "Sauerstoffflasche voll", checked: true },
           { text: "Trage gereinigt", checked: true },
@@ -83,6 +121,7 @@ window.WACHBUCH_DEMO = {
       },
       {
         title: "Wachabschluss",
+        interval: "daily",
         items: [
           { text: "Müll entsorgt", checked: false },
           { text: "Schlüsselübergabe", checked: false },
@@ -90,6 +129,7 @@ window.WACHBUCH_DEMO = {
       },
     ],
   },
+
   feuerwehr: {
     id: "feuerwehr",
     label: "Feuerwehr",
@@ -141,17 +181,43 @@ window.WACHBUCH_DEMO = {
         updated: "gestern",
       },
     ],
+    assets: [
+      { id: "hlf-20", label: "HLF 20", kind: "vehicle", status: "limited", note: "Atemschutz 3 OOB" },
+      { id: "dlk", label: "DLK", kind: "vehicle", status: "ready", note: "" },
+      { id: "as-3", label: "Atemschutz 3", kind: "device", status: "oob", note: "Werkstatt" },
+      { id: "as-4", label: "Atemschutz 4", kind: "device", status: "ready", note: "Ersatz" },
+    ],
+    defects: [
+      {
+        id: 111,
+        title: "Atemschutzgerät 3 undicht",
+        description: "Druckminderer, Werkstatt informiert.",
+        asset_ref: "Atemschutz 3",
+        priority: "urgent",
+        status: "open",
+        owner: "demo-waf",
+        due: "heute",
+        category: "device",
+      },
+      {
+        id: 112,
+        title: "Schlauchturm-Beleuchtung",
+        description: "Elektrofirma angefragt.",
+        asset_ref: "Gerätehaus",
+        priority: "normal",
+        status: "waiting",
+        owner: "demo-admin",
+        due: "Freitag",
+        category: "facility",
+      },
+    ],
+    inventory: [
+      { id: "key-halle", label: "Schlüssel Fahrzeughalle", kind: "key", holder: "demo-waf", since: "heute 06:00" },
+      { id: "as-reserve", label: "Atemschutz Reserve", kind: "device", holder: null, since: null },
+    ],
     calendar: [
-      {
-        title: "Atemschutz-Übung",
-        when: "Heute · 14:00–16:00",
-        location: "Übungsanlage",
-      },
-      {
-        title: "Fahrzeugpflege DLK",
-        when: "Übermorgen · Vormittag",
-        location: "Fahrzeughalle",
-      },
+      { title: "Atemschutz-Übung", when: "Heute · 14:00–16:00", location: "Übungsanlage" },
+      { title: "Fahrzeugpflege DLK", when: "Übermorgen · Vormittag", location: "Fahrzeughalle" },
     ],
     coffee: {
       balance: "18,75 €",
@@ -161,6 +227,7 @@ window.WACHBUCH_DEMO = {
     checklists: [
       {
         title: "Fahrzeugcheck HLF 20",
+        interval: "daily",
         items: [
           { text: "Pumpe Funktionstest", checked: true },
           { text: "Atemschutz vollzählig", checked: false },
@@ -169,6 +236,7 @@ window.WACHBUCH_DEMO = {
       },
       {
         title: "Wochencheck Gerätehaus",
+        interval: "weekly",
         items: [
           { text: "Notstromaggregat geprüft", checked: false },
           { text: "Schlauchlager Ordnung", checked: false },
@@ -176,6 +244,121 @@ window.WACHBUCH_DEMO = {
       },
     ],
   },
+
+  ffw: {
+    id: "ffw",
+    label: "Freiwillige Feuerwehr",
+    station: "FFW Musterdorf",
+    role: "Wehrführung",
+    username: "demo-wf",
+    tagline: "Gerätehaus-Alltag, Übungen und asynchrone To-dos für die Freiwillige Feuerwehr.",
+    accent: "#f59e0b",
+    handovers: [
+      {
+        id: 31,
+        title: "Gerätehaus – Heizung macht Geräusche",
+        description: "Heizungstechniker für Samstag vormerken. Schlüsselkasten Code unverändert.",
+        status: "open",
+        priority: "important",
+        category: "Gebäude",
+        author: "demo-wf",
+        updated: "vorgestern",
+      },
+      {
+        id: 32,
+        title: "Übung Verkehrsabsicherung – Material fehlt",
+        description: "2 Leitkegel und 1 Warnweste nachbestellen vor nächster Übung.",
+        status: "open",
+        priority: "normal",
+        category: "Material",
+        author: "demo-ausbilder",
+        updated: "vor 2 Tagen",
+      },
+      {
+        id: 33,
+        title: "Jugendfeuerwehr – Raum aufgeräumt",
+        description: "Nach Gruppenstunde erledigt.",
+        status: "done",
+        priority: "normal",
+        category: "Wache",
+        author: "demo-jugend",
+        updated: "gestern",
+      },
+    ],
+    assets: [
+      { id: "lf-kat", label: "LF-KatS", kind: "vehicle", status: "ready", note: "" },
+      { id: "ts", label: "TS", kind: "vehicle", status: "limited", note: "Batterie schwach" },
+      { id: "heizung", label: "Heizung Gerätehaus", kind: "device", status: "limited", note: "Geräusche" },
+    ],
+    defects: [
+      {
+        id: 131,
+        title: "Heizung Gerätehaus",
+        description: "Techniker Samstag, Zugang klären.",
+        asset_ref: "Heizung Gerätehaus",
+        priority: "important",
+        status: "open",
+        owner: "demo-wf",
+        due: "Samstag",
+        category: "facility",
+      },
+      {
+        id: 132,
+        title: "Leitkegel / Warnwesten nachbestellen",
+        description: "Für Übung Verkehrsabsicherung.",
+        asset_ref: "Materiallager",
+        priority: "normal",
+        status: "open",
+        owner: "demo-ausbilder",
+        due: "vor nächster Übung",
+        category: "material",
+      },
+      {
+        id: 133,
+        title: "TS-Batterie prüfen",
+        description: "Laden und Messung dokumentieren.",
+        asset_ref: "TS",
+        priority: "important",
+        status: "in_progress",
+        owner: "demo-mitglied",
+        due: "diese Woche",
+        category: "vehicle",
+      },
+    ],
+    inventory: [
+      { id: "key-gh", label: "Schlüssel Gerätehaus", kind: "key", holder: "demo-wf", since: "Mo 18:00" },
+      { id: "key-tor", label: "Toröffner", kind: "key", holder: null, since: null },
+    ],
+    calendar: [
+      { title: "Übungsdienst", when: "Freitag · 19:30", location: "Gerätehaus" },
+      { title: "Jugendfeuerwehr", when: "Mittwoch · 17:00", location: "Gruppenraum" },
+    ],
+    coffee: {
+      balance: "9,40 €",
+      hint: "Kaffeekasse Gerätehaus – Liste am Kühlschrank.",
+      ledger: [{ amount: "-3,20 €", note: "Kaffee Übung", who: "demo-kasse" }],
+    },
+    checklists: [
+      {
+        title: "Gerätehaus-Wochenheck",
+        interval: "weekly",
+        items: [
+          { text: "Tore / Heizung ok", checked: false },
+          { text: "Notstrom Sichtprüfung", checked: false },
+          { text: "Fahrzeugbatterien", checked: true },
+        ],
+      },
+      {
+        title: "Übungsvorbereitung",
+        interval: "weekly",
+        items: [
+          { text: "Materialliste komplett", checked: false },
+          { text: "Teilnehmer informiert", checked: true },
+        ],
+      },
+    ],
+  },
+
   polizei: {
     id: "polizei",
     label: "Polizei",
@@ -227,17 +410,55 @@ window.WACHBUCH_DEMO = {
         updated: "vor 10 Std.",
       },
     ],
+    assets: [
+      { id: "fustw-3", label: "FuStW 3", kind: "vehicle", status: "limited", note: "Reifen vorne links" },
+      { id: "fustw-1", label: "FuStW 1", kind: "vehicle", status: "ready", note: "" },
+      { id: "body-dock", label: "Bodycam-Dock", kind: "device", status: "limited", note: "Dock 2/4 leer" },
+    ],
+    defects: [
+      {
+        id: 121,
+        title: "FuStW 3 Reifenprofil",
+        description: "Werkstatt 14:00, bis dahin Notbetrieb.",
+        asset_ref: "FuStW 3",
+        priority: "urgent",
+        status: "open",
+        owner: "demo-dgl",
+        due: "heute 14:00",
+        category: "vehicle",
+      },
+      {
+        id: 122,
+        title: "Zellenschlüssel Haken 7 fehlt",
+        description: "Schlüsselverwaltung informiert.",
+        asset_ref: "Schlüsselbrett",
+        priority: "important",
+        status: "open",
+        owner: "demo-admin",
+        due: "heute",
+        category: "key",
+      },
+      {
+        id: 123,
+        title: "Bodycam-Docks nachladen",
+        description: "Dock 2 und 4.",
+        asset_ref: "Bodycam-Dock",
+        priority: "important",
+        status: "in_progress",
+        owner: "demo-mitglied",
+        due: "Schichtende",
+        category: "device",
+      },
+    ],
+    inventory: [
+      { id: "key-7", label: "Zellenschlüssel (Haken 7)", kind: "key", holder: null, since: null, note: "vermisst" },
+      { id: "cam-1", label: "Bodycam 1", kind: "device", holder: "demo-mitglied", since: "heute 06:05" },
+      { id: "cam-2", label: "Bodycam 2", kind: "device", holder: null, since: null },
+      { id: "cam-3", label: "Bodycam 3", kind: "device", holder: "demo-dgl", since: "heute 06:00" },
+    ],
     calendar: [
-      {
-        title: "Lagebesprechung",
-        when: "Heute · in 2 Std.",
-        location: "Besprechungsraum",
-      },
-      {
-        title: "Fahrzeugübergabe Fuhrpark",
-        when: "Morgen · 08:00–09:00",
-        location: "Hof",
-      },
+      { title: "Lagebesprechung", when: "Heute · in 2 Std.", location: "Besprechungsraum" },
+      { title: "Fahrzeugübergabe Fuhrpark", when: "Morgen · 08:00–09:00", location: "Hof" },
     ],
     coffee: {
       balance: "31,00 €",
@@ -250,6 +471,7 @@ window.WACHBUCH_DEMO = {
     checklists: [
       {
         title: "Fahrzeugcheck FuStW 3",
+        interval: "daily",
         items: [
           { text: "Blaulicht / Folgetonhorn", checked: true },
           { text: "Bodycams geladen", checked: false },
@@ -258,6 +480,7 @@ window.WACHBUCH_DEMO = {
       },
       {
         title: "Wachrundgang",
+        interval: "daily",
         items: [
           { text: "Eingänge gesichert", checked: false },
           { text: "Funkraum aufgeräumt", checked: false },

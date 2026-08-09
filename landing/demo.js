@@ -65,6 +65,28 @@ const PROFILES = {
       },
     ],
   },
+  ffw: {
+    banner: "Demo-Modus · Freiwillige Feuerwehr",
+    station: "FFW Musterdorf",
+    role: "Wehrführung",
+    handovers: [
+      {
+        title: "Gerätehaus – Heizung macht Geräusche",
+        priority: "important",
+        status: "open",
+      },
+      {
+        title: "Übung Verkehrsabsicherung – Material fehlt",
+        priority: "normal",
+        status: "open",
+      },
+      {
+        title: "TS-Batterie prüfen",
+        priority: "important",
+        status: "progress",
+      },
+    ],
+  },
 };
 
 const PRIORITY_LABEL = {
@@ -129,7 +151,13 @@ function renderProfile(service) {
   );
 
   const tabId =
-    service === "feuerwehr" ? "tab-fw" : service === "polizei" ? "tab-pol" : "tab-rd";
+    service === "feuerwehr"
+      ? "tab-fw"
+      : service === "polizei"
+        ? "tab-pol"
+        : service === "ffw"
+          ? "tab-ffw"
+          : "tab-rd";
   panel.setAttribute("aria-labelledby", tabId);
 }
 

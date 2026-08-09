@@ -22,10 +22,14 @@ python3 -m http.server 4173
 
 - `/app/?service=rettungsdienst`
 - `/app/?service=feuerwehr`
+- `/app/?service=ffw`
 - `/app/?service=polizei`
 
-Die Webapp enthält Übersicht, Übergaben (Suche/Filter/Detail), Kalender,
-Kaffeekasse, Checklisten und Konto — offline mit Musterdaten.
+Die Webapp enthält Übersicht, Übergaben, **Mängel**, **Geräte/Statusboard**,
+Quittierung, Kalender, Kaffeekasse, Checklisten und Konto — offline mit
+Musterdaten (Fahrplan Phase A–D).
+
+Fachlicher Fahrplan: [`docs/FAHRPLAN-BEHOERDEN.md`](../docs/FAHRPLAN-BEHOERDEN.md).
 
 ## Mobile App-Demo
 
