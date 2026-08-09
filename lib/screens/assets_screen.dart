@@ -3,6 +3,7 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
+import 'package:wachbuch_mobile/screens/reports_screen.dart';
 import 'package:wachbuch_mobile/theme/design_tokens.dart';
 import 'package:wachbuch_mobile/ui/asset_status_board.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
@@ -92,6 +93,12 @@ class _AssetsScreenState extends State<AssetsScreen> {
     }
   }
 
+  void _openReports() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ReportsScreen(api: widget.api)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -99,7 +106,16 @@ class _AssetsScreenState extends State<AssetsScreen> {
     final maxW = AppLayout.contentMaxWidth(width);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.assetsScreenTitle)),
+      appBar: AppBar(
+        title: Text(l.assetsScreenTitle),
+        actions: [
+          IconButton(
+            tooltip: l.reportsTitle,
+            onPressed: _openReports,
+            icon: const Icon(Icons.analytics_outlined),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _reload,
         child: Align(
