@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 
-/// Loads and updates station defects (Mängel).
+/// Loads and mutates station defects (Mängel).
 class DefectState extends ChangeNotifier {
   DefectState({required this.api});
 
@@ -21,7 +21,6 @@ class DefectState extends ChangeNotifier {
   bool get hasData => _items.isNotEmpty;
 
   int get openCount => _items.where((item) => item.isOpen).length;
-
   int get urgentCount => _items.where((item) => item.isUrgent).length;
 
   Future<void> reload() async {
@@ -42,6 +41,40 @@ class DefectState extends ChangeNotifier {
     } finally {
       _loading = false;
       _notify();
+    }
+  }
+
+  Future<Defect?> create({
+    required String title,
+    String description = '',
+    String assetRef = '',
+    String priority = 'normal',
+    String category = 'task',
+    DateTime? dueAt,
+  }) async {
+    _error = null;
+    _lastError = null;
+    try {
+      final created = await api.createDefect(
+        title: title,
+        description: description,
+        assetRef: assetRef,
+        priority: priority,
+        category: category,
+        dueAt: dueAt,
+      );
+      _items = [created, ..._items];
+      _notify();
+      return created;
+    } on ApiException catch (error) {
+      _lastError = error;
+      _error = error.message;
+      _notify();
+      return null;
+    } catch (error) {
+      _error = error.toString();
+      _notify();
+      return null;
     }
   }
 

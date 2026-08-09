@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
+import 'package:wachbuch_mobile/api/api_cache.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_address.dart';
 import 'package:wachbuch_mobile/api/server_links.dart';
@@ -100,6 +101,10 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     }
 
     if (token != null && await widget.store.isTokenExpired()) {
+      // Expired credentials must not retain their offline station snapshots.
+      if (url != null && url.isNotEmpty) {
+        await _clearCacheForSession(url, token);
+      }
       await widget.store.clearToken();
       token = null;
       _sessionNotice = 'Ihre Anmeldung ist abgelaufen. Bitte erneut anmelden.';
@@ -150,6 +155,23 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _clearCacheForSession(String baseUrl, String token) async {
+    if (DemoService.isDemoUrl(baseUrl) || token.isEmpty) return;
+    try {
+      await SecureApiCache.forSession(baseUrl: baseUrl, token: token).clear();
+    } catch (_) {
+      // Logout/server changes must still complete if secure-storage cleanup
+      // encounters an OS/keychain failure. The token is removed regardless.
+    }
+  }
+
+  Future<void> _clearCurrentApiCache() async {
+    final api = _api;
+    final token = api?.token;
+    if (api == null || token == null || token.isEmpty) return;
+    await _clearCacheForSession(api.baseUrl, token);
+  }
+
   Future<bool> _applyServerLink(
     String url, {
     required bool confirmIfNeeded,
@@ -179,6 +201,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
       );
       if (confirmed != true) return false;
     }
+    await _clearCurrentApiCache();
     await widget.store.clearAll();
     await widget.store.writeServerUrl(url);
     return true;
@@ -267,6 +290,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
   }
 
   Future<void> _logout({String? notice}) async {
+    await _clearCurrentApiCache();
     await widget.store.clearToken();
     if (!mounted) return;
     setState(() {
@@ -279,6 +303,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
   }
 
   Future<void> _changeServer() async {
+    await _clearCurrentApiCache();
     await widget.store.clearAll();
     if (!mounted) return;
     setState(() {
