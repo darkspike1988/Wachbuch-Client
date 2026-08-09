@@ -65,7 +65,9 @@ class ApiException implements Exception {
 
   bool get isMfaRequired =>
       statusCode == 403 &&
-      (code == 'mfa_required' || message.toUpperCase().contains('MFA'));
+      (code == 'mfa_required' ||
+          code == 'mfa_setup_required' ||
+          message.toUpperCase().contains('MFA'));
 
   @override
   String toString() {
@@ -270,7 +272,7 @@ class WachbuchApi {
         value: value,
         expiresAt: _parseExpiresAt(body['expires_at']),
       );
-    });
+    }, maxAttempts: 1);
   }
 
   /// GET /api/v1/me/ with encrypted offline fallback.
@@ -319,7 +321,7 @@ class WachbuchApi {
       final body = _decode(response);
       if (body.isEmpty) return Checklist(id: id, title: '', completed: true);
       return Checklist.fromJson({...body, 'id': body['checklist'] ?? id, 'completed': true});
-    });
+    }, maxAttempts: 1);
   }
 
   Future<Map<String, dynamic>> setChecklistSchedule(
@@ -339,7 +341,7 @@ class WachbuchApi {
         ),
       );
       return _decode(response);
-    });
+    }, maxAttempts: 1);
   }
 
   /// GET /api/v1/defects/
@@ -378,10 +380,11 @@ class WachbuchApi {
         ),
       );
       return Defect.fromJson(_decode(_requireModule(response, 'Mängel')));
-    });
+    }, maxAttempts: 1);
   }
 
   /// POST /api/v1/defects/{id}/status/
+  /// The server suppresses duplicate status events, so retry is safe.
   Future<Defect> updateDefectStatus(int id, String status) async {
     return _withRetry(() async {
       final response = await _send(
@@ -431,7 +434,7 @@ class WachbuchApi {
       return DefectAttachment.fromJson(
         _decode(_requireModule(response, 'Mängel')),
       );
-    });
+    }, maxAttempts: 1);
   }
 
   Future<Uint8List> downloadAttachment(int id) async {
@@ -472,7 +475,7 @@ class WachbuchApi {
         ),
       );
       return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
-    });
+    }, maxAttempts: 1);
   }
 
   Future<StationAsset> updateAssetStatus(
@@ -489,7 +492,7 @@ class WachbuchApi {
         ),
       );
       return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
-    });
+    }, maxAttempts: 1);
   }
 
   /// GET /api/v1/inventory/
@@ -518,9 +521,10 @@ class WachbuchApi {
         ),
       );
       return InventoryItem.fromJson(_decode(_requireModule(response, 'Inventar')));
-    });
+    }, maxAttempts: 1);
   }
 
+  /// Idempotent server-side for the same user/item; safe to retry.
   Future<InventoryItem> inventoryCheckout(String id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -534,6 +538,7 @@ class WachbuchApi {
     });
   }
 
+  /// Idempotent server-side after a successful return; safe to retry.
   Future<InventoryItem> inventoryCheckin(String id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -556,6 +561,7 @@ class WachbuchApi {
     return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
   }
 
+  /// Idempotent per handover/user via the server uniqueness constraint.
   Future<HandoverAck> acknowledgeHandover(int id) async {
     return _withRetry(() async {
       final response = await _send(
@@ -625,6 +631,7 @@ class WachbuchApi {
       token: newToken,
       client: _client,
       requestTimeout: requestTimeout,
+      cache: _cache,
     );
   }
 }
