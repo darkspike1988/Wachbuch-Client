@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:wachbuch_mobile/api/wachalltag_paths.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
@@ -285,10 +286,25 @@ class WachbuchApi {
   Future<List<Defect>> defects() async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/defects/'), headers: _headers()),
+        _client.get(_uri(WachalltagPaths.defects), headers: _headers()),
       );
       final body = _decode(_requireModule(response, 'Mängel'));
       return _readList(body).map(Defect.fromJson).toList(growable: false);
+    });
+  }
+
+  /// POST /api/v1/defects/ — Mangel anlegen (Welle 2 / Phase 1).
+  Future<Defect> createDefect(Map<String, dynamic> payload) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri(WachalltagPaths.defects),
+          headers: _headers(),
+          body: jsonEncode(payload),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return Defect.fromJson(body);
     });
   }
 
@@ -297,7 +313,7 @@ class WachbuchApi {
     return _withRetry(() async {
       final response = await _send(
         _client.post(
-          _uri('/api/v1/defects/$id/status/'),
+          _uri(WachalltagPaths.defectStatus(id)),
           headers: _headers(),
           body: jsonEncode({'status': status}),
         ),
@@ -311,7 +327,7 @@ class WachbuchApi {
   Future<List<StationAsset>> assets() async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/assets/'), headers: _headers()),
+        _client.get(_uri(WachalltagPaths.assets), headers: _headers()),
       );
       final body = _decode(_requireModule(response, 'Geräte'));
       return _readList(body)
@@ -320,11 +336,35 @@ class WachbuchApi {
     });
   }
 
+  /// POST /api/v1/assets/{id}/status/ — Asset-Status setzen.
+  Future<StationAsset> updateAssetStatus(
+    String id, {
+    required String status,
+    String note = '',
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri(WachalltagPaths.assetStatus(id)),
+          headers: _headers(),
+          body: jsonEncode({
+            'status': status,
+            if (note.isNotEmpty) 'note': note,
+          }),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Geräte'));
+      return StationAsset.fromJson(
+        body.isEmpty ? {'id': id, 'status': status, 'note': note} : body,
+      );
+    });
+  }
+
   /// GET /api/v1/inventory/ — Schlüssel-/Pool-Geräte (Modul `inventory`).
   Future<List<InventoryItem>> inventory() async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/inventory/'), headers: _headers()),
+        _client.get(_uri(WachalltagPaths.inventory), headers: _headers()),
       );
       final body = _decode(_requireModule(response, 'Inventar'));
       return _readList(body)
@@ -338,7 +378,7 @@ class WachbuchApi {
     return _withRetry(() async {
       final response = await _send(
         _client.post(
-          _uri('/api/v1/inventory/$id/checkout/'),
+          _uri(WachalltagPaths.inventoryCheckout(id)),
           headers: _headers(),
         ),
       );
@@ -352,7 +392,7 @@ class WachbuchApi {
     return _withRetry(() async {
       final response = await _send(
         _client.post(
-          _uri('/api/v1/inventory/$id/checkin/'),
+          _uri(WachalltagPaths.inventoryCheckin(id)),
           headers: _headers(),
         ),
       );
@@ -365,7 +405,10 @@ class WachbuchApi {
   Future<List<HandoverAck>> handoverAcks(int id) async {
     return _withRetry(() async {
       final response = await _send(
-        _client.get(_uri('/api/v1/handovers/$id/acks/'), headers: _headers()),
+        _client.get(
+          _uri(WachalltagPaths.handoverAcks(id)),
+          headers: _headers(),
+        ),
       );
       final body = _decode(_requireModule(response, 'Quittierung'));
       return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
@@ -377,7 +420,7 @@ class WachbuchApi {
     return _withRetry(() async {
       final response = await _send(
         _client.post(
-          _uri('/api/v1/handovers/$id/ack/'),
+          _uri(WachalltagPaths.handoverAck(id)),
           headers: _headers(),
           body: jsonEncode(const <String, dynamic>{}),
         ),

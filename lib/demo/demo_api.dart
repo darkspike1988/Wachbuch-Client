@@ -41,9 +41,11 @@ class DemoWachbuchApi extends WachbuchApi {
     required this.profile,
     String? token,
     List<Defect>? defects,
+    List<StationAsset>? assets,
     List<InventoryItem>? inventory,
     Map<int, List<HandoverAck>>? acks,
   })  : _defects = List<Defect>.from(defects ?? profile.defects),
+        _assets = List<StationAsset>.from(assets ?? profile.assets),
         _inventory = List<InventoryItem>.from(inventory ?? profile.inventory),
         _acks = {
           for (final entry in (acks ?? const <int, List<HandoverAck>>{}).entries)
@@ -58,6 +60,7 @@ class DemoWachbuchApi extends WachbuchApi {
   final DemoProfile profile;
   final Set<int> _completedChecklists = {};
   final List<Defect> _defects;
+  final List<StationAsset> _assets;
   final List<InventoryItem> _inventory;
   final Map<int, List<HandoverAck>> _acks;
 
@@ -153,6 +156,22 @@ class DemoWachbuchApi extends WachbuchApi {
   }
 
   @override
+  Future<Defect> createDefect(Map<String, dynamic> payload) async {
+    final nextId = _defects.fold<int>(
+          0,
+          (max, defect) => defect.id > max ? defect.id : max,
+        ) +
+        1;
+    final created = Defect.fromJson({
+      ...payload,
+      'id': nextId,
+      'owner': payload['owner'] ?? profile.username,
+    });
+    _defects.insert(0, created);
+    return created;
+  }
+
+  @override
   Future<Defect> updateDefectStatus(int id, String status) async {
     final index = _defects.indexWhere((defect) => defect.id == id);
     if (index < 0) {
@@ -169,7 +188,26 @@ class DemoWachbuchApi extends WachbuchApi {
 
   @override
   Future<List<StationAsset>> assets() async {
-    return List<StationAsset>.unmodifiable(profile.assets);
+    return List<StationAsset>.unmodifiable(_assets);
+  }
+
+  @override
+  Future<StationAsset> updateAssetStatus(
+    String id, {
+    required String status,
+    String note = '',
+  }) async {
+    final index = _assets.indexWhere((asset) => asset.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Gerät nicht gefunden.');
+    }
+    final updated = StationAsset.fromJson({
+      ..._assets[index].toJson(),
+      'status': status,
+      if (note.isNotEmpty) 'note': note,
+    });
+    _assets[index] = updated;
+    return updated;
   }
 
   @override
@@ -231,6 +269,7 @@ class DemoWachbuchApi extends WachbuchApi {
       profile: profile,
       token: newToken,
       defects: _defects,
+      assets: _assets,
       inventory: _inventory,
       acks: _acks,
     );

@@ -4,6 +4,14 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
 ## Unreleased – Landingpage & Behörden-Demo
 
+### Welle 2 (Produktiv) — gestartet
+
+- Fahrplan `docs/FAHRPLAN-PRODUKTIV.md`, OpenAPI-Entwurf
+  `docs/openapi-wachalltag.yaml`, Server-Handoff
+  `docs/SERVER-HANDOFF-WACHALLTAG.md`.
+- Client-Pfadkonstanten `WachalltagPaths`; API `createDefect` /
+  `updateAssetStatus` (Demo + HTTP).
+
 ### CI
 
 - Android-/Dependency-Workflows auf **JDK 21** (AGP 9.3 Lint braucht

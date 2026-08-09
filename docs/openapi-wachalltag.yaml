@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Wachbuch Wachalltag API
+  description: |
+    Contract for station routines (defects, assets, handover acknowledgements,
+    inventory). No incident/patient/case data.
+
+    Companion to SCHEMA-WACHALLTAG.md and FAHRPLAN-PRODUKTIV.md.
+    Auth: `Authorization: Token <wb_…>` (same as existing /api/v1/).
+  version: 1.0.0-draft
+  license:
+    name: AGPL-3.0-or-later
+
+servers:
+  - url: /api/v1
+    description: Wachbuch API root (relative to station origin)
+
+tags:
+  - name: defects
+  - name: assets
+  - name: handovers
+  - name: inventory
+
+paths:
+  /defects/:
+    get:
+      tags: [defects]
+      summary: List station defects
+      operationId: listDefects
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefectList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ModuleUnavailable"
+    post:
+      tags: [defects]
+      summary: Create defect
+      operationId: createDefect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefectCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Defect"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ModuleUnavailable"
+
+  /defects/{id}/:
+    parameters:
+      - $ref: "#/components/parameters/DefectId"
+    get:
+      tags: [defects]
+      summary: Defect detail
+      operationId: getDefect
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Defect"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [defects]
+      summary: Update allowed defect fields
+      operationId: patchDefect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefectPatch"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Defect"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /defects/{id}/status/:
+    parameters:
+      - $ref: "#/components/parameters/DefectId"
+    post:
+      tags: [defects]
+      summary: Append-only status change
+      operationId: setDefectStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/DefectStatus"
+      responses:
+        "200":
+          description: Updated defect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Defect"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /assets/:
+    get:
+      tags: [assets]
+      summary: List station assets
+      operationId: listAssets
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ModuleUnavailable"
+
+  /assets/{id}/status/:
+    parameters:
+      - $ref: "#/components/parameters/AssetId"
+    post:
+      tags: [assets]
+      summary: Set asset status
+      operationId: setAssetStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/AssetStatus"
+                note:
+                  type: string
+      responses:
+        "200":
+          description: Updated asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /handovers/{id}/acks/:
+    parameters:
+      - $ref: "#/components/parameters/HandoverId"
+    get:
+      tags: [handovers]
+      summary: List acknowledgements for a handover
+      operationId: listHandoverAcks
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverAckList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ModuleUnavailable"
+
+  /handovers/{id}/ack/:
+    parameters:
+      - $ref: "#/components/parameters/HandoverId"
+    post:
+      tags: [handovers]
+      summary: Acknowledge handover (idempotent per user)
+      operationId: acknowledgeHandover
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Existing or new acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverAck"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /inventory/:
+    get:
+      tags: [inventory]
+      summary: List pool / key inventory (Phase 4)
+      operationId: listInventory
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ModuleUnavailable"
+
+  /inventory/{id}/checkout/:
+    parameters:
+      - $ref: "#/components/parameters/InventoryId"
+    post:
+      tags: [inventory]
+      summary: Check out inventory item (Phase 4)
+      operationId: checkoutInventory
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Already checked out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /inventory/{id}/checkin/:
+    parameters:
+      - $ref: "#/components/parameters/InventoryId"
+    post:
+      tags: [inventory]
+      summary: Check in inventory item (Phase 4)
+      operationId: checkinInventory
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    DefectId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    AssetId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    HandoverId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    InventoryId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ModuleUnavailable:
+      description: Optional module not enabled on this server
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          nullable: true
+
+    DefectStatus:
+      type: string
+      enum: [open, in_progress, waiting, done]
+
+    DefectPriority:
+      type: string
+      enum: [urgent, important, normal]
+
+    DefectCategory:
+      type: string
+      enum: [vehicle, material, safety, facility, key, device, task]
+
+    Defect:
+      type: object
+      required: [id, title, priority, status]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        asset_ref:
+          type: string
+          default: ""
+        priority:
+          $ref: "#/components/schemas/DefectPriority"
+        status:
+          $ref: "#/components/schemas/DefectStatus"
+        owner:
+          type: string
+          default: ""
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        due_label:
+          type: string
+          description: Display helper for demos; servers may omit
+        category:
+          $ref: "#/components/schemas/DefectCategory"
+
+    DefectCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        asset_ref:
+          type: string
+        priority:
+          $ref: "#/components/schemas/DefectPriority"
+        status:
+          $ref: "#/components/schemas/DefectStatus"
+        owner:
+          type: string
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          $ref: "#/components/schemas/DefectCategory"
+
+    DefectPatch:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        asset_ref:
+          type: string
+        priority:
+          $ref: "#/components/schemas/DefectPriority"
+        owner:
+          type: string
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          $ref: "#/components/schemas/DefectCategory"
+
+    DefectList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Defect"
+
+    AssetStatus:
+      type: string
+      enum: [ready, limited, oob, workshop]
+
+    AssetKind:
+      type: string
+      enum: [vehicle, device, key]
+
+    Asset:
+      type: object
+      required: [id, label, kind, status]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        kind:
+          $ref: "#/components/schemas/AssetKind"
+        status:
+          $ref: "#/components/schemas/AssetStatus"
+        note:
+          type: string
+          default: ""
+
+    AssetList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Asset"
+
+    HandoverAck:
+      type: object
+      required: [handover_id, by, at]
+      properties:
+        handover_id:
+          type: integer
+        by:
+          type: string
+        at:
+          type: string
+          format: date-time
+
+    HandoverAckList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/HandoverAck"
+
+    InventoryItem:
+      type: object
+      required: [id, label, kind]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        kind:
+          type: string
+          enum: [key, device, vehicle]
+        holder:
+          type: string
+          nullable: true
+        since:
+          type: string
+          format: date-time
+          nullable: true
+        since_label:
+          type: string
+        note:
+          type: string
+
+    InventoryList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+
+    StationModules:
+      type: object
+      description: Fragment under GET /me/ → membership.station.modules
+      properties:
+        defects:
+          type: boolean
+        assets:
+          type: boolean
+        inventory:
+          type: boolean
+        calendar:
+          type: boolean
+        coffee:
+          type: boolean
+        checklists:
+          type: boolean

@@ -1,9 +1,12 @@
-# Schema: Wachalltag (Defect · Asset · Ack)
+# Schema: Wachalltag (Defect · Asset · Ack · Inventory)
 
 Stand: 9. August 2026  
-Bezug: [FAHRPLAN-BEHOERDEN.md](FAHRPLAN-BEHOERDEN.md) Phase A
+Bezug: [FAHRPLAN-BEHOERDEN.md](FAHRPLAN-BEHOERDEN.md) (Welle 1) ·
+[FAHRPLAN-PRODUKTIV.md](FAHRPLAN-PRODUKTIV.md) (Welle 2)  
+OpenAPI: [openapi-wachalltag.yaml](openapi-wachalltag.yaml)  
+Server-Handoff: [SERVER-HANDOFF-WACHALLTAG.md](SERVER-HANDOFF-WACHALLTAG.md)
 
-Vertragsentwurf für Webapp-Demo, späteren Server (`/api/v1/`) und Flutter-Client.
+Vertragsentwurf für Webapp-Demo, Server (`/api/v1/`) und Flutter-Client.
 Kein Einsatz-/Patienten-/Vorgangsbezug.
 
 ## Prinzipien
@@ -13,8 +16,9 @@ Kein Einsatz-/Patienten-/Vorgangsbezug.
 2. **Append-only Historie** bei Statuswechseln und Quittierungen (Server später)
 3. **Gleiche Feldnamen** in Webapp (`landing/app/data.js`) und Flutter-Modellen
 4. **Enums als Strings** in JSON (`open`, `ready`, …) — stabil für API-Versionierung
-5. **State** — `ChangeNotifier` + Screen-lokaler State (wie `HandoverState`); API-Methoden werfen `501`, bis der Server liefert
-6. **Modul-Flags** — UI nur zeigen, wenn `station.modules.defects|assets == true`
+5. **State** — `ChangeNotifier` + Screen-lokaler State (wie `HandoverState`)
+6. **Modul-Flags** — UI nur zeigen, wenn `station.modules.defects|assets|inventory == true`
+7. **404 = Modul aus** — fehlende optionale Module liefern 404 (nicht 500); Client blendet UI aus
 
 ## `defect`
 
@@ -116,12 +120,14 @@ Demo-Profile setzen diese Flags auf `true`.
 | Schicht | Status |
 | --- | --- |
 | Webapp Demo | A–D + E (objectURL) + F + G + I |
-| Flutter Modelle + Demo-API + UI | A–D + F-Felder + G Inventar; HTTP-Client verdrahtet |
-| Server API | offen (Contract hier) |
+| Flutter Modelle + Demo-API + UI | verdrahtet inkl. createDefect / asset status |
+| OpenAPI Draft | `openapi-wachalltag.yaml` (Welle 2 Phase 0) |
+| Server API | offen — siehe SERVER-HANDOFF |
 
 ## Abnahme
 
 - [x] Feldnamen Webapp ↔ Dokument deckungsgleich
 - [x] Flutter `fromJson` mit Unit-Tests für Alias/Müll-Eingaben
 - [x] Flutter HTTP-Client für defects/assets/inventory/acks (404 = Modul aus)
-- [ ] Server OpenAPI-Spiegel nach Freeze
+- [x] OpenAPI-Entwurf + Server-Handoff im Client-Repo
+- [ ] Server OpenAPI-Spiegel + Phase-1-Endpoints
