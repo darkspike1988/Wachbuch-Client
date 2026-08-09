@@ -5,8 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
+import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/station_asset.dart';
 
 const demoTokenPrefix = 'wb_demo_';
 
@@ -36,7 +39,14 @@ class DemoWachbuchApi extends WachbuchApi {
   DemoWachbuchApi({
     required this.profile,
     String? token,
-  }) : super(
+    List<Defect>? defects,
+    Map<int, List<HandoverAck>>? acks,
+  })  : _defects = List<Defect>.from(defects ?? profile.defects),
+        _acks = {
+          for (final entry in (acks ?? const <int, List<HandoverAck>>{}).entries)
+            entry.key: List<HandoverAck>.from(entry.value),
+        },
+        super(
           baseUrl: profile.service.serverUrl,
           token: token ?? '$demoTokenPrefix${profile.service.id}',
           client: _NoopClient(),
@@ -44,6 +54,8 @@ class DemoWachbuchApi extends WachbuchApi {
 
   final DemoProfile profile;
   final Set<int> _completedChecklists = {};
+  final List<Defect> _defects;
+  final Map<int, List<HandoverAck>> _acks;
 
   bool get isDemo => true;
 
@@ -59,6 +71,8 @@ class DemoWachbuchApi extends WachbuchApi {
         'token': '/api/v1/token/',
         'me': '/api/v1/me/',
         'handovers': '/api/v1/handovers/',
+        'defects': '/api/v1/defects/',
+        'assets': '/api/v1/assets/',
       },
     };
   }
@@ -130,8 +144,60 @@ class DemoWachbuchApi extends WachbuchApi {
   }
 
   @override
+  Future<List<Defect>> defects() async {
+    return List<Defect>.unmodifiable(_defects);
+  }
+
+  @override
+  Future<Defect> updateDefectStatus(int id, String status) async {
+    final index = _defects.indexWhere((defect) => defect.id == id);
+    if (index < 0) {
+      throw ApiException(404, 'Mangel nicht gefunden.');
+    }
+    // Re-parse so aliases like "blocked"/"closed" stay on the contract enums.
+    final updated = Defect.fromJson({
+      ..._defects[index].toJson(),
+      'status': status,
+    });
+    _defects[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<List<StationAsset>> assets() async {
+    return List<StationAsset>.unmodifiable(profile.assets);
+  }
+
+  @override
+  Future<List<HandoverAck>> handoverAcks(int id) async {
+    return List<HandoverAck>.unmodifiable(_acks[id] ?? const []);
+  }
+
+  @override
+  Future<HandoverAck> acknowledgeHandover(int id) async {
+    final exists = profile.handovers.any((entry) => entry['id'] == id);
+    if (!exists) {
+      throw ApiException(404, 'Übergabe nicht gefunden.');
+    }
+    final by = profile.username;
+    final current = _acks.putIfAbsent(id, () => <HandoverAck>[]);
+    final existing = current.where((ack) => ack.by == by);
+    if (existing.isNotEmpty) {
+      return existing.first;
+    }
+    final ack = HandoverAck(handoverId: id, by: by, at: DateTime.now());
+    current.add(ack);
+    return ack;
+  }
+
+  @override
   DemoWachbuchApi copyWithToken(String newToken) {
-    return DemoWachbuchApi(profile: profile, token: newToken);
+    return DemoWachbuchApi(
+      profile: profile,
+      token: newToken,
+      defects: _defects,
+      acks: _acks,
+    );
   }
 
   @override

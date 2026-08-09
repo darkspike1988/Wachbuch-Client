@@ -3,12 +3,16 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/demo/demo_api.dart';
 import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
+import 'package:wachbuch_mobile/models/handover_ack.dart';
+import 'package:wachbuch_mobile/models/station_asset.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
+import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
+import 'package:wachbuch_mobile/ui/asset_status_board.dart';
 import 'package:wachbuch_mobile/ui/demo_banner.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/handover_filter.dart';
@@ -95,6 +99,7 @@ class _HomeShellState extends State<HomeShell> {
     return switch (service) {
       DemoService.rettungsdienst => l10n.demoBannerRettungsdienst,
       DemoService.feuerwehr => l10n.demoBannerFeuerwehr,
+      DemoService.ffw => l10n.demoBannerFfw,
       DemoService.polizei => l10n.demoBannerPolizei,
       null => null,
     };
@@ -363,6 +368,10 @@ class _OverviewTab extends StatelessWidget {
                   );
                 },
               ),
+              if (modules['assets'] == true) ...[
+                const SizedBox(height: 24),
+                _OverviewAssetBoard(api: api),
+              ],
               const SizedBox(height: 24),
               _SectionTitle(
                 icon: Icons.dashboard_customize_outlined,
@@ -595,6 +604,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['defects'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-defects',
+          icon: Icons.report_problem_outlined,
+          title: l.moduleDefectsTitle,
+          subtitle: l.moduleDefectsSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -638,10 +657,78 @@ class _ModuleTiles extends StatelessWidget {
         screen = KaffeekasseScreen(api: api);
       case 'module-tile-checklists':
         screen = ChecklistenScreen(api: api);
+      case 'module-tile-defects':
+        screen = DefectsScreen(api: api);
       default:
         return;
     }
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+}
+
+/// Loads station assets for the overview board; hides on 501 / empty.
+class _OverviewAssetBoard extends StatefulWidget {
+  const _OverviewAssetBoard({required this.api});
+
+  final WachbuchApi api;
+
+  @override
+  State<_OverviewAssetBoard> createState() => _OverviewAssetBoardState();
+}
+
+class _OverviewAssetBoardState extends State<_OverviewAssetBoard> {
+  List<StationAsset> _assets = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OverviewAssetBoard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.api != widget.api) {
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final assets = await widget.api.assets();
+      if (!mounted) return;
+      setState(() {
+        _assets = assets;
+        _loading = false;
+      });
+    } on ApiException catch (_) {
+      // 501 or other errors: keep board empty; overview already surfaces
+      // auth/network problems elsewhere.
+      if (!mounted) return;
+      setState(() {
+        _assets = const [];
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _assets = const [];
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading && _assets.isEmpty) {
+      return const SizedBox(
+        height: 48,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    return AssetStatusBoard(assets: _assets);
   }
 }
 
@@ -748,8 +835,12 @@ class _HandoversTabState extends State<_HandoversTab> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) =>
-          _HandoverDetailSheet(future: detailFuture, fallback: item),
+      builder: (context) => _HandoverDetailSheet(
+        api: widget.api,
+        handoverId: id,
+        future: detailFuture,
+        fallback: item,
+      ),
     );
   }
 
@@ -1089,18 +1180,92 @@ class _HandoverChip extends StatelessWidget {
   }
 }
 
-class _HandoverDetailSheet extends StatelessWidget {
-  const _HandoverDetailSheet({required this.future, required this.fallback});
+class _HandoverDetailSheet extends StatefulWidget {
+  const _HandoverDetailSheet({
+    required this.api,
+    required this.handoverId,
+    required this.future,
+    required this.fallback,
+  });
 
+  final WachbuchApi api;
+  final int handoverId;
   final Future<Map<String, dynamic>> future;
   final Map<String, dynamic> fallback;
+
+  @override
+  State<_HandoverDetailSheet> createState() => _HandoverDetailSheetState();
+}
+
+class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
+  List<HandoverAck> _acks = const [];
+  bool _acksSupported = true;
+  bool _acking = false;
+  String? _ackError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAcks();
+  }
+
+  Future<void> _loadAcks() async {
+    try {
+      final acks = await widget.api.handoverAcks(widget.handoverId);
+      if (!mounted) return;
+      setState(() {
+        _acks = acks;
+        _acksSupported = true;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      if (error.statusCode == 501) {
+        setState(() => _acksSupported = false);
+        return;
+      }
+      setState(() => _ackError = error.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _acksSupported = false);
+    }
+  }
+
+  Future<void> _acknowledge(AppLocalizations l) async {
+    setState(() {
+      _acking = true;
+      _ackError = null;
+    });
+    try {
+      final ack = await widget.api.acknowledgeHandover(widget.handoverId);
+      if (!mounted) return;
+      setState(() {
+        _acks = [
+          ..._acks.where((item) => item.by != ack.by),
+          ack,
+        ];
+        _acking = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _acking = false;
+        _ackError = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _acking = false;
+        _ackError = l.handoverAckFailed;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return SafeArea(
       child: FutureBuilder<Map<String, dynamic>>(
-        future: future,
+        future: widget.future,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const SizedBox(
@@ -1117,12 +1282,17 @@ class _HandoverDetailSheet extends StatelessWidget {
               child: ErrorBanner(message: message),
             );
           }
-          final item = {...fallback, ...?snapshot.data};
+          final item = {...widget.fallback, ...?snapshot.data};
           final rawAuthor = item['author'];
           final author = rawAuthor is Map ? rawAuthor : null;
           final authorName = author?['display_name']?.toString();
           final details = item['details']?.toString().trim();
           final version = item['version'];
+          final me = widget.api is DemoWachbuchApi
+              ? (widget.api as DemoWachbuchApi).profile.username
+              : null;
+          final alreadyAcked =
+              me != null && _acks.any((ack) => ack.by == me);
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               24,
@@ -1183,6 +1353,53 @@ class _HandoverDetailSheet extends StatelessWidget {
                     icon: Icons.history,
                     value: l.detailsVersion(version.toString()),
                   ),
+                if (_acksSupported) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l.handoverAckListTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_acks.isEmpty)
+                    Text(
+                      l.handoverAckEmpty,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                    )
+                  else
+                    ..._acks.map(
+                      (ack) => _DetailRow(
+                        icon: Icons.verified_outlined,
+                        value:
+                            '${ack.by} · ${_formatTimestamp(ack.at.toIso8601String())}',
+                      ),
+                    ),
+                  if (_ackError != null) ...[
+                    const SizedBox(height: 8),
+                    ErrorBanner(message: _ackError!),
+                  ],
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _acking || alreadyAcked
+                        ? null
+                        : () => _acknowledge(l),
+                    icon: _acking
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.done_all),
+                    label: Text(
+                      alreadyAcked ? l.handoverAckDone : l.handoverAckButton,
+                    ),
+                  ),
+                ],
               ],
             ),
           );

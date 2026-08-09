@@ -12,8 +12,12 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
   Übergaben, Mängel-Workflow, Statusboard, Gerätepools, Quittierung, Kalender,
   Kaffeekasse, Checklisten; Profile inkl. Freiwillige Feuerwehr.
 - Fachfahrplan `docs/FAHRPLAN-BEHOERDEN.md` (Phasen A–I, Server-/Mobile-Pfad).
-- Offline-Demo in der App: Startbildschirm → „Demo-Modus ausprobieren“ mit drei
-  Organisationsprofilen und Muster-Übergaben, Kalender, Kaffeekasse und Checklisten.
+- Offline-Demo in der App: Startbildschirm → „Demo-Modus ausprobieren“ mit
+  Organisationsprofilen (RD, Feuerwehr, FFW, Polizei) und Muster-Übergaben,
+  Kalender, Kaffeekasse und Checklisten.
+- Flutter Phase A–D (Demo): Modelle `Defect` / `StationAsset` / `HandoverAck`,
+  Contract `docs/SCHEMA-WACHALLTAG.md`, Mängel-Screen, Statusboard auf der
+  Übersicht, Quittierung im Übergabe-Detail; API-Stubs mit HTTP 501 bis Server.
 - Gelbes Demo-Banner in der App-Shell, analog zum Server-Demo-Modus.
 
 ## Unreleased – Module API (Kalender, Kaffeekasse, Checklisten)

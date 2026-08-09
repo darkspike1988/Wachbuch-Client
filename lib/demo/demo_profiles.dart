@@ -1,10 +1,14 @@
-/// Local demo profiles for Rettungsdienst, Feuerwehr and Polizei.
+/// Local demo profiles for RD, Feuerwehr, FFW and Polizei.
 /// Offline-only sample data — never used against a real server.
 library;
+
+import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/station_asset.dart';
 
 enum DemoService {
   rettungsdienst,
   feuerwehr,
+  ffw,
   polizei;
 
   String get id => name;
@@ -37,6 +41,8 @@ class DemoProfile {
     required this.calendar,
     required this.coffee,
     required this.checklists,
+    this.defects = const [],
+    this.assets = const [],
   });
 
   final DemoService service;
@@ -48,6 +54,8 @@ class DemoProfile {
   final List<Map<String, dynamic>> calendar;
   final Map<String, dynamic> coffee;
   final List<Map<String, dynamic>> checklists;
+  final List<Defect> defects;
+  final List<StationAsset> assets;
 
   Map<String, dynamic> get me => {
         'username': username,
@@ -60,6 +68,8 @@ class DemoProfile {
               'coffee': true,
               'checklists': true,
               'birthdays': true,
+              'defects': true,
+              'assets': true,
             },
           },
         },
@@ -70,6 +80,7 @@ DemoProfile demoProfileFor(DemoService service) {
   return switch (service) {
     DemoService.rettungsdienst => _rettungsdienst,
     DemoService.feuerwehr => _feuerwehr,
+    DemoService.ffw => _ffw,
     DemoService.polizei => _polizei,
   };
 }
@@ -131,6 +142,47 @@ final _rettungsdienst = DemoProfile(
       'updated_at': _iso(_now.subtract(const Duration(days: 1))),
       'version': 3,
     },
+  ],
+  assets: const [
+    StationAsset(id: 'rtw-1', label: 'RTW 1', kind: 'vehicle', status: 'limited', note: 'Defi-Akku schwach'),
+    StationAsset(id: 'rtw-2', label: 'RTW 2', kind: 'vehicle', status: 'ready'),
+    StationAsset(id: 'ktw-1', label: 'KTW 1', kind: 'vehicle', status: 'ready'),
+    StationAsset(id: 'funk-wache', label: 'Funk Wachzimmer', kind: 'device', status: 'limited', note: 'Kanal 4'),
+  ],
+  defects: [
+    Defect(
+      id: 101,
+      title: 'Defi-Akku RTW 1 unter 40 %',
+      description: 'Ersatz aus Materiallager, Gerät kalibrieren.',
+      assetRef: 'RTW 1',
+      priority: 'urgent',
+      status: 'open',
+      owner: 'demo-schicht',
+      dueLabel: 'heute 14:00',
+      category: 'material',
+    ),
+    Defect(
+      id: 102,
+      title: 'Kühlschrank-Temperaturlog fehlt',
+      description: 'Heutige Werte nachtragen.',
+      assetRef: 'Medikamentenkühlung',
+      priority: 'important',
+      status: 'open',
+      owner: 'demo-mitglied',
+      dueLabel: 'heute 18:00',
+      category: 'facility',
+    ),
+    Defect(
+      id: 103,
+      title: 'Funkgerät Wachzimmer',
+      description: 'IT informiert, Ersatzgerät Spind B.',
+      assetRef: 'Funk Wachzimmer',
+      priority: 'important',
+      status: 'in_progress',
+      owner: 'demo-admin',
+      dueLabel: 'morgen',
+      category: 'device',
+    ),
   ],
   calendar: [
     {
@@ -248,6 +300,36 @@ final _feuerwehr = DemoProfile(
       'version': 1,
     },
   ],
+  assets: const [
+    StationAsset(id: 'hlf-20', label: 'HLF 20', kind: 'vehicle', status: 'limited', note: 'Atemschutz 3 OOB'),
+    StationAsset(id: 'dlk', label: 'DLK', kind: 'vehicle', status: 'ready'),
+    StationAsset(id: 'as-3', label: 'Atemschutz 3', kind: 'device', status: 'oob', note: 'Werkstatt'),
+    StationAsset(id: 'as-4', label: 'Atemschutz 4', kind: 'device', status: 'ready', note: 'Ersatz'),
+  ],
+  defects: const [
+    Defect(
+      id: 111,
+      title: 'Atemschutzgerät 3 undicht',
+      description: 'Druckminderer, Werkstatt informiert.',
+      assetRef: 'Atemschutz 3',
+      priority: 'urgent',
+      status: 'open',
+      owner: 'demo-waf',
+      dueLabel: 'heute',
+      category: 'device',
+    ),
+    Defect(
+      id: 112,
+      title: 'Schlauchturm-Beleuchtung',
+      description: 'Elektrofirma angefragt.',
+      assetRef: 'Gerätehaus',
+      priority: 'normal',
+      status: 'waiting',
+      owner: 'demo-admin',
+      dueLabel: 'Freitag',
+      category: 'facility',
+    ),
+  ],
   calendar: [
     {
       'id': 11,
@@ -299,6 +381,125 @@ final _feuerwehr = DemoProfile(
       'items': [
         {'id': 14, 'text': 'Notstromaggregat geprüft', 'checked': false},
         {'id': 15, 'text': 'Schlauchlager Ordnung', 'checked': false},
+      ],
+    },
+  ],
+);
+
+final _ffw = DemoProfile(
+  service: DemoService.ffw,
+  stationName: 'FFW Musterdorf',
+  roleLabel: 'Wehrführung',
+  username: 'demo-wf',
+  tagline: 'Gerätehaus-Alltag und asynchrone To-dos für die Freiwillige Feuerwehr.',
+  handovers: [
+    {
+      'id': 31,
+      'title': '[Demo] Gerätehaus – Heizung macht Geräusche',
+      'description': 'Heizungstechniker für Samstag vormerken.',
+      'status': 'open',
+      'priority': 'important',
+      'category': 'station',
+      'author': 'demo-wf',
+      'updated_at': _iso(_now.subtract(const Duration(days: 2))),
+      'version': 1,
+    },
+    {
+      'id': 32,
+      'title': '[Demo] Übung Verkehrsabsicherung – Material fehlt',
+      'description': '2 Leitkegel und 1 Warnweste nachbestellen.',
+      'status': 'open',
+      'priority': 'normal',
+      'category': 'material',
+      'author': 'demo-ausbilder',
+      'updated_at': _iso(_now.subtract(const Duration(days: 2, hours: 4))),
+      'version': 1,
+    },
+    {
+      'id': 33,
+      'title': '[Demo] Jugendfeuerwehr – Raum aufgeräumt',
+      'description': 'Nach Gruppenstunde erledigt.',
+      'status': 'done',
+      'priority': 'normal',
+      'category': 'station',
+      'author': 'demo-jugend',
+      'updated_at': _iso(_now.subtract(const Duration(days: 1))),
+      'version': 1,
+    },
+  ],
+  assets: const [
+    StationAsset(id: 'lf-kat', label: 'LF-KatS', kind: 'vehicle', status: 'ready'),
+    StationAsset(id: 'ts', label: 'TS', kind: 'vehicle', status: 'limited', note: 'Batterie schwach'),
+    StationAsset(id: 'heizung', label: 'Heizung Gerätehaus', kind: 'device', status: 'limited', note: 'Geräusche'),
+  ],
+  defects: const [
+    Defect(
+      id: 131,
+      title: 'Heizung Gerätehaus',
+      description: 'Techniker Samstag, Zugang klären.',
+      assetRef: 'Heizung Gerätehaus',
+      priority: 'important',
+      status: 'open',
+      owner: 'demo-wf',
+      dueLabel: 'Samstag',
+      category: 'facility',
+    ),
+    Defect(
+      id: 132,
+      title: 'Leitkegel / Warnwesten nachbestellen',
+      description: 'Für Übung Verkehrsabsicherung.',
+      assetRef: 'Materiallager',
+      priority: 'normal',
+      status: 'open',
+      owner: 'demo-ausbilder',
+      dueLabel: 'vor nächster Übung',
+      category: 'material',
+    ),
+    Defect(
+      id: 133,
+      title: 'TS-Batterie prüfen',
+      description: 'Laden und Messung dokumentieren.',
+      assetRef: 'TS',
+      priority: 'important',
+      status: 'in_progress',
+      owner: 'demo-mitglied',
+      dueLabel: 'diese Woche',
+      category: 'vehicle',
+    ),
+  ],
+  calendar: [
+    {
+      'id': 31,
+      'title': 'Übungsdienst',
+      'start': _iso(_now.add(const Duration(days: 2, hours: 19))),
+      'end': _iso(_now.add(const Duration(days: 2, hours: 22))),
+      'all_day': false,
+      'location': 'Gerätehaus',
+    },
+  ],
+  coffee: {
+    'balance': '9.40',
+    'currency': 'EUR',
+    'payment_hint': 'Kaffeekasse Gerätehaus.',
+    'ledger': [
+      {
+        'id': 31,
+        'amount': '-3.20',
+        'description': 'Kaffee Übung',
+        'created_at': _iso(_now.subtract(const Duration(days: 3))),
+        'user': 'demo-kasse',
+      },
+    ],
+  },
+  checklists: [
+    {
+      'id': 31,
+      'title': 'Gerätehaus-Wochenheck',
+      'completed': false,
+      'items': [
+        {'id': 31, 'text': 'Tore / Heizung ok', 'checked': false},
+        {'id': 32, 'text': 'Notstrom Sichtprüfung', 'checked': false},
+        {'id': 33, 'text': 'Fahrzeugbatterien', 'checked': true},
       ],
     },
   ],
@@ -356,6 +557,46 @@ final _polizei = DemoProfile(
       'updated_at': _iso(_now.subtract(const Duration(hours: 10))),
       'version': 1,
     },
+  ],
+  assets: const [
+    StationAsset(id: 'fustw-3', label: 'FuStW 3', kind: 'vehicle', status: 'limited', note: 'Reifen vorne links'),
+    StationAsset(id: 'fustw-1', label: 'FuStW 1', kind: 'vehicle', status: 'ready'),
+    StationAsset(id: 'body-dock', label: 'Bodycam-Dock', kind: 'device', status: 'limited', note: 'Dock 2/4 leer'),
+  ],
+  defects: const [
+    Defect(
+      id: 121,
+      title: 'FuStW 3 Reifenprofil',
+      description: 'Werkstatt 14:00, bis dahin Notbetrieb.',
+      assetRef: 'FuStW 3',
+      priority: 'urgent',
+      status: 'open',
+      owner: 'demo-dgl',
+      dueLabel: 'heute 14:00',
+      category: 'vehicle',
+    ),
+    Defect(
+      id: 122,
+      title: 'Zellenschlüssel Haken 7 fehlt',
+      description: 'Schlüsselverwaltung informiert.',
+      assetRef: 'Schlüsselbrett',
+      priority: 'important',
+      status: 'open',
+      owner: 'demo-admin',
+      dueLabel: 'heute',
+      category: 'key',
+    ),
+    Defect(
+      id: 123,
+      title: 'Bodycam-Docks nachladen',
+      description: 'Dock 2 und 4.',
+      assetRef: 'Bodycam-Dock',
+      priority: 'important',
+      status: 'in_progress',
+      owner: 'demo-mitglied',
+      dueLabel: 'Schichtende',
+      category: 'device',
+    ),
   ],
   calendar: [
     {

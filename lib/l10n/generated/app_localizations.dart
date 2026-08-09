@@ -254,11 +254,143 @@ abstract class AppLocalizations {
   /// **'Punkte abhaken und abschließen'**
   String get moduleChecklistsSubtitle;
 
+  /// No description provided for @moduleDefectsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mängel'**
+  String get moduleDefectsTitle;
+
+  /// No description provided for @moduleDefectsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Punkte mit Owner und Frist'**
+  String get moduleDefectsSubtitle;
+
+  /// No description provided for @moduleAssetsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Geräte'**
+  String get moduleAssetsTitle;
+
+  /// No description provided for @moduleAssetsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fahrzeug- und Gerätestatus der Wache'**
+  String get moduleAssetsSubtitle;
+
   /// No description provided for @quickAccessTitle.
   ///
   /// In de, this message translates to:
   /// **'Schnellzugriff'**
   String get quickAccessTitle;
+
+  /// No description provided for @defectsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mängel'**
+  String get defectsTitle;
+
+  /// No description provided for @defectsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Punkte aus dem Wachalltag — Status und Zuständigkeit nachvollziehbar halten.'**
+  String get defectsHint;
+
+  /// No description provided for @defectsEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Mängel für diesen Filter.'**
+  String get defectsEmpty;
+
+  /// No description provided for @defectAssetLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bezug'**
+  String get defectAssetLabel;
+
+  /// No description provided for @defectOwnerLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Zuständig'**
+  String get defectOwnerLabel;
+
+  /// No description provided for @defectDueLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Frist'**
+  String get defectDueLabel;
+
+  /// No description provided for @defectSetStatus.
+  ///
+  /// In de, this message translates to:
+  /// **'Status setzen'**
+  String get defectSetStatus;
+
+  /// No description provided for @defectStatusWaiting.
+  ///
+  /// In de, this message translates to:
+  /// **'Wartend'**
+  String get defectStatusWaiting;
+
+  /// No description provided for @assetsBoardTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fahrzeug- & Gerätestatus'**
+  String get assetsBoardTitle;
+
+  /// No description provided for @assetStatusReady.
+  ///
+  /// In de, this message translates to:
+  /// **'Einsatzklar'**
+  String get assetStatusReady;
+
+  /// No description provided for @assetStatusLimited.
+  ///
+  /// In de, this message translates to:
+  /// **'Eingeschränkt'**
+  String get assetStatusLimited;
+
+  /// No description provided for @assetStatusOob.
+  ///
+  /// In de, this message translates to:
+  /// **'Außer Betrieb'**
+  String get assetStatusOob;
+
+  /// No description provided for @assetStatusWorkshop.
+  ///
+  /// In de, this message translates to:
+  /// **'Werkstatt'**
+  String get assetStatusWorkshop;
+
+  /// No description provided for @handoverAckButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Übernommen'**
+  String get handoverAckButton;
+
+  /// No description provided for @handoverAckDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Von Ihnen quittiert'**
+  String get handoverAckDone;
+
+  /// No description provided for @handoverAckListTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Quittierungen'**
+  String get handoverAckListTitle;
+
+  /// No description provided for @handoverAckEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch nicht quittiert.'**
+  String get handoverAckEmpty;
+
+  /// No description provided for @handoverAckFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Quittierung fehlgeschlagen.'**
+  String get handoverAckFailed;
 
   /// No description provided for @handoverSearchHint.
   ///
@@ -677,7 +809,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupDemoSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr oder Polizei.'**
+  /// **'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr, FFW oder Polizei.'**
   String get setupDemoSubtitle;
 
   /// No description provided for @setupDemoRettungsdienst.
@@ -703,6 +835,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Gerätehaus, Fahrzeuge und Dienstübergabe'**
   String get setupDemoFeuerwehrHint;
+
+  /// No description provided for @setupDemoFfw.
+  ///
+  /// In de, this message translates to:
+  /// **'Freiwillige Feuerwehr'**
+  String get setupDemoFfw;
+
+  /// No description provided for @setupDemoFfwHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gerätehaus, Fahrzeuge und ehrenamtlicher Wachalltag'**
+  String get setupDemoFfwHint;
 
   /// No description provided for @setupDemoPolizei.
   ///
@@ -733,6 +877,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Feuerwehr'**
   String get demoBannerFeuerwehr;
+
+  /// No description provided for @demoBannerFfw.
+  ///
+  /// In de, this message translates to:
+  /// **'Freiwillige Feuerwehr'**
+  String get demoBannerFfw;
 
   /// No description provided for @demoBannerPolizei.
   ///

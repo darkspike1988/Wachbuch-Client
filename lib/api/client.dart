@@ -6,8 +6,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:wachbuch_mobile/models/checkliste.dart';
+import 'package:wachbuch_mobile/models/defect.dart';
+import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/station_asset.dart';
 
 typedef WachbuchApiFactory = WachbuchApi Function(String baseUrl);
 
@@ -275,6 +278,33 @@ class WachbuchApi {
     });
   }
 
+  /// GET /api/v1/defects/ — Mängel (Modul `defects`, Contract: SCHEMA-WACHALLTAG).
+  ///
+  /// Default: not available until the server ships the endpoint.
+  Future<List<Defect>> defects() async {
+    throw ApiException(501, 'Mängel-Modul auf diesem Server nicht verfügbar.');
+  }
+
+  /// POST /api/v1/defects/{id}/status/ — Statuswechsel (append-only).
+  Future<Defect> updateDefectStatus(int id, String status) async {
+    throw ApiException(501, 'Mängel-Modul auf diesem Server nicht verfügbar.');
+  }
+
+  /// GET /api/v1/assets/ — Fahrzeug-/Gerätestatus (Modul `assets`).
+  Future<List<StationAsset>> assets() async {
+    throw ApiException(501, 'Geräte-Modul auf diesem Server nicht verfügbar.');
+  }
+
+  /// GET /api/v1/handovers/{id}/acks/
+  Future<List<HandoverAck>> handoverAcks(int id) async {
+    throw ApiException(501, 'Quittierung auf diesem Server nicht verfügbar.');
+  }
+
+  /// POST /api/v1/handovers/{id}/ack/ — idempotent pro Benutzer.
+  Future<HandoverAck> acknowledgeHandover(int id) async {
+    throw ApiException(501, 'Quittierung auf diesem Server nicht verfügbar.');
+  }
+
   List<Map<String, dynamic>> _readList(Map<String, dynamic> body) {
     final results = body['results'] ?? body['entries'] ?? body['termine'];
     if (results is! List) return const [];
@@ -346,6 +376,8 @@ String moduleLabel(String key) {
     'checklists': 'Checklisten',
     'messaging': 'Nachrichten',
     'tasks': 'Aufgaben',
+    'defects': 'Mängel',
+    'assets': 'Geräte',
   };
   return labels[key] ?? key;
 }

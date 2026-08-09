@@ -93,7 +93,74 @@ class AppLocalizationsDe extends AppLocalizations {
   String get moduleChecklistsSubtitle => 'Punkte abhaken und abschließen';
 
   @override
+  String get moduleDefectsTitle => 'Mängel';
+
+  @override
+  String get moduleDefectsSubtitle => 'Offene Punkte mit Owner und Frist';
+
+  @override
+  String get moduleAssetsTitle => 'Geräte';
+
+  @override
+  String get moduleAssetsSubtitle => 'Fahrzeug- und Gerätestatus der Wache';
+
+  @override
   String get quickAccessTitle => 'Schnellzugriff';
+
+  @override
+  String get defectsTitle => 'Mängel';
+
+  @override
+  String get defectsHint =>
+      'Offene Punkte aus dem Wachalltag — Status und Zuständigkeit nachvollziehbar halten.';
+
+  @override
+  String get defectsEmpty => 'Keine Mängel für diesen Filter.';
+
+  @override
+  String get defectAssetLabel => 'Bezug';
+
+  @override
+  String get defectOwnerLabel => 'Zuständig';
+
+  @override
+  String get defectDueLabel => 'Frist';
+
+  @override
+  String get defectSetStatus => 'Status setzen';
+
+  @override
+  String get defectStatusWaiting => 'Wartend';
+
+  @override
+  String get assetsBoardTitle => 'Fahrzeug- & Gerätestatus';
+
+  @override
+  String get assetStatusReady => 'Einsatzklar';
+
+  @override
+  String get assetStatusLimited => 'Eingeschränkt';
+
+  @override
+  String get assetStatusOob => 'Außer Betrieb';
+
+  @override
+  String get assetStatusWorkshop => 'Werkstatt';
+
+  @override
+  String get handoverAckButton => 'Übernommen';
+
+  @override
+  String get handoverAckDone => 'Von Ihnen quittiert';
+
+  @override
+  String get handoverAckListTitle => 'Quittierungen';
+
+  @override
+  String get handoverAckEmpty => 'Noch nicht quittiert.';
+
+  @override
+  String get handoverAckFailed => 'Quittierung fehlgeschlagen.';
 
   @override
   String get handoverSearchHint => 'Übergaben durchsuchen';
@@ -322,7 +389,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get setupDemoSubtitle =>
-      'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr oder Polizei.';
+      'Lokale Musterdaten ohne Server — für Rettungsdienst, Feuerwehr, FFW oder Polizei.';
 
   @override
   String get setupDemoRettungsdienst => 'Rettungsdienst';
@@ -339,6 +406,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Gerätehaus, Fahrzeuge und Dienstübergabe';
 
   @override
+  String get setupDemoFfw => 'Freiwillige Feuerwehr';
+
+  @override
+  String get setupDemoFfwHint =>
+      'Gerätehaus, Fahrzeuge und ehrenamtlicher Wachalltag';
+
+  @override
   String get setupDemoPolizei => 'Polizei';
 
   @override
@@ -352,6 +426,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get demoBannerFeuerwehr => 'Feuerwehr';
+
+  @override
+  String get demoBannerFfw => 'Freiwillige Feuerwehr';
 
   @override
   String get demoBannerPolizei => 'Polizei';

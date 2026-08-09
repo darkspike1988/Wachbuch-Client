@@ -53,4 +53,31 @@ void main() {
     expect(pol.stationName, contains('Polizei'));
     expect(fw.handovers.first['title'], isNot(equals(pol.handovers.first['title'])));
   });
+
+  test('FFW profile and defect/asset/ack APIs work offline', () async {
+    final api = DemoWachbuchApi(profile: demoProfileFor(DemoService.ffw));
+
+    expect(DemoService.fromServerUrl(DemoService.ffw.serverUrl), DemoService.ffw);
+
+    final me = await api.me();
+    final modules =
+        ((me['membership'] as Map)['station'] as Map)['modules'] as Map;
+    expect(modules['defects'], isTrue);
+    expect(modules['assets'], isTrue);
+
+    final defects = await api.defects();
+    expect(defects, isNotEmpty);
+    final updated = await api.updateDefectStatus(defects.first.id, 'blocked');
+    expect(updated.status, 'waiting');
+
+    final assets = await api.assets();
+    expect(assets, isNotEmpty);
+
+    final handoverId = (await api.handovers()).first['id'] as int;
+    final ack = await api.acknowledgeHandover(handoverId);
+    expect(ack.by, demoProfileFor(DemoService.ffw).username);
+    final again = await api.acknowledgeHandover(handoverId);
+    expect(again.at, ack.at);
+    expect((await api.handoverAcks(handoverId)).length, 1);
+  });
 }

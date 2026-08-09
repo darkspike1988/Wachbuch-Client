@@ -20,7 +20,7 @@ Enterprise-Dienstplan, Abrechnung, vollständige Personalverwaltung.
 | Baustein | Heute |
 | --- | --- |
 | Server | Übergaben, Kalender, Kasse, Checklisten, Demo-Modus |
-| Mobile Client | Lesen + Checklisten-Abschluss, Offline-Demo-Profile |
+| Mobile Client | Lesen + Checklisten-Abschluss; Offline-Demo inkl. Mängel/Assets/Quittierung (Contract `SCHEMA-WACHALLTAG`) |
 | Webapp (`landing/app/`) | Offline-Demo SPA, gleiche Profile |
 
 ## Umsetzungsprinzip
@@ -82,11 +82,11 @@ später API teilen.
 | Schicht | Arbeit |
 | --- | --- |
 | Webapp | `data.js` um `defects`, `assets`, `acks` erweitern |
-| Docs | Dieses Schema als Vertragsskizze |
+| Docs | `docs/SCHEMA-WACHALLTAG.md` als Vertrag |
 | Server | später `GET/POST /api/v1/defects/`, `/assets/`, Quittierung an Handover |
-| Flutter | Modelle + Screens nach API-Freeze |
+| Flutter | Modelle + Demo-API + Mängel-Screen / Statusboard / Ack (501 bis Server) |
 
-**Akzeptanz:** Webapp zeigt Mängel und Assets je Organisation ohne Server.
+**Akzeptanz:** Webapp und Flutter-Demo zeigen Mängel und Assets je Organisation ohne Server.
 
 ---
 
@@ -307,5 +307,5 @@ Spiegel: API-Doku im Server-Repo; Client erst nach Contract-Freeze.
 
 ## Nächster Schritt
 
-Phase **A+B+C+D** in der Webapp als Offline-Prototyp umsetzen (dieser Branch),
-danach Server-Contract für `defects` / `assets` / `ack` vorschlagen.
+Phase **A–D** in Webapp + Flutter-Demo erledigt (dieser Branch).  
+Als Nächstes: Server-OpenAPI für `defects` / `assets` / `ack` einfrieren und echte HTTP-Pfade im Client verdrahten.
