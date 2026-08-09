@@ -64,8 +64,8 @@ void main() {
     });
     final api = WachbuchApi(baseUrl: 'https://wache.example', client: client);
 
-    expect(
-      () => api.me(),
+    await expectLater(
+      api.me(),
       throwsA(
         isA<ApiException>()
             .having((e) => e.statusCode, 'statusCode', 401)
