@@ -1,7 +1,7 @@
 name: wachbuch_mobile
 description: AGPL companion app for self-hosted Wachbuch (iOS/Android).
 publish_to: "none"
-version: 0.6.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ^3.8.0
