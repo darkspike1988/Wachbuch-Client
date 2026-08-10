@@ -64,9 +64,12 @@ class SecureApiCache implements ApiCache {
   @override
   Future<void> clear() async {
     // Enumerate secure storage instead of relying only on this process' memory.
-    // This guarantees logout/server-change cleanup even after an app restart.
+    // Snapshot the matching keys before deleting: the secure-storage mock (and
+    // some platform implementations) can mutate the backing map on delete.
     final all = await _storage.readAll();
-    final persistedKeys = all.keys.where((key) => key.startsWith(_prefix));
+    final persistedKeys = all.keys
+        .where((key) => key.startsWith(_prefix))
+        .toList(growable: false);
     for (final storageKey in persistedKeys) {
       await _storage.delete(key: storageKey);
     }

@@ -113,12 +113,19 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     final initialLink = await widget.linkSource.getInitialLink();
     if (initialLink != null) {
       final linkedUrl = _parseLink(initialLink);
-      // Cold-start via deep link is intentional; confirm only for hot links.
-      if (linkedUrl != null &&
-          await _applyServerLink(linkedUrl, confirmIfNeeded: false)) {
+      if (linkedUrl != null && linkedUrl != url) {
+        // During bootstrap `_api` does not exist yet, so clear the persisted
+        // session cache directly before replacing a previously stored server.
+        if (url != null && url.isNotEmpty && token != null && token.isNotEmpty) {
+          await _clearCacheForSession(url, token);
+        }
+        await widget.store.clearAll();
+        await widget.store.writeServerUrl(linkedUrl);
         url = linkedUrl;
         token = null;
       }
+      // A cold-start link to the already configured server is a no-op: it must
+      // not revoke the current token or discard its offline snapshots.
     }
 
     if (!mounted) return;

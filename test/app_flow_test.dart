@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_links.dart';
@@ -105,6 +106,12 @@ class _ThemeLocation implements SolarLocationProvider {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   testWidgets('fresh install opens server setup', (tester) async {
     await tester.pumpWidget(WachbuchApp(store: _MemorySessionStore()));
     await tester.binding.setLocale('de', '');
