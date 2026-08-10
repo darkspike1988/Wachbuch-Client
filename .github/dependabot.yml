@@ -17,6 +17,9 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # v11 ist durch docs/SECURE-STORAGE-MIGRATION-1.0.md blockiert: erst
+      # 10.x auf echten Geräten verifizieren, danach eigener Migrations-Change.
+      - dependency-name: "flutter_secure_storage"
     groups:
       flutter:
         patterns:
