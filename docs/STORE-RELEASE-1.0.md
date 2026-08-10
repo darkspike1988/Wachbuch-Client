@@ -1,7 +1,7 @@
 # Store Release 1.0 – Abnahmeplan
 
 Stand: 10. August 2026  
-Geplanter Build: **1.0.0+11**
+Geplanter Build: **1.0.0+12**
 
 Dieses Dokument trennt automatisch prüfbare Release-Gates von Schritten, die zwingend in Apple Developer / App Store Connect beziehungsweise Google Play Console durchgeführt werden müssen.
 
@@ -23,6 +23,7 @@ Vor Merge des 1.0-Branches müssen erfolgreich sein:
 - `flutter gen-l10n`
 - `flutter analyze`
 - vollständige Flutter-Test-Suite
+- Secure-Storage-Regressionsprüfung (`flutter_secure_storage` 10.3.1, explizite Migration + Crash-Backup)
 - Android Internal APKs
 - Android Production-AAB-Kompilierung
 - Android Lint
@@ -33,7 +34,22 @@ Vor Merge des 1.0-Branches müssen erfolgreich sein:
 - Xcode **26+** und iOS SDK **26+** im iOS-CI
 - Validierung aller im finalen Bundle vorhandenen `PrivacyInfo.xcprivacy`-Dateien
 
-## 3. Store-Signing
+## 3. Secure-Storage-Migration 9.x → 10.3.1
+
+Build `1.0.0+12` ist der verpflichtende Migrationsschritt für bestehende lokale App-Tokens und Offline-Caches. Android verwendet zentral:
+
+```dart
+AndroidOptions(
+  migrateOnAlgorithmChange: true,
+  migrateWithBackup: true,
+)
+```
+
+Vor öffentlichem Rollout muss die Upgrade-Testmatrix in [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md) auf echten Geräten bestanden sein. Ein direkter Sprung einer bestehenden 9.x-Installation auf eine spätere 11.x-Linie ist für Wachbuch nicht freigegeben.
+
+Die iOS-Keychain-Policy wird in diesem Schritt bewusst nicht gleichzeitig auf Secure Enclave oder andere Accessibility-Attribute umgestellt. Das reduziert die Zahl gleichzeitig migrierter Sicherheitsmechanismen.
+
+## 4. Store-Signing
 
 ### Android
 
@@ -67,13 +83,14 @@ Erforderliche Secrets:
 
 Der Workflow prüft Xcode/iOS-SDK, Version, Provisioning-Profile-Bundle-ID, archivierte Bundle-ID/Version/Build, Export-Compliance-Flag, Codesignatur und vorhandene Privacy-Manifeste. Die exportierte IPA wird mit `altool --validate-app` validiert, bevor sie zu App Store Connect hochgeladen wird.
 
-## 4. Öffentliche Store-Dokumente
+## 5. Öffentliche Store-Dokumente
 
 Für 1.0 vorhanden:
 
 - [`PRIVACY-POLICY.md`](PRIVACY-POLICY.md)
 - [`SUPPORT.md`](SUPPORT.md)
 - [`STORE-METADATA.md`](STORE-METADATA.md)
+- [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md)
 
 Direkt verwendbare öffentliche Übergangs-URLs:
 
@@ -83,7 +100,7 @@ Direkt verwendbare öffentliche Übergangs-URLs:
 
 Eine eigene Domain kann diese URLs später ersetzen; die Store-Angaben und die In-App-Erklärung müssen dann synchron aktualisiert werden.
 
-## 5. Apple Developer / App Store Connect – manuell
+## 6. Apple Developer / App Store Connect – manuell
 
 Vor dem ersten Upload:
 
@@ -106,12 +123,13 @@ Vor Review:
 - [ ] Echte Screenshots aus dem 1.0-Build mit ausschließlich Demo-Daten hochgeladen.
 - [ ] Dedizierter Review-Server + wiederverwendbarer Testzugang hinterlegt; alternativ eingebauten Demo-Modus nur nach Apples Zustimmung als Ersatz verwenden.
 - [ ] Export-Compliance-Angabe mit `ITSAppUsesNonExemptEncryption=false` abgeglichen.
+- [ ] Upgrade von +11 auf +12 mit bestehendem Keychain-Token auf echtem iPhone geprüft.
 - [ ] TestFlight-Build auf echtem iPhone und mindestens einem iPad-Layout geprüft.
 - [ ] Build in App Store Connect ohne Upload-Warnungen/Fehler verarbeitet.
 
 Apple verlangt seit 28. April 2026 Xcode 26 oder neuer mit iOS-26-SDK oder neuer. Der CI-Gate bildet diese Mindestanforderung ab.
 
-## 6. Google Play Console – manuell
+## 7. Google Play Console – manuell
 
 Vor dem ersten Upload:
 
@@ -133,11 +151,12 @@ Vor Review/Produktion:
 - [ ] Store Listing mit echten 1.0-Screenshots und finalen Texten ausgefüllt.
 - [ ] Pre-Launch-Report geprüft; keine kritischen Crashes/ANRs/Policy-Probleme.
 - [ ] Production-AAB targetet API **36+**. Der Release-Workflow bricht andernfalls ab.
+- [ ] 9.x→10.3.1-Secure-Storage-Upgrade einschließlich Prozessabbruch/Recovery auf echtem Android-Gerät geprüft.
 - [ ] Internen oder geschlossenen Test auf echten Android-Geräten abgeschlossen.
 
 Ab 31. August 2026 müssen neue Apps und Updates für Mobilgeräte Android 16 / API 36 oder höher targeten. Zusätzlich gelten die aktuellen Android-/Play-Entwicklerverifikationsanforderungen; deshalb sind Paketregistrierung und verifiziertes Entwicklerprofil Teil der 1.0-Freigabe.
 
-## 7. Datenschutz-/Berechtigungsabgleich 1.0
+## 8. Datenschutz-/Berechtigungsabgleich 1.0
 
 ### Android Manifest
 
@@ -167,13 +186,13 @@ Erwartete Usage Descriptions:
 
 `ITSAppUsesNonExemptEncryption=false` bleibt gesetzt, solange die App nur reguläre Betriebssystem-/HTTPS-Verschlüsselung im beschriebenen Umfang nutzt und keine eigene exportkontrollpflichtige Kryptofunktion hinzukommt.
 
-## 8. Datenschutz-/Privacy-Manifest-Gate
+## 9. Datenschutz-/Privacy-Manifest-Gate
 
 Apple verlangt korrekte Privacy-Manifeste für verwendete Required-Reason-APIs und betroffene Drittanbieter-SDKs. Der Build validiert alle `PrivacyInfo.xcprivacy`, die im finalen App-Bundle enthalten sind. Bei jedem Plugin-Upgrade muss zusätzlich geprüft werden, ob Apple neue Required-Reason-/SDK-Anforderungen eingeführt hat.
 
 Ein erfolgreicher lokaler/CI-Build ersetzt **nicht** die App-Store-Connect-Verarbeitung: Erst ein dort vollständig verarbeiteter Build ohne Privacy-/SDK-Warnung gilt als Store-Gate bestanden.
 
-## 9. Review-Testfälle vor Veröffentlichung
+## 10. Review-Testfälle vor Veröffentlichung
 
 Auf iOS und Android mindestens prüfen:
 
@@ -194,14 +213,17 @@ Auf iOS und Android mindestens prüfen:
 15. Logout → Token/Cache entfernt
 16. Serverwechsel → alter Token/Cache entfernt
 17. Deep Link gleicher Server → bestehende Sitzung bleibt
-18. große Schrift 200 %, Hoch-/Querformat, Tablet/iPad
-19. Berechtigungen einzeln verweigern
+18. Upgrade +11 → +12 mit bestehendem Token und Offline-Cache
+19. Android: unterbrochene erste Secure-Storage-Migration → Recovery
+20. große Schrift 200 %, Hoch-/Querformat, Tablet/iPad
+21. Berechtigungen einzeln verweigern
 
-## 10. Freigabekriterium
+## 11. Freigabekriterium
 
 **1.0 darf erst öffentlich eingereicht werden**, wenn:
 
 - GitHub-CI auf dem finalen Release-Head vollständig grün ist,
+- der Secure-Storage-Migrationspfad 9.x → 10.3.1 auf echten Geräten bestanden ist,
 - die signierten Store-Artefakte aus `main` erzeugt wurden,
 - TestFlight beziehungsweise interner Play-Test auf echten Geräten bestanden ist,
 - Datenschutz/Store-Metadaten dem tatsächlichen Build entsprechen,
