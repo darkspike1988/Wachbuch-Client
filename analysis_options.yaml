@@ -1,10 +1,4 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
-#
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
+# Static analysis for the Wachbuch Flutter client.
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
@@ -12,10 +6,5 @@ analyzer:
     # WachbuchApi intentionally exposes the public named argument `cache:`
     # while storing it in the private `_cache` field. Converting it to the
     # suggested `this._cache` initializing formal would make `_cache:` part of
-    # the public constructor API. Keep the stable public API instead.
+    # the public constructor API. Keep that stable public API instead.
     prefer_initializing_formals: ignore
-
-linter:
-  rules:
-    # Project-specific lint overrides belong here when they are semantic and
-    # documented; otherwise the Flutter recommended lint set remains active.
