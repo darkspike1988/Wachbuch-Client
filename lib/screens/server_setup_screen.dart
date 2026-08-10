@@ -6,6 +6,7 @@ import 'package:wachbuch_mobile/demo/demo_api.dart';
 import 'package:wachbuch_mobile/demo/demo_profiles.dart';
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/screens/demo_picker_sheet.dart';
+import 'package:wachbuch_mobile/screens/privacy_screen.dart';
 import 'package:wachbuch_mobile/screens/qr_scan_screen.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
@@ -87,12 +88,19 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
     await widget.onServerReady(service.serverUrl);
   }
 
+  void _openPrivacy() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PrivacyScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
     final maxW = AppLayout.isTablet(width) ? 480.0 : 420.0;
     final scheme = Theme.of(context).colorScheme;
+    final german = Localizations.localeOf(context).languageCode == 'de';
 
     return Scaffold(
       body: SafeArea(
@@ -195,7 +203,14 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                     icon: const Icon(Icons.science_outlined),
                     label: Text(l.setupDemoButton),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    key: const Key('privacy-policy-button'),
+                    onPressed: _busy ? null : _openPrivacy,
+                    icon: const Icon(Icons.privacy_tip_outlined),
+                    label: Text(german ? 'Datenschutz' : 'Privacy'),
+                  ),
+                  const SizedBox(height: 20),
                   Text(
                     l.setupFooter,
                     textAlign: TextAlign.center,
