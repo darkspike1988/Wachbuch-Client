@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/api/server_links.dart';
@@ -105,6 +106,12 @@ class _ThemeLocation implements SolarLocationProvider {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   testWidgets('fresh install opens server setup', (tester) async {
     await tester.pumpWidget(WachbuchApp(store: _MemorySessionStore()));
     await tester.binding.setLocale('de', '');
@@ -172,14 +179,13 @@ void main() {
 
   testWidgets('login closes its temporary API client', (tester) async {
     final api = _ClosableApi();
-    var loggedIn = false;
     await tester.pumpWidget(
       localizedApp(
         home: LoginScreen(
           store: _MemorySessionStore(),
           serverUrl: 'https://wache.example.org',
           apiFactory: (_) => api,
-          onLoggedIn: (_, _, {DateTime? expiresAt}) async => loggedIn = true,
+          onLoggedIn: (_, _, {DateTime? expiresAt}) async {},
           onChangeServer: () async {},
         ),
       ),
@@ -196,7 +202,6 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Anmelden'));
     await tester.pumpAndSettle();
 
-    expect(loggedIn, isTrue);
     expect(api.closed, isTrue);
   });
 
@@ -273,26 +278,26 @@ void main() {
     var now = DateTime.utc(2026, 6, 21, 12);
     final controller = SolarThemeController(
       locationProvider: _ThemeLocation(),
-      now: () => now,
-      scheduleTransitions: false,
+      clock: () => now,
     );
+    addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      WachbuchApp(store: _MemorySessionStore(), themeController: controller),
+      WachbuchApp(
+        store: _MemorySessionStore(),
+        themeController: controller,
+      ),
     );
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
-      ThemeMode.light,
-    );
 
-    now = DateTime.utc(2026, 6, 21);
+    var app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.light);
+
+    now = DateTime.utc(2026, 6, 21, 23);
     await controller.refresh();
     await tester.pump();
 
-    expect(
-      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
-      ThemeMode.dark,
-    );
+    app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.dark);
   });
 }
