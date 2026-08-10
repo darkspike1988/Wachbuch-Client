@@ -22,7 +22,9 @@ void main() {
     expect(find.textContaining('PRIVACY-POLICY.md'), findsOneWidget);
   });
 
-  testWidgets('privacy policy renders English store copy', (tester) async {
+  testWidgets('privacy policy renders English store copy and public link', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       localizedApp(
         locale: const Locale('en'),
@@ -33,6 +35,12 @@ void main() {
 
     expect(find.text('Privacy'), findsOneWidget);
     expect(find.textContaining('open-source client'), findsOneWidget);
-    expect(find.textContaining('no advertising'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('open-privacy-policy')),
+      300,
+    );
+    expect(find.byKey(const Key('open-privacy-policy')), findsOneWidget);
+    expect(find.text('Open privacy policy'), findsOneWidget);
   });
 }
