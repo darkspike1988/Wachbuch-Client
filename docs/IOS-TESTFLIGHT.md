@@ -4,7 +4,7 @@ Stand: 10. August 2026
 
 Der Flutter-Client verwendet die Bundle-ID `de.wachbuch.wachbuchMobile`. Seit 28. April 2026 müssen App-Store-Connect-Uploads mit **Xcode 26 oder neuer** und einem **iOS-26-SDK oder neuer** gebaut werden. Sowohl `iOS CI` als auch der TestFlight-Workflow prüfen diese Mindestversionen explizit.
 
-Der verbindliche Abnahmeplan liegt in [`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md).
+Der verbindliche Abnahmeplan liegt in [`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md). Für das Upgrade bestehender Installationen gilt zusätzlich [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md).
 
 ## Voraussetzungen
 
@@ -35,7 +35,7 @@ Der unsigned Build ist nur ein technischer Check und nicht für App Store/TestFl
 `.github/workflows/ios.yml` läuft bei Pull Requests und Pushes auf `main` und prüft:
 
 1. Xcode 26+ und iOS SDK 26+,
-2. Flutter-/Dependency-Auflösung,
+2. Flutter-/Dependency-Auflösung und unveränderten Lockfile-Stand,
 3. iOS-Simulator-Build,
 4. unsigned iOS-Release-Build,
 5. Produktions-Bundle-ID,
@@ -72,10 +72,10 @@ Die geheimen Dateien niemals committen.
 
 ## Was der Workflow vor dem Upload erzwingt
 
-Für 1.0 werden standardmäßig `1.0.0` und Build `11` vorgeschlagen. Der Workflow:
+Für den aktuellen 1.0-Migrationskandidaten werden standardmäßig `1.0.0` und Build `12` vorgeschlagen. Der Workflow:
 
 1. läuft nur von `main`,
-2. verlangt exakte Übereinstimmung mit `version: 1.0.0+11` in `pubspec.yaml`,
+2. verlangt exakte Übereinstimmung mit `version: 1.0.0+12` in `pubspec.yaml`,
 3. prüft Xcode/iOS-SDK,
 4. validiert alle benötigten Secrets,
 5. prüft, dass das Provisioning Profile zu `de.wachbuch.wachbuchMobile` gehört,
@@ -87,6 +87,21 @@ Für 1.0 werden standardmäßig `1.0.0` und Build `11` vorgeschlagen. Der Workfl
 11. führt `xcrun altool --validate-app` aus,
 12. lädt erst danach über App Store Connect API Key hoch,
 13. entfernt temporäre Signing-/API-Key-Dateien.
+
+## Secure-Storage-Upgrade auf iOS
+
+`flutter_secure_storage` wird mit Build `1.0.0+12` auf 10.3.1 aktualisiert. **Die Keychain-Policy selbst wird in diesem Schritt bewusst nicht zusätzlich verändert.** Insbesondere wird nicht gleichzeitig eine Secure-Enclave-/Accessibility-Migration eingeführt. Dadurch bleibt die Zahl gleichzeitig veränderter Sicherheitsmechanismen klein.
+
+Vor öffentlicher Freigabe ist auf einem echten iPhone ein Upgrade von der vorherigen +11-Installation durchzuführen:
+
+1. +11 installieren und mit Testserver anmelden,
+2. Offline-Daten laden,
+3. ohne Logout auf +12 aktualisieren,
+4. bestehende Sitzung und Offline-Lesecache prüfen,
+5. Gerät neu starten/sperren und erneut öffnen,
+6. Logout und Serverwechsel auf vollständige Bereinigung prüfen.
+
+Ein späterer Wechsel auf `flutter_secure_storage` 11.x bleibt ein separater Change.
 
 ## Datenschutz / App Privacy
 
@@ -106,7 +121,7 @@ App-Privacy-Angaben müssen den tatsächlichen Build und den echten Serverbetrie
 - keine externe Analytics-/Crash-Telemetrie,
 - sichere lokale Speicherung von App-Token und Offline-Cache,
 - Organisations-/Login-Daten gehen nur an den vom Nutzer eingerichteten Server,
-- ausdrücklich ausgewählte Mängelfotos können an diesen Server übertragen werden,
+- ausdrücklich ausgewählte Mängelfotos können an diesen Server übertragen werden; aktuelle Serverstände re-encodieren gespeicherte Mängelfotos metadata-frei,
 - QR-Kamera lokal,
 - ungefährer Standort nur lokal für Sonnenaufgang/-untergang.
 
@@ -142,8 +157,9 @@ Review-Text und Store-Metadaten: [`STORE-METADATA.md`](STORE-METADATA.md).
 1. Release-PR vollständig grün mergen.
 2. App-ID/App-Store-Connect-Eintrag und Signing-Assets anlegen.
 3. GitHub-Environment/Secrets konfigurieren.
-4. **Actions → TestFlight → Run workflow** auf `main`, Version `1.0.0`, Build `11`.
+4. **Actions → TestFlight → Run workflow** auf `main`, Version `1.0.0`, Build `12`.
 5. App Store Connect muss den Upload vollständig verarbeiten; Warnungen/Fehler kontrollieren.
-6. TestFlight auf echtem iPhone und iPad testen.
-7. Datenschutz, App Privacy, Altersfreigabe, Screenshots, Beschreibung und Review-Zugang vervollständigen.
-8. Erst dann den ausgewählten Build zu App Review senden.
+6. Upgrade von +11 auf +12 mit bestehendem Token/Cache auf echtem iPhone testen.
+7. TestFlight auf echtem iPhone und iPad testen.
+8. Datenschutz, App Privacy, Altersfreigabe, Screenshots, Beschreibung und Review-Zugang vervollständigen.
+9. Erst dann den ausgewählten Build zu App Review senden.
