@@ -8,16 +8,17 @@ Open-Source-Begleit-App für das selbst gehostete **[Wachbuch](https://github.co
 | **Server** | https://github.com/darkspike1988/Rettungswache-Wachbuch |
 | **Lizenz** | AGPL-3.0-or-later |
 | **API** | `/api/v1/` · Token-Auth |
-| **App-Version** | `0.6.0+10` |
+| **App-Version** | `1.0.0+11` |
 | **Produktiv-Paarung** | Server `0.16.x` |
 | **E2E-Abnahme** | [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md) |
+| **Store-Release** | [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md) |
 | **Roadmap** | [ROADMAP.md](ROADMAP.md) |
 
 ## Quelle der Wahrheit
 
 Dieses Repository ist die **kanonische Quelle** für den Flutter-/iOS-/Android-Client. Der historische Ordner `clients/wachbuch-mobile/` im Server-Repository darf diesen Stand nicht überschreiben.
 
-## Was 0.6.x kann
+## Was 1.0 kann
 
 - Serveradresse oder QR verbinden; App-Token sicher in Keychain/Keystore speichern
 - strukturierter API-Fehlervertrag mit `code`, `message` und `correlation_id`
@@ -37,10 +38,11 @@ Dieses Repository ist die **kanonische Quelle** für den Flutter-/iOS-/Android-C
 - Phone: Bottom-Navigation · Tablet: NavigationRail + Grid
 - Material Design 3, Dark/Light und große Textskalierung
 - Deutsch/Englisch für produktive Wachalltag-Oberflächen
+- direkt vor der Anmeldung erreichbare Datenschutzinformationen für Store-Compliance
 
 ## Produktgrenze
 
-Wachbuch ist ein Werkzeug für den **Stations-/Wachalltag**. Nicht Teil des Modells sind insbesondere Patienten-, ePCR-, Einsatz-, Alarmierungs-, ELS-, Personalakten- oder vergleichbare sensible Fachdaten.
+Wachbuch ist ein Werkzeug für den **Stations-/Wachalltag**. Nicht Teil des Modells sind insbesondere Patienten-, ePCR-, Einsatz-, Alarmierungs-, ELS-, Personalakten- oder vergleichbare sensible Fachdaten. Wachbuch ist keine offizielle Behörden-App und kein Notrufsystem.
 
 ## Landingpage & Web-Demo
 
@@ -50,7 +52,7 @@ cd landing && python3 -m http.server 4173
 # Webapp  → http://127.0.0.1:4173/app/
 ```
 
-Die Demo dient als Produkt-/UX-Vorschau. Die entsprechenden Kernfunktionen Mängel, Geräte, Inventar, Quittierungen, wiederkehrende Checks, Fotos und Auswertung besitzen in `0.6.x` reale Server-Endpunkte.
+Die Demo dient als Produkt-/UX-Vorschau. Die entsprechenden Kernfunktionen Mängel, Geräte, Inventar, Quittierungen, wiederkehrende Checks, Fotos und Auswertung besitzen in `1.0` reale Server-Endpunkte.
 
 ## Lokaler Start
 
@@ -83,10 +85,10 @@ Ein Produktionsbuild benötigt einen eigenen Upload-Key und fällt niemals auf e
 
 ```bash
 cp android/key.properties.example android/key.properties
-BUILD_NAME=0.6.0 BUILD_NUMBER=10 bash scripts/build-aab.sh
+BUILD_NAME=1.0.0 BUILD_NUMBER=11 bash scripts/build-aab.sh
 ```
 
-Der Release-Workflow erzeugt zusätzlich Hashes, Zertifikatsberichte, Obfuskationssymbole und eine CycloneDX-SBOM.
+Der Release-Workflow erzeugt zusätzlich Hashes, Zertifikatsberichte, Obfuskationssymbole und eine CycloneDX-SBOM. Store-Builds werden ausschließlich aus `main` erzeugt und müssen exakt zur Version in `pubspec.yaml` passen.
 
 ## Server-Kopplung
 
@@ -104,9 +106,10 @@ Vor Freigabe müssen mindestens bestehen:
 - Berechtigungs-/Signatur-/SDK-/Größen-Gates
 - SBOM-Erzeugung
 - iOS Simulator/Release-Build ohne Signierung
+- Xcode 26+ und iOS-26-SDK+
 - Dependency-Security
 
-Siehe zusätzlich [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md), [docs/INSTALL-ANDROID.md](docs/INSTALL-ANDROID.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md).
+Store-spezifisch siehe [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md), [docs/STORE-METADATA.md](docs/STORE-METADATA.md), [docs/PRIVACY-POLICY.md](docs/PRIVACY-POLICY.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md).
 
 ## Rechtliches
 
