@@ -2,6 +2,43 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## 1.0.0 – Store-Release-Kandidat
+
+### Wachalltag
+
+- Reale Server-Parität für Übergaben, Quittierungen, Mängel, Mängelfotos,
+  Geräte-/Fahrzeugstatus, Inventar/Pools, wiederkehrende Checklisten und
+  Auswertungen.
+- Übergaben können direkt als Mangel übernommen werden.
+- Demo-Profile für Rettungsdienst, Feuerwehr, Freiwillige Feuerwehr und Polizei
+  spiegeln die produktiven Kernabläufe ohne externen Demo-Server.
+- Verschlüsselter, server- und tokengebundener Offline-Lesecache mit sauberer
+  Bereinigung bei Logout und Serverwechsel.
+
+### Sicherheit und Robustheit
+
+- Strukturierter API-Fehlervertrag inklusive MFA-Codes und Correlation-ID.
+- Schreibende, nicht idempotente API-Aufrufe werden nicht automatisch
+  wiederholt.
+- Mängelfotos werden auf Dateityp, Inhalt, Dateigröße und Serverkontingente
+  begrenzt.
+- Cold-Start-/Deep-Link-Sessionwechsel bereinigen alte Credentials und Caches;
+  ein Link zum bereits konfigurierten Server widerruft die Sitzung nicht.
+
+### Store-Release
+
+- Version `1.0.0+11`.
+- Production-ID Android: `de.wachbuch.mobile`.
+- Bundle-ID iOS/iPadOS: `de.wachbuch.wachbuchMobile`.
+- Android Signed Release mit echtem Upload-Key, API-36-, Permission-,
+  Signatur-, Lint-, Größen- und SBOM-Gates.
+- iOS-/TestFlight-Gates für Xcode 26+, iOS-SDK 26+, Bundle-/Build-Metadaten,
+  Provisioning Profile, Codesignatur, Privacy-Manifeste und App-Validierung vor
+  Upload.
+- Datenschutzinformationen bereits vor Login in der App erreichbar.
+- Öffentliche Datenschutz-/Support-Dokumente, Store-Metadaten, Review-Hinweise
+  und verbindliche 1.0-Abnahmecheckliste ergänzt.
+
 ## Unreleased – Landingpage & Behörden-Demo
 
 ### CI
