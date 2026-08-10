@@ -24,6 +24,9 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     environment: testflight
+    env:
+      RELEASE_BUILD_NAME: ${{ inputs.build_name }}
+      RELEASE_BUILD_NUMBER: ${{ inputs.build_number }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -36,16 +39,16 @@ jobs:
             echo "Store releases must be built from main, got: $GITHUB_REF_NAME" >&2
             exit 1
           fi
-          if ! [[ "${{ inputs.build_name }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if ! [[ "$RELEASE_BUILD_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "build_name must use MAJOR.MINOR.PATCH" >&2
             exit 1
           fi
-          if ! [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]; then
+          if ! [[ "$RELEASE_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
             echo "build_number must be a positive integer" >&2
             exit 1
           fi
           source_version=$(awk '/^version:/{print $2; exit}' pubspec.yaml)
-          expected="${{ inputs.build_name }}+${{ inputs.build_number }}"
+          expected="$RELEASE_BUILD_NAME+$RELEASE_BUILD_NUMBER"
           if [ "$source_version" != "$expected" ]; then
             echo "pubspec version $source_version does not match release input $expected" >&2
             exit 1
@@ -153,7 +156,9 @@ jobs:
 
       - name: Resolve dependencies and verify source
         run: |
+          set -euo pipefail
           flutter pub get
+          git diff --exit-code -- pubspec.lock
           flutter gen-l10n
           flutter analyze
           flutter test
@@ -161,16 +166,15 @@ jobs:
       - name: Create signed archive
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          BUILD_NAME: ${{ inputs.build_name }}
-          BUILD_NUMBER: ${{ inputs.build_number }}
         run: |
           set -euo pipefail
           flutter build ios --release --no-codesign \
-            --build-name "$BUILD_NAME" \
-            --build-number "$BUILD_NUMBER"
+            --build-name "$RELEASE_BUILD_NAME" \
+            --build-number "$RELEASE_BUILD_NUMBER"
 
+          test -f ios/Runner.xcworkspace/contents.xcworkspacedata
           xcodebuild \
-            -project ios/Runner.xcodeproj \
+            -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -destination 'generic/platform=iOS' \
@@ -179,10 +183,10 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             PRODUCT_BUNDLE_IDENTIFIER=de.wachbuch.wachbuchMobile \
-            MARKETING_VERSION="$BUILD_NAME" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            FLUTTER_BUILD_NAME="$BUILD_NAME" \
-            FLUTTER_BUILD_NUMBER="$BUILD_NUMBER" \
+            MARKETING_VERSION="$RELEASE_BUILD_NAME" \
+            CURRENT_PROJECT_VERSION="$RELEASE_BUILD_NUMBER" \
+            FLUTTER_BUILD_NAME="$RELEASE_BUILD_NAME" \
+            FLUTTER_BUILD_NUMBER="$RELEASE_BUILD_NUMBER" \
             archive
 
       - name: Audit archive metadata and privacy manifests
@@ -194,11 +198,14 @@ jobs:
           bundle_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
           version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")
           build=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")
-          encryption=$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist")
+          encryption=$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist" | tr '[:upper:]' '[:lower:]')
           test "$bundle_id" = "de.wachbuch.wachbuchMobile"
-          test "$version" = "${{ inputs.build_name }}"
-          test "$build" = "${{ inputs.build_number }}"
-          test "$encryption" = "false"
+          test "$version" = "$RELEASE_BUILD_NAME"
+          test "$build" = "$RELEASE_BUILD_NUMBER"
+          case "$encryption" in
+            false|no|0) ;;
+            *) echo "Unexpected ITSAppUsesNonExemptEncryption value: $encryption" >&2; exit 1 ;;
+          esac
 
           manifest_count=0
           while IFS= read -r -d '' manifest; do
