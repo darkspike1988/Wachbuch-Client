@@ -10,7 +10,7 @@ on:
       build_number:
         description: Unique and strictly increasing Play version code
         required: true
-        default: "11"
+        default: "12"
 
 permissions:
   contents: read
@@ -56,6 +56,7 @@ jobs:
           test -f docs/PRIVACY-POLICY.md
           test -f docs/STORE-RELEASE-1.0.md
           test -f docs/STORE-METADATA.md
+          test -f docs/SECURE-STORAGE-MIGRATION-1.0.md
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
