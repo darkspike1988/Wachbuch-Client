@@ -19,6 +19,7 @@ Diese IDs nach der ersten Store-Anlage **nicht mehr ändern**.
 Vor Merge des 1.0-Branches müssen erfolgreich sein:
 
 - `flutter pub get`
+- unverändertes, committed `pubspec.lock`
 - `flutter gen-l10n`
 - `flutter analyze`
 - vollständige Flutter-Test-Suite
@@ -30,7 +31,7 @@ Vor Merge des 1.0-Branches müssen erfolgreich sein:
 - iOS Simulator-Build
 - iOS Release-Build ohne Signierung
 - Xcode **26+** und iOS SDK **26+** im iOS-CI
-- Validierung vorhandener gebündelter `PrivacyInfo.xcprivacy`-Dateien
+- Validierung aller im finalen Bundle vorhandenen `PrivacyInfo.xcprivacy`-Dateien
 
 ## 3. Store-Signing
 
@@ -93,6 +94,8 @@ Vor dem ersten Upload:
 - [ ] App Store Connect API Key mit minimal notwendigen Rechten erzeugt.
 - [ ] GitHub Environment `testflight` mit Required Reviewer konfigurieren.
 - [ ] Secrets eintragen; Schlüssel niemals committen.
+- [ ] **EU-DSA-Trader-Status** in App Store Connect bewusst festlegen. Apple verlangt die Erklärung auch dann, wenn kein EU-Vertrieb geplant ist.
+- [ ] Bei Trader-Status die von Apple geforderten Kontakt-/Nachweisdaten verifizieren und vor Veröffentlichung prüfen, welche Anschrift, Telefonnummer und E-Mail auf der EU-Produktseite öffentlich erscheinen.
 
 Vor Review:
 
@@ -112,8 +115,9 @@ Apple verlangt seit 28. April 2026 Xcode 26 oder neuer mit iOS-26-SDK oder neuer
 
 Vor dem ersten Upload:
 
-- [ ] Entwicklerprofil/Identität vollständig verifiziert.
-- [ ] App mit Paket-ID `de.wachbuch.mobile` angelegt.
+- [ ] Passenden Kontotyp **Personal** oder **Organization** bewusst wählen; Organisationskonten benötigen unter anderem die hierfür geforderten Organisations-/D-U-N-S-Angaben.
+- [ ] Entwicklerprofil, Identität und Kontaktangaben vollständig verifiziert; Angaben müssen mit Zahlungsprofil/Nachweisen übereinstimmen.
+- [ ] Paketname `de.wachbuch.mobile` im verifizierten Entwicklerkonto registriert und App damit angelegt.
 - [ ] Play App Signing aktiviert.
 - [ ] GitHub Environment `google-play` mit Required Reviewer konfigurieren.
 - [ ] Upload-Key-Secrets eintragen.
@@ -123,6 +127,7 @@ Vor Review/Produktion:
 
 - [ ] App access: Demo-Anweisung und bei Bedarf dedizierte Review-Zugangsdaten eingetragen.
 - [ ] Datenschutz-URL eingetragen.
+- [ ] öffentliche Support-E-Mail/Support-Kontaktdaten in Play Console korrekt eingetragen.
 - [ ] Data-Safety-Formular vollständig und konsistent mit der Datenschutzerklärung ausgefüllt.
 - [ ] Content Rating / Zielgruppe ausgefüllt.
 - [ ] Store Listing mit echten 1.0-Screenshots und finalen Texten ausgefüllt.
@@ -130,7 +135,7 @@ Vor Review/Produktion:
 - [ ] Production-AAB targetet API **36+**. Der Release-Workflow bricht andernfalls ab.
 - [ ] Internen oder geschlossenen Test auf echten Android-Geräten abgeschlossen.
 
-Ab 31. August 2026 müssen neue Apps und Updates für Mobilgeräte Android 16 / API 36 oder höher targeten.
+Ab 31. August 2026 müssen neue Apps und Updates für Mobilgeräte Android 16 / API 36 oder höher targeten. Zusätzlich gelten die aktuellen Android-/Play-Entwicklerverifikationsanforderungen; deshalb sind Paketregistrierung und verifiziertes Entwicklerprofil Teil der 1.0-Freigabe.
 
 ## 7. Datenschutz-/Berechtigungsabgleich 1.0
 
@@ -173,23 +178,24 @@ Ein erfolgreicher lokaler/CI-Build ersetzt **nicht** die App-Store-Connect-Verar
 Auf iOS und Android mindestens prüfen:
 
 1. frische Installation → Server-Setup
-2. Demo-Modus ohne Server
-3. HTTPS-Server manuell verbinden
-4. QR-Verbindung, Kamera verweigert → manuelle Eingabe weiterhin möglich
-5. Login/App-Token und MFA-Hinweis
-6. Übergabe lesen/filtern/quittieren
-7. Übergabe → Mangel
-8. Mangel anlegen/Status/Foto
-9. Geräte-/Fahrzeugstatus
-10. Inventar Checkout/Checkin
-11. Checkliste abschließen + Wiederholungsfälligkeit
-12. Auswertung
-13. Offline-Lesecache
-14. Logout → Token/Cache entfernt
-15. Serverwechsel → alter Token/Cache entfernt
-16. Deep Link gleicher Server → bestehende Sitzung bleibt
-17. große Schrift 200 %, Hoch-/Querformat, Tablet/iPad
-18. Berechtigungen einzeln verweigern
+2. Datenschutzlink vor Login öffnen
+3. Demo-Modus ohne Server
+4. HTTPS-Server manuell verbinden
+5. QR-Verbindung, Kamera verweigert → manuelle Eingabe weiterhin möglich
+6. Login/App-Token und MFA-Hinweis
+7. Übergabe lesen/filtern/quittieren
+8. Übergabe → Mangel
+9. Mangel anlegen/Status/Foto
+10. Geräte-/Fahrzeugstatus
+11. Inventar Checkout/Checkin
+12. Checkliste abschließen + Wiederholungsfälligkeit
+13. Auswertung
+14. Offline-Lesecache
+15. Logout → Token/Cache entfernt
+16. Serverwechsel → alter Token/Cache entfernt
+17. Deep Link gleicher Server → bestehende Sitzung bleibt
+18. große Schrift 200 %, Hoch-/Querformat, Tablet/iPad
+19. Berechtigungen einzeln verweigern
 
 ## 10. Freigabekriterium
 
@@ -199,5 +205,6 @@ Auf iOS und Android mindestens prüfen:
 - die signierten Store-Artefakte aus `main` erzeugt wurden,
 - TestFlight beziehungsweise interner Play-Test auf echten Geräten bestanden ist,
 - Datenschutz/Store-Metadaten dem tatsächlichen Build entsprechen,
+- Apple-DSA-/Google-Entwicklerverifikation für die gewählte Vertriebsform erledigt ist,
 - Review-Zugang funktioniert,
 - keine echten Patienten-/Einsatz-/Organisationsdaten in Screenshots oder Reviewer-Demo enthalten sind.
