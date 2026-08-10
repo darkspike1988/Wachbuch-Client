@@ -84,16 +84,20 @@ void main() {
     final iosCi = await File('.github/workflows/ios.yml').readAsString();
 
     expect(pubspec, contains('version: 1.0.0+11'));
+    expect(pubspec, contains('sdk: ^3.12.0'));
     expect(androidRelease, contains('default: 1.0.0'));
     expect(androidRelease, contains('default: "11"'));
-    expect(androidRelease, contains('test "$target_sdk" -ge 36'));
+    expect(androidRelease, contains(r'test "$target_sdk" -ge 36'));
     expect(androidRelease, contains('Store releases must be built from main'));
+    expect(androidRelease, contains('git diff --exit-code -- pubspec.lock'));
 
     expect(testflight, contains('default: 1.0.0'));
     expect(testflight, contains('default: "11"'));
     expect(testflight, contains('Xcode 26 or later'));
     expect(testflight, contains('iOS 26 SDK or later'));
     expect(testflight, contains('xcrun altool --validate-app'));
+    expect(testflight, contains('-workspace ios/Runner.xcworkspace'));
+    expect(testflight, contains('git diff --exit-code -- pubspec.lock'));
     expect(testflight, contains('de.wachbuch.wachbuchMobile'));
     expect(iosCi, contains('Xcode 26 or later'));
 
