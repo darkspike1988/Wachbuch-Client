@@ -33,6 +33,8 @@ Mit `flutter_secure_storage` 10.3.1 verwendet die Standardkonfiguration:
 
 Wachbuch hat Android-App-Backups im Produktionsmanifest deaktiviert. Diese Einstellung bleibt verpflichtend.
 
+In 10.x gilt zusätzlich der Android-Default `resetOnError=true`: Tritt ein Entschlüsselungsfehler auf, den auch die Migration nicht auflösen kann, wird der Secure Storage zurückgesetzt, damit die App nicht mit inkonsistentem Kryptomaterial weiterläuft. Das betroffene Gerät verliert dann seine Sitzung und der Nutzer muss sich neu anmelden. `migrateWithBackup` sichert genau diesen Migrationspfad mit Backup-Markern ab; ein Reset ist daher durch das Upgrade selbst nicht zu erwarten und wird in der Testmatrix über Schritt 11 abgedeckt.
+
 ## iOS/iPadOS
 
 Die bisherige Keychain-Konfiguration wird in diesem Migrationsschritt bewusst nicht auf Secure Enclave oder neue Accessibility-Attribute umgestellt. Dadurch werden Kryptobibliotheks-Upgrade und Keychain-Policy nicht gleichzeitig verändert. Ein späterer Secure-Enclave-Schritt benötigt eine eigene Migration und reale Geräteabnahme.
