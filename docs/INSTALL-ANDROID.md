@@ -4,7 +4,7 @@ Stand: 10. August 2026
 
 Für die öffentliche Google-Play-Freigabe gilt zusätzlich
 [`PLAY-STORE.md`](PLAY-STORE.md). Die verbindliche 1.0-Abnahme steht in
-[`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md).
+[`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md). Für Upgrades vorhandener Installationen gilt zusätzlich [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md).
 
 ## Varianten
 
@@ -63,11 +63,15 @@ cp android/key.properties.example android/key.properties
 ```
 
 `build-aab.sh` liest Version und Buildnummer standardmäßig direkt aus
-`pubspec.yaml` (`1.0.0+11`) und bricht ab, wenn man per `BUILD_NAME` oder
+`pubspec.yaml` (`1.0.0+12`) und bricht ab, wenn man per `BUILD_NAME` oder
 `BUILD_NUMBER` einen davon abweichenden Store-Build anfordert.
 
 Alternativ den geschützten GitHub-Workflow **Android Signed Release** verwenden.
 Details und Secret-Namen stehen in [`PLAY-STORE.md`](PLAY-STORE.md).
+
+## Upgrade von Build +11
+
+Build `1.0.0+12` aktualisiert `flutter_secure_storage` kontrolliert auf 10.3.1. Bestehende Installationen **nicht vorher deinstallieren**, wenn der Erhalt von Test-Token/Offline-Cache geprüft werden soll. Auf mindestens einem realen Gerät müssen Sitzung, Offline-Cache, Logout, Serverwechsel und ein unterbrochener erster Storage-Zugriff gemäß [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md) getestet werden.
 
 ## Erster Start
 
@@ -97,6 +101,7 @@ bereits eingerichteten Server lässt die gültige Sitzung bestehen.
 
 - kein Klartext-HTTP in nicht debuggbaren Builds
 - Token über Secure Storage beziehungsweise Android Keystore
+- Secure Storage 10.3.1 mit RSA-OAEP/SHA-256 + AES-GCM und expliziter crash-resistenter Migration
 - server-/tokengebundener verschlüsselter Offline-Lesecache
 - Logout und Serverwechsel bereinigen Token und zugehörigen Cache
 - keine Cloud-Sicherung und keine Geräteübertragung der App-Daten
@@ -116,3 +121,4 @@ bereits eingerichteten Server lässt die gültige Sitzung bestehen.
 | Standort verweigert | Systemtheme wird verwendet |
 | 403 bei MFA | App-Token statt Passwort verwenden |
 | 401 nach Tokenablauf | erneut anmelden beziehungsweise Token erneuern |
+| Upgrade verliert Sitzung | Rollout stoppen; Migrationsmatrix/CI prüfen und nicht auf 9.x downgraden, bevor der migrierte Storage getestet wurde |

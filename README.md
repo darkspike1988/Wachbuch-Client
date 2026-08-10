@@ -8,10 +8,11 @@ Open-Source-Begleit-App für das selbst gehostete **[Wachbuch](https://github.co
 | **Server** | https://github.com/darkspike1988/Rettungswache-Wachbuch |
 | **Lizenz** | AGPL-3.0-or-later |
 | **API** | `/api/v1/` · Token-Auth |
-| **App-Version** | `1.0.0+11` |
+| **App-Version** | `1.0.0+12` |
 | **Produktiv-Paarung** | Server `0.16.x` |
 | **E2E-Abnahme** | [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md) |
 | **Store-Release** | [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md) |
+| **Secure-Storage-Migration** | [docs/SECURE-STORAGE-MIGRATION-1.0.md](docs/SECURE-STORAGE-MIGRATION-1.0.md) |
 | **Roadmap** | [ROADMAP.md](ROADMAP.md) |
 
 ## Quelle der Wahrheit
@@ -21,13 +22,14 @@ Dieses Repository ist die **kanonische Quelle** für den Flutter-/iOS-/Android-C
 ## Was 1.0 kann
 
 - Serveradresse oder QR verbinden; App-Token sicher in Keychain/Keystore speichern
+- Android Secure Storage 10.x mit RSA-OAEP/SHA-256 + AES-GCM und crash-resistenter Migration aus 9.x
 - strukturierter API-Fehlervertrag mit `code`, `message` und `correlation_id`
 - MFA-Fehler `mfa_required` und `mfa_setup_required` sauber behandeln
 - Übergaben suchen/filtern, Details öffnen und pro Benutzer quittieren
 - Übergabe direkt als echten Mangel übernehmen
 - Mängel anlegen, priorisieren, zuordnen, terminieren und Status ändern
 - authentifizierte Mängelfotos aus Kamera/Mediathek hoch- und herunterladen
-- Foto-Schutz: JPEG/PNG/WebP, 2 MiB je Datei; Server begrenzt zusätzlich Anzahl/Gesamtmenge
+- Foto-Schutz: JPEG/PNG/WebP, 2 MiB je Datei; aktueller Server normalisiert gespeicherte Mängelfotos zusätzlich metadata-frei
 - Fahrzeug-/Gerätestatus anzeigen und bei berechtigter Rolle ändern
 - Schlüssel-/Poolgeräte ausgeben und zurückgeben
 - wiederkehrende Checklisten mit täglicher/wöchentlicher/monatlicher Fälligkeit
@@ -85,7 +87,7 @@ Ein Produktionsbuild benötigt einen eigenen Upload-Key und fällt niemals auf e
 
 ```bash
 cp android/key.properties.example android/key.properties
-BUILD_NAME=1.0.0 BUILD_NUMBER=11 bash scripts/build-aab.sh
+BUILD_NAME=1.0.0 BUILD_NUMBER=12 bash scripts/build-aab.sh
 ```
 
 Der Release-Workflow erzeugt zusätzlich Hashes, Zertifikatsberichte, Obfuskationssymbole und eine CycloneDX-SBOM. Store-Builds werden ausschließlich aus `main` erzeugt und müssen exakt zur Version in `pubspec.yaml` passen.
@@ -108,8 +110,9 @@ Vor Freigabe müssen mindestens bestehen:
 - iOS Simulator/Release-Build ohne Signierung
 - Xcode 26+ und iOS-26-SDK+
 - Dependency-Security
+- reales Upgrade 9.x → 10.3.1 für Secure Storage vor breitem Rollout
 
-Store-spezifisch siehe [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md), [docs/STORE-METADATA.md](docs/STORE-METADATA.md), [docs/PRIVACY-POLICY.md](docs/PRIVACY-POLICY.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md) und [docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md).
+Store-spezifisch siehe [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md), [docs/STORE-METADATA.md](docs/STORE-METADATA.md), [docs/PRIVACY-POLICY.md](docs/PRIVACY-POLICY.md), [docs/PLAY-STORE.md](docs/PLAY-STORE.md), [docs/IOS-TESTFLIGHT.md](docs/IOS-TESTFLIGHT.md) und [docs/SECURE-STORAGE-MIGRATION-1.0.md](docs/SECURE-STORAGE-MIGRATION-1.0.md).
 
 ## Rechtliches
 

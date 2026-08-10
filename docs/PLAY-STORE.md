@@ -2,7 +2,7 @@
 
 Stand: 10. August 2026
 
-Der verbindliche 1.0-Abnahmeplan liegt in [`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md).
+Der verbindliche 1.0-Abnahmeplan liegt in [`STORE-RELEASE-1.0.md`](STORE-RELEASE-1.0.md). Für bestehende Installationen ist zusätzlich [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md) verbindlich.
 
 ## Offizielle Grundlagen
 
@@ -60,7 +60,7 @@ Mit `REQUIRE_RELEASE_SIGNING=true` bricht der Build ab, falls ein Wert fehlt. Ei
 ## Lokaler 1.0-Produktionsbuild
 
 ```bash
-BUILD_NAME=1.0.0 BUILD_NUMBER=11 ./scripts/build-aab.sh
+BUILD_NAME=1.0.0 BUILD_NUMBER=12 ./scripts/build-aab.sh
 ```
 
 Direkter Flutter-Aufruf:
@@ -70,10 +70,18 @@ REQUIRE_RELEASE_SIGNING=true flutter build appbundle \
   --release \
   --flavor production \
   --build-name 1.0.0 \
-  --build-number 11 \
+  --build-number 12 \
   --obfuscate \
   --split-debug-info=build/symbols/production
 ```
+
+## Secure-Storage-Migrationsbuild
+
+Build `1.0.0+12` aktualisiert `flutter_secure_storage` auf 10.3.1 und aktiviert die kontrollierte Android-Migration mit `migrateOnAlgorithmChange=true` sowie `migrateWithBackup=true`. Die Produktions-App bleibt von Android-Cloud-Backup/Geräteübertragung ausgeschlossen.
+
+Vor einem breiten Rollout muss mindestens ein echtes Upgrade **von einer bestehenden +11/9.x-Installation auf +12** geprüft werden. Dabei müssen bestehender App-Token und Offline-Cache erhalten bleiben; zusätzlich sind Logout, Serverwechsel sowie ein absichtlich unterbrochener erster Storage-Zugriff und anschließendes Recovery zu testen. Details: [`SECURE-STORAGE-MIGRATION-1.0.md`](SECURE-STORAGE-MIGRATION-1.0.md).
+
+Ein späteres Upgrade auf `flutter_secure_storage` 11.x ist ein eigener Breaking-Change und wird nicht zusammen mit diesem Release freigegeben.
 
 ## Geschützter GitHub-Release
 
@@ -112,7 +120,7 @@ Das erzeugte `.aab` zunächst **manuell in den internen Play-Test-Track** hochla
 
 Nicht vorgesehen sind Hintergrundstandort, Kontakte, Mikrofon, SMS/Anruflisten oder breite Datei-/Medienspeicherberechtigungen.
 
-QR-Kameraframes werden nicht als Foto gespeichert/hochgeladen. Ausdrücklich ausgewählte Mängelfotos werden dagegen an den eingerichteten selbst gehosteten Server übertragen. Standortdaten verlassen nach aktuellem App-Konzept das Gerät nicht.
+QR-Kameraframes werden nicht als Foto gespeichert/hochgeladen. Ausdrücklich ausgewählte Mängelfotos werden dagegen an den eingerichteten selbst gehosteten Server übertragen. Aktuelle Serverstände normalisieren gespeicherte Mängelfotos serverseitig als metadata-freies JPEG. Standortdaten verlassen nach aktuellem App-Konzept das Gerät nicht.
 
 Android-Appdaten sind von Cloud-Backups und Geräteübertragungen ausgeschlossen.
 
@@ -155,9 +163,10 @@ Texte, Positionierung und Screenshotplan liegen in [`STORE-METADATA.md`](STORE-M
 
 1. App `de.wachbuch.mobile` in Play Console anlegen.
 2. Play App Signing aktivieren.
-3. GitHub **Android Signed Release** auf `main` für `1.0.0+11` ausführen.
+3. GitHub **Android Signed Release** auf `main` für `1.0.0+12` ausführen.
 4. Signiertes AAB in den internen Test-Track laden.
 5. App access, Data Safety, Datenschutz, Altersfreigabe/Zielgruppe und Store Listing ausfüllen.
-6. Interne Tester auf Login, Demo, QR, Deep Link, Standort-/Kameraverweigerung, Tablet, Rotation, Offline/Logout/Serverwechsel testen lassen.
-7. Pre-Launch-Report prüfen und kritische Abstürze, ANRs, Permission- oder Policyfehler beheben.
-8. Erst danach Production-Release einreichen beziehungsweise stufenweise ausrollen.
+6. Upgrade von +11 auf +12 auf echtem Gerät inklusive Secure-Storage-Recovery testen.
+7. Interne Tester auf Login, Demo, QR, Deep Link, Standort-/Kameraverweigerung, Tablet, Rotation, Offline/Logout/Serverwechsel testen lassen.
+8. Pre-Launch-Report prüfen und kritische Abstürze, ANRs, Permission- oder Policyfehler beheben.
+9. Erst danach Production-Release einreichen beziehungsweise stufenweise ausrollen.

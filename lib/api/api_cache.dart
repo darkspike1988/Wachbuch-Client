@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wachbuch_mobile/security/secure_storage.dart';
 
 /// Small encrypted cache for read-only API snapshots.
 ///
@@ -18,7 +19,7 @@ class SecureApiCache implements ApiCache {
   SecureApiCache({
     required this.namespace,
     FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  }) : _storage = storage ?? createWachbuchSecureStorage();
 
   factory SecureApiCache.forSession({
     required String baseUrl,
