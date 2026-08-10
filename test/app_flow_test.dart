@@ -179,13 +179,14 @@ void main() {
 
   testWidgets('login closes its temporary API client', (tester) async {
     final api = _ClosableApi();
+    var loggedIn = false;
     await tester.pumpWidget(
       localizedApp(
         home: LoginScreen(
           store: _MemorySessionStore(),
           serverUrl: 'https://wache.example.org',
           apiFactory: (_) => api,
-          onLoggedIn: (_, _, {DateTime? expiresAt}) async {},
+          onLoggedIn: (_, _, {DateTime? expiresAt}) async => loggedIn = true,
           onChangeServer: () async {},
         ),
       ),
@@ -202,6 +203,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Anmelden'));
     await tester.pumpAndSettle();
 
+    expect(loggedIn, isTrue);
     expect(api.closed, isTrue);
   });
 
@@ -278,26 +280,26 @@ void main() {
     var now = DateTime.utc(2026, 6, 21, 12);
     final controller = SolarThemeController(
       locationProvider: _ThemeLocation(),
-      clock: () => now,
+      now: () => now,
+      scheduleTransitions: false,
     );
-    addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      WachbuchApp(
-        store: _MemorySessionStore(),
-        themeController: controller,
-      ),
+      WachbuchApp(store: _MemorySessionStore(), themeController: controller),
     );
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.light,
+    );
 
-    var app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.themeMode, ThemeMode.light);
-
-    now = DateTime.utc(2026, 6, 21, 23);
+    now = DateTime.utc(2026, 6, 21);
     await controller.refresh();
     await tester.pump();
 
-    app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.themeMode, ThemeMode.dark);
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
   });
 }
