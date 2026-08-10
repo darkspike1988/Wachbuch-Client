@@ -42,9 +42,11 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve dependencies
+      - name: Resolve locked dependencies
         run: |
+          set -euo pipefail
           flutter pub get
+          git diff --exit-code -- pubspec.lock
           flutter gen-l10n
 
       - name: Build for iOS Simulator
@@ -59,7 +61,11 @@ jobs:
           APP=build/ios/iphoneos/Runner.app
           test -d "$APP"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "de.wachbuch.wachbuchMobile"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist")" = "false"
+          encryption=$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist" | tr '[:upper:]' '[:lower:]')
+          case "$encryption" in
+            false|no|0) ;;
+            *) echo "Unexpected ITSAppUsesNonExemptEncryption value: $encryption" >&2; exit 1 ;;
+          esac
           manifest_count=0
           while IFS= read -r -d '' manifest; do
             plutil -lint "$manifest"
