@@ -87,7 +87,7 @@ void main() {
     expect(pubspec, contains('sdk: ^3.12.0'));
     expect(androidRelease, contains('default: 1.0.0'));
     expect(androidRelease, contains('default: "11"'));
-    expect(androidRelease, contains(r'test "$target_sdk" -ge 36'));
+    expect(androidRelease, contains(r'test "$target_sdk" -ge 36'.replaceAll(r'\"', '"')));
     expect(androidRelease, contains('Store releases must be built from main'));
     expect(androidRelease, contains('git diff --exit-code -- pubspec.lock'));
 
