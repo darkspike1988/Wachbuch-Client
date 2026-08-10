@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       build_name:
-        description: Version name, for example 0.5.2
+        description: Semantic version from pubspec.yaml, for example 1.0.0
         required: true
-        default: 0.5.1
+        default: 1.0.0
       build_number:
-        description: Unique and increasing Play version code
+        description: Unique and strictly increasing Play version code
         required: true
-        default: "10"
+        default: "11"
 
 permissions:
   contents: read
@@ -27,6 +27,33 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Validate store release source and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "Store releases must be built from main, got: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          if ! [[ "${{ inputs.build_name }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "build_name must use MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          if ! [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "build_number must be a positive integer" >&2
+            exit 1
+          fi
+          source_version=$(awk '/^version:/{print $2; exit}' pubspec.yaml)
+          expected="${{ inputs.build_name }}+${{ inputs.build_number }}"
+          if [ "$source_version" != "$expected" ]; then
+            echo "pubspec version $source_version does not match release input $expected" >&2
+            exit 1
+          fi
+          test -f docs/PRIVACY-POLICY.md
+          test -f docs/STORE-RELEASE-1.0.md
+          test -f docs/STORE-METADATA.md
+
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
@@ -78,6 +105,7 @@ jobs:
       - name: Verify source
         run: |
           flutter pub get
+          flutter gen-l10n
           flutter analyze
           flutter test
 
