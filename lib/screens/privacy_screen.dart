@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/link.dart';
+
+const _privacyPolicyUri =
+    'https://github.com/darkspike1988/Wachbuch-Client/'
+    'blob/main/docs/PRIVACY-POLICY.md';
+const _supportUri =
+    'https://github.com/darkspike1988/Wachbuch-Client/'
+    'blob/main/docs/SUPPORT.md';
 
 /// Store-facing privacy information that remains reachable before login.
 ///
 /// The canonical, versioned policy lives in docs/PRIVACY-POLICY.md. This
-/// screen intentionally contains the operational essentials so Google Play's
-/// requirement for an in-app privacy policy does not depend on a web view or
-/// an external browser package.
+/// screen intentionally contains the operational essentials and a real public
+/// privacy-policy link so the store disclosure does not depend on a WebView.
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
@@ -53,11 +60,19 @@ class PrivacyScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const SelectableText(
-                        'https://github.com/darkspike1988/Wachbuch-Client/'
-                        'blob/main/docs/PRIVACY-POLICY.md',
+                      const SelectableText(_privacyPolicyUri),
+                      const SizedBox(height: 8),
+                      Link(
+                        uri: Uri.parse(_privacyPolicyUri),
+                        target: LinkTarget.blank,
+                        builder: (context, followLink) => OutlinedButton.icon(
+                          key: const Key('open-privacy-policy'),
+                          onPressed: followLink,
+                          icon: const Icon(Icons.open_in_new),
+                          label: Text(policy.openPolicy),
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
                         policy.supportTitle,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -65,9 +80,17 @@ class PrivacyScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const SelectableText(
-                        'https://github.com/darkspike1988/'
-                        'Wachbuch-Client/issues',
+                      const SelectableText(_supportUri),
+                      const SizedBox(height: 8),
+                      Link(
+                        uri: Uri.parse(_supportUri),
+                        target: LinkTarget.blank,
+                        builder: (context, followLink) => TextButton.icon(
+                          key: const Key('open-support-page'),
+                          onPressed: followLink,
+                          icon: const Icon(Icons.support_agent_outlined),
+                          label: Text(policy.openSupport),
+                        ),
                       ),
                     ],
                   ),
@@ -88,6 +111,8 @@ class _PolicyCopy {
     required this.sections,
     required this.canonicalTitle,
     required this.supportTitle,
+    required this.openPolicy,
+    required this.openSupport,
   });
 
   final String title;
@@ -95,6 +120,8 @@ class _PolicyCopy {
   final List<_PolicySection> sections;
   final String canonicalTitle;
   final String supportTitle;
+  final String openPolicy;
+  final String openSupport;
 }
 
 class _PolicySection {
@@ -156,6 +183,8 @@ const _de = _PolicyCopy(
   ],
   canonicalTitle: 'Vollständige Datenschutzerklärung',
   supportTitle: 'Support / Kontakt zur App',
+  openPolicy: 'Datenschutzerklärung öffnen',
+  openSupport: 'Support-Seite öffnen',
 );
 
 const _en = _PolicyCopy(
@@ -206,4 +235,6 @@ const _en = _PolicyCopy(
   ],
   canonicalTitle: 'Full privacy policy',
   supportTitle: 'App support / contact',
+  openPolicy: 'Open privacy policy',
+  openSupport: 'Open support page',
 );
