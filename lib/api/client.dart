@@ -7,6 +7,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:wachbuch_mobile/api/api_cache.dart';
+import 'package:wachbuch_mobile/models/chat.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/defect_attachment.dart';
@@ -591,6 +592,169 @@ class WachbuchApi {
     return WachalltagReport.fromJson(body);
   }
 
+  // --- E2EE messaging -------------------------------------------------------
+  // The server only ever stores/forwards ciphertext envelopes; encryption and
+  // decryption happen locally in `crypto/e2ee`.
+
+  /// GET /api/v1/chat/identity/ — own key bundle (or `configured: false`).
+  Future<Map<String, dynamic>> chatIdentity() =>
+      _getJson('/api/v1/chat/identity/');
+
+  /// POST /api/v1/chat/identity/ — register or replace the E2EE identity.
+  Future<void> registerChatIdentity({
+    required Map<String, dynamic> publicJwk,
+    required String wrappedPrivateJwk,
+    required String kdfSalt,
+    required int kdfIterations,
+    bool replace = false,
+  }) async {
+    await _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/chat/identity/'),
+          headers: _headers(),
+          body: jsonEncode({
+            'public_jwk': publicJwk,
+            'wrapped_private_jwk': wrappedPrivateJwk,
+            'kdf_salt': kdfSalt,
+            'kdf_iterations': kdfIterations,
+            if (replace) 'replace': true,
+          }),
+        ),
+      );
+      _decode(response);
+    }, maxAttempts: 1);
+  }
+
+  /// GET /api/v1/chat/keys/ — public keys of station members.
+  Future<List<ChatMemberKey>> chatMemberKeys() async {
+    final body = await _getJson('/api/v1/chat/keys/', moduleLabel: 'Nachrichten');
+    final members = body['members'];
+    if (members is! List) return const [];
+    return members
+        .whereType<Map>()
+        .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+  }
+
+  /// GET /api/v1/chat/ — station chat feed (oldest first), ciphertext envelopes.
+  Future<List<ChatFeedItem>> stationChat() async {
+    final body = await _getJson('/api/v1/chat/', moduleLabel: 'Nachrichten');
+    return _readList(body).map(ChatFeedItem.fromJson).toList(growable: false);
+  }
+
+  /// POST /api/v1/chat/ — send a pre-encrypted station chat envelope.
+  Future<void> sendStationChat(Map<String, dynamic> payload) =>
+      _postEnvelope('/api/v1/chat/', payload);
+
+  /// GET /api/v1/chat/private/ — conversations plus colleague key directory.
+  Future<PrivateHome> privateConversations() async {
+    final body = await _getJson('/api/v1/chat/private/', moduleLabel: 'Nachrichten');
+    final colleagues = (body['colleagues'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    return PrivateHome(
+      conversations:
+          _readList(body).map(ChatConversation.fromJson).toList(growable: false),
+      colleagues: colleagues,
+    );
+  }
+
+  /// POST /api/v1/chat/private/ — open (or reuse) a 1:1 conversation.
+  Future<int> startPrivateConversation(int peerId) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/chat/private/'),
+          headers: _headers(),
+          body: jsonEncode({'peer_id': peerId}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Nachrichten'));
+      return (body['id'] as num).toInt();
+    }, maxAttempts: 1);
+  }
+
+  /// GET /api/v1/chat/private/{id}/ — thread with peer keys and messages.
+  Future<PrivateThreadData> privateThread(int id) async {
+    final body = await _getJson('/api/v1/chat/private/$id/', moduleLabel: 'Nachrichten');
+    final other = body['other'] is Map ? Map<String, dynamic>.from(body['other']) : const {};
+    final peerKeys = (body['peer_keys'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    return PrivateThreadData(
+      otherId: _readIntValue(other['id']),
+      otherName: (other['name'] ?? '').toString(),
+      peerKeys: peerKeys,
+      messages: _readList(body).map(ChatFeedItem.fromJson).toList(growable: false),
+    );
+  }
+
+  /// POST /api/v1/chat/private/{id}/ — send a pre-encrypted private message.
+  Future<void> sendPrivateMessage(int id, Map<String, dynamic> payload) =>
+      _postEnvelope('/api/v1/chat/private/$id/', payload);
+
+  /// GET /api/v1/post/ — Secure Mail inbox/outbox and colleague directory.
+  Future<MailInboxData> mailInbox() async {
+    final body = await _getJson('/api/v1/post/', moduleLabel: 'Nachrichten');
+    List<ChatMemberKey> keys(Object? raw) => (raw as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    List<MailSummary> mails(Object? raw) => (raw as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => MailSummary.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    return MailInboxData(
+      received: mails(body['received']),
+      sent: mails(body['sent']),
+      colleagues: keys(body['colleagues']),
+    );
+  }
+
+  /// POST /api/v1/post/ — send Secure Mail (envelope + recipient ids).
+  Future<int> sendMail({
+    required List<int> recipientIds,
+    required Map<String, dynamic> payload,
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/post/'),
+          headers: _headers(),
+          body: jsonEncode({...payload, 'recipient_ids': recipientIds}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Nachrichten'));
+      return (body['id'] as num).toInt();
+    }, maxAttempts: 1);
+  }
+
+  /// GET /api/v1/post/{id}/ — one mail (marks read) with recipient status.
+  Future<MailDetailData> mailDetail(int id) async {
+    final body = await _getJson('/api/v1/post/$id/', moduleLabel: 'Nachrichten');
+    final envelope = body['envelope'] is Map
+        ? ChatFeedItem.fromJson(Map<String, dynamic>.from(body['envelope']))
+        : const ChatFeedItem(
+            id: 0, authorId: null, authorName: '', isOwn: false, isEncrypted: true);
+    final recipients = (body['recipients'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => MailRecipientStatus.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    return MailDetailData(envelope: envelope, recipients: recipients);
+  }
+
+  Future<void> _postEnvelope(String path, Map<String, dynamic> payload) async {
+    await _withRetry(() async {
+      final response = await _send(
+        _client.post(_uri(path), headers: _headers(), body: jsonEncode(payload)),
+      );
+      _decode(_requireModule(response, 'Nachrichten'));
+    }, maxAttempts: 1);
+  }
+
   /// Turns module-disabled 404 into a clear, non-retryable ApiException.
   http.Response _requireModule(http.Response response, String label) {
     if (response.statusCode == 404) {
@@ -611,6 +775,11 @@ class WachbuchApi {
   /// Optional modules that are not installed on older servers.
   static bool isModuleUnavailable(ApiException error) =>
       error.statusCode == 404 || error.statusCode == 501;
+
+  int _readIntValue(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
 
   List<Map<String, dynamic>> _readList(Map<String, dynamic> body) {
     final results = body['results'] ?? body['entries'] ?? body['termine'];
