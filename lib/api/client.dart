@@ -14,6 +14,7 @@ import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/pinboard_note.dart';
 import 'package:wachbuch_mobile/models/report_stats.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
@@ -307,6 +308,38 @@ class WachbuchApi {
   Future<List<Checklist>> checklisten() async {
     final body = await _getJson('/api/v1/checklisten/', cacheKey: 'checklists');
     return _readList(body).map(Checklist.fromJson).toList(growable: false);
+  }
+
+  /// GET /api/v1/pinnwand/ with encrypted offline fallback.
+  Future<List<PinboardNote>> pinboard() async {
+    final body = await _getJson(
+      '/api/v1/pinnwand/',
+      cacheKey: 'pinboard',
+      moduleLabel: 'Pinnwand',
+    );
+    return _readList(body).map(PinboardNote.fromJson).toList(growable: false);
+  }
+
+  /// POST /api/v1/pinnwand/ (create a short station notice).
+  Future<PinboardNote> createPinboardNote({
+    required String title,
+    required String body,
+    String category = 'info',
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/pinnwand/'),
+          headers: _headers(),
+          body: jsonEncode({
+            'title': title,
+            'body': body,
+            'category': category,
+          }),
+        ),
+      );
+      return PinboardNote.fromJson(_decode(_requireModule(response, 'Pinnwand')));
+    }, maxAttempts: 1);
   }
 
   /// POST /api/v1/checklisten/{id}/abschluss/
