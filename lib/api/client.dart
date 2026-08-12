@@ -591,6 +591,52 @@ class WachbuchApi {
     return WachalltagReport.fromJson(body);
   }
 
+  // --- Inspections / maintenance due dates ---------------------------------
+
+  /// GET /api/v1/assets/{id}/ — device card (history + open defects).
+  Future<AssetCard> assetCard(String assetId) async {
+    final body = await _getJson('/api/v1/assets/$assetId/', moduleLabel: 'Geräte');
+    return AssetCard.fromJson(body);
+  }
+
+  /// POST /api/v1/assets/{id}/inspection/ — record an inspection.
+  Future<StationAsset> recordInspection(
+    String assetId, {
+    String result = 'ok',
+    String note = '',
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/assets/$assetId/inspection/'),
+          headers: _headers(),
+          body: jsonEncode({'result': result, 'note': note}),
+        ),
+      );
+      return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
+    }, maxAttempts: 1);
+  }
+
+  /// PUT /api/v1/assets/{id}/inspection-schedule/ — set/clear interval (days).
+  Future<StationAsset> setInspectionSchedule(String assetId, int? intervalDays) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.put(
+          _uri('/api/v1/assets/$assetId/inspection-schedule/'),
+          headers: _headers(),
+          body: jsonEncode({'interval_days': intervalDays}),
+        ),
+      );
+      return StationAsset.fromJson(_decode(_requireModule(response, 'Geräte')));
+    }, maxAttempts: 1);
+  }
+
+  /// GET /api/v1/inspections/due/ — due and overdue inspections (reminders).
+  Future<List<StationAsset>> dueInspections() async {
+    final body = await _getJson('/api/v1/inspections/due/', moduleLabel: 'Geräte');
+    return _readList(body).map(StationAsset.fromJson).toList(growable: false);
+  }
+
   /// Turns module-disabled 404 into a clear, non-retryable ApiException.
   http.Response _requireModule(http.Response response, String label) {
     if (response.statusCode == 404) {

@@ -8,6 +8,7 @@ import 'package:wachbuch_mobile/models/station_asset.dart';
 import 'package:wachbuch_mobile/screens/assets_screen.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
+import 'package:wachbuch_mobile/screens/inspections_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/screens/reports_screen.dart';
@@ -640,6 +641,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['assets'] == true || modules['inventory'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-inspections',
+          icon: Icons.build_circle_outlined,
+          title: l.inspectionsTitle,
+          subtitle: l.inspectionsSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -689,6 +700,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = AssetsScreen(api: api);
       case 'module-tile-reports':
         screen = ReportsScreen(api: api);
+      case 'module-tile-inspections':
+        screen = DueInspectionsScreen(api: api);
       default:
         return;
     }
