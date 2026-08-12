@@ -6,6 +6,7 @@ import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 import 'package:wachbuch_mobile/screens/assets_screen.dart';
+import 'package:wachbuch_mobile/screens/chat_screen.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
@@ -641,6 +642,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['chat'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-chat',
+          icon: Icons.forum_outlined,
+          title: l.chatTitle,
+          subtitle: l.chatSubtitle,
+        ),
+      );
+    }
     if (modules['pinboard'] == true) {
       destinations.add(
         _ModuleDestination(
@@ -700,6 +711,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = AssetsScreen(api: api);
       case 'module-tile-reports':
         screen = ReportsScreen(api: api);
+      case 'module-tile-chat':
+        screen = ChatScreen(api: api);
       case 'module-tile-pinboard':
         screen = PinnwandScreen(api: api);
       default:

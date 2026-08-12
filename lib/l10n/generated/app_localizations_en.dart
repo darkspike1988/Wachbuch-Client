@@ -23,6 +23,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSwitch => 'Switch';
 
   @override
+  String get commonSave => 'Save';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String get commonRetry => 'Try again';
+
+  @override
   String get noticeSessionExpired =>
       'Your session has expired. Please sign in again.';
 
@@ -106,6 +115,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vehicle and equipment status at the station';
 
   @override
+  String get moduleReportsTitle => 'Reports';
+
+  @override
+  String get moduleReportsSubtitle => 'Defects, due checks and readiness rate';
+
+  @override
   String get quickAccessTitle => 'Quick access';
 
   @override
@@ -119,10 +134,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defectsEmpty => 'No defects for this filter.';
 
   @override
+  String get defectAdd => 'Add defect';
+
+  @override
+  String get defectCreateTitle => 'Create defect';
+
+  @override
+  String get defectTitleLabel => 'Title';
+
+  @override
+  String get defectDescriptionLabel => 'Description';
+
+  @override
+  String get defectCategoryLabel => 'Category';
+
+  @override
+  String get defectPriorityLabel => 'Priority';
+
+  @override
   String get defectAssetLabel => 'Asset';
 
   @override
   String get defectOwnerLabel => 'Owner';
+
+  @override
+  String get defectOwnerSelf => 'Assign to me';
 
   @override
   String get defectDueLabel => 'Due';
@@ -132,6 +168,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get defectStatusWaiting => 'Waiting';
+
+  @override
+  String get defectCreateFailed => 'Defect could not be created.';
+
+  @override
+  String get defectPhotosTitle => 'Photos';
+
+  @override
+  String get defectPhotosHint =>
+      'Only photograph the defect condition. Do not photograph patient or incident data.';
+
+  @override
+  String get defectPhotosEmpty => 'No photos yet.';
+
+  @override
+  String get defectAddPhoto => 'Add photo';
+
+  @override
+  String get defectTakePhoto => 'Camera';
+
+  @override
+  String get defectChoosePhoto => 'Photo library';
+
+  @override
+  String get defectPhotoUploadFailed => 'Photo could not be uploaded.';
+
+  @override
+  String get defectPhotoTooLarge => 'The image may be at most 2 MiB.';
+
+  @override
+  String get defectPhotoUploaded => 'Photo uploaded.';
 
   @override
   String get assetsBoardTitle => 'Vehicle & equipment status';
@@ -190,6 +257,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checklistDueSection => 'Due today / overdue';
+
+  @override
+  String get reportsTitle => 'Reports';
+
+  @override
+  String get reportsHint =>
+      'Lightweight station overview without individual performance scoring.';
+
+  @override
+  String get reportsOpenDefects => 'Open defects';
+
+  @override
+  String get reportsOverdueDefects => 'Overdue defects';
+
+  @override
+  String get reportsOverdueChecks => 'Overdue checks';
+
+  @override
+  String get reportsAssetReady => 'Assets ready';
+
+  @override
+  String get reportsInventoryOut => 'Pools checked out';
+
+  @override
+  String get reportsUnacked => 'Unacknowledged handovers';
+
+  @override
+  String get reportsOldestOpen => 'Oldest open defect';
+
+  @override
+  String get reportsDays => 'days';
+
+  @override
+  String get reportsByOwner => 'Open defects by owner';
+
+  @override
+  String get reportsNoOwner => 'No owner';
+
+  @override
+  String get reportsPrivacyHint =>
+      'This report supports station organisation and is not intended for individual employee performance scoring.';
 
   @override
   String get handoverAckButton => 'Acknowledged';
@@ -482,7 +590,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qrScanCameraHint =>
-      'The camera is used only to read the server address. No photos are saved or uploaded.';
+      'The camera is used here only to read the server address. No photos are saved or uploaded during QR scanning.';
 
   @override
   String get qrScanInvalid => 'Not a valid Wachbuch server QR code.';
@@ -496,7 +604,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qrCameraDialogMessage =>
-      'Wachbuch needs the camera solely to scan the QR code containing your station\'s server address. You can also enter the address manually without the camera.';
+      'Wachbuch needs the camera here solely to scan the QR code containing your station\'s server address. You can also enter the address manually without the camera.';
 
   @override
   String get qrCameraContinue => 'Continue';
@@ -549,4 +657,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get handoverEnumUnknown => 'Not specified';
+
+  @override
+  String get chatTitle => 'Station chat';
+
+  @override
+  String get chatSubtitle => 'End-to-end encrypted';
+
+  @override
+  String get chatSetupTitle => 'Set up chat keys';
+
+  @override
+  String get chatSetupHint =>
+      'Choose a passphrase. It protects your private key and is never sent to the server.';
+
+  @override
+  String get chatSetupAction => 'Create keys';
+
+  @override
+  String get chatUnlockTitle => 'Unlock chat';
+
+  @override
+  String get chatUnlockHint =>
+      'Enter your passphrase to read and write encrypted messages.';
+
+  @override
+  String get chatUnlockAction => 'Unlock';
+
+  @override
+  String get chatPassphrase => 'Passphrase';
+
+  @override
+  String get chatWrongPassphrase => 'Wrong passphrase or damaged key.';
+
+  @override
+  String get chatComposeHint => 'Short message to the station …';
+
+  @override
+  String get chatSend => 'Send';
+
+  @override
+  String get chatEmpty => 'No messages yet.';
+
+  @override
+  String get chatUnreadable => 'Message not readable (no key for you).';
+
+  @override
+  String get chatLoadError => 'Could not load the chat.';
+
+  @override
+  String get chatMe => 'Me';
+
+  @override
+  String get pinboardTitle => 'Pinboard';
+
+  @override
+  String get pinboardSubtitle => 'Notices and hints for the station';
+
+  @override
+  String get pinboardEmpty => 'No notices on the pinboard yet.';
+
+  @override
+  String get pinboardCreate => 'New notice';
+
+  @override
+  String get pinboardFieldTitle => 'Title';
+
+  @override
+  String get pinboardFieldBody => 'Text';
+
+  @override
+  String get pinboardCategory => 'Type';
+
+  @override
+  String get pinboardPinned => 'Pinned';
+
+  @override
+  String get pinboardSave => 'Save';
+
+  @override
+  String get pinboardCancel => 'Cancel';
+
+  @override
+  String get pinboardCategoryInfo => 'Info';
+
+  @override
+  String get pinboardCategoryImportant => 'Important';
+
+  @override
+  String get pinboardCategoryEvent => 'Event/Note';
+
+  @override
+  String get pinboardLoadError => 'Could not load the pinboard.';
+
+  @override
+  String get pinboardCreated => 'Notice created.';
 }
