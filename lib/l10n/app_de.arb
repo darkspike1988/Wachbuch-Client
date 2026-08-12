@@ -230,5 +230,21 @@
   "handoverCategoryMaterial": "Material",
   "handoverCategoryTask": "Offene Aufgabe",
   "handoverCategorySafety": "Sicherheit/Mangel",
-  "handoverEnumUnknown": "Nicht angegeben"
+  "handoverEnumUnknown": "Nicht angegeben",
+
+  "pinboardTitle": "Pinnwand",
+  "pinboardSubtitle": "Aushänge und Hinweise für die Wache",
+  "pinboardEmpty": "Noch keine Aushänge an der Pinnwand.",
+  "pinboardCreate": "Aushang anlegen",
+  "pinboardFieldTitle": "Titel",
+  "pinboardFieldBody": "Text",
+  "pinboardCategory": "Art",
+  "pinboardPinned": "Angepinnt",
+  "pinboardSave": "Speichern",
+  "pinboardCancel": "Abbrechen",
+  "pinboardCategoryInfo": "Info",
+  "pinboardCategoryImportant": "Wichtig",
+  "pinboardCategoryEvent": "Termin/Hinweis",
+  "pinboardLoadError": "Pinnwand konnte nicht geladen werden.",
+  "pinboardCreated": "Aushang wurde angelegt."
 }

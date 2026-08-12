@@ -222,5 +222,21 @@
   "handoverCategoryMaterial": "Material",
   "handoverCategoryTask": "Open task",
   "handoverCategorySafety": "Safety/defect",
-  "handoverEnumUnknown": "Not specified"
+  "handoverEnumUnknown": "Not specified",
+
+  "pinboardTitle": "Pinboard",
+  "pinboardSubtitle": "Notices and hints for the station",
+  "pinboardEmpty": "No notices on the pinboard yet.",
+  "pinboardCreate": "New notice",
+  "pinboardFieldTitle": "Title",
+  "pinboardFieldBody": "Text",
+  "pinboardCategory": "Type",
+  "pinboardPinned": "Pinned",
+  "pinboardSave": "Save",
+  "pinboardCancel": "Cancel",
+  "pinboardCategoryInfo": "Info",
+  "pinboardCategoryImportant": "Important",
+  "pinboardCategoryEvent": "Event/Note",
+  "pinboardLoadError": "Could not load the pinboard.",
+  "pinboardCreated": "Notice created."
 }

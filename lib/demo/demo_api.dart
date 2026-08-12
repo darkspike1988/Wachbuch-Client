@@ -14,6 +14,7 @@ import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
 import 'package:wachbuch_mobile/models/kalender_entry.dart';
+import 'package:wachbuch_mobile/models/pinboard_note.dart';
 import 'package:wachbuch_mobile/models/report_stats.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
@@ -51,6 +52,31 @@ class _NoopClient extends http.BaseClient {
   }
 }
 
+List<PinboardNote> _demoPinboard() {
+  final now = DateTime.now();
+  return [
+    PinboardNote(
+      id: 2,
+      title: 'Teamabend am Freitag',
+      body: 'Gemeinsames Grillen ab 19 Uhr hinter der Wache. Bitte kurz eintragen.',
+      category: 'event',
+      isPinned: true,
+      authorName: 'Demo',
+      updatedAt: now.subtract(const Duration(hours: 3)),
+    ),
+    PinboardNote(
+      id: 1,
+      title: 'Neue Kaffeemaschine',
+      body: 'Die neue Maschine steht im Aufenthaltsraum. Kurzanleitung hängt daneben.',
+      category: 'info',
+      isPinned: false,
+      authorName: 'Demo',
+      updatedAt: now.subtract(const Duration(days: 1)),
+    ),
+  ];
+}
+
+
 class DemoWachbuchApi extends WachbuchApi {
   DemoWachbuchApi({
     required this.profile,
@@ -62,7 +88,9 @@ class DemoWachbuchApi extends WachbuchApi {
     Map<int, List<DefectAttachment>>? attachments,
     Map<int, Uint8List>? attachmentBytes,
     Set<int>? completedChecklists,
-  })  : _defects = List<Defect>.from(defects ?? profile.defects),
+    List<PinboardNote>? pinboard,
+  })  : _pinboard = List<PinboardNote>.from(pinboard ?? _demoPinboard()),
+        _defects = List<Defect>.from(defects ?? profile.defects),
         _assets = List<StationAsset>.from(assets ?? profile.assets),
         _inventory = List<InventoryItem>.from(inventory ?? profile.inventory),
         _acks = {
@@ -86,6 +114,7 @@ class DemoWachbuchApi extends WachbuchApi {
 
   final DemoProfile profile;
   final Set<int> _completedChecklists;
+  final List<PinboardNote> _pinboard;
   final List<Defect> _defects;
   final List<StationAsset> _assets;
   final List<InventoryItem> _inventory;
@@ -190,6 +219,31 @@ class DemoWachbuchApi extends WachbuchApi {
       return Checklist(id: id, title: '', completed: true);
     }
     return Checklist.fromJson({...match, 'completed': true});
+  }
+
+  @override
+  Future<List<PinboardNote>> pinboard() async =>
+      List<PinboardNote>.unmodifiable(_pinboard);
+
+  @override
+  Future<PinboardNote> createPinboardNote({
+    required String title,
+    required String body,
+    String category = 'info',
+  }) async {
+    final note = PinboardNote(
+      id: (_pinboard.isEmpty
+              ? 0
+              : _pinboard.map((n) => n.id).reduce((a, b) => a > b ? a : b)) +
+          1,
+      title: title,
+      body: body,
+      category: category,
+      authorName: 'Demo',
+      updatedAt: DateTime.now(),
+    );
+    _pinboard.insert(0, note);
+    return note;
   }
 
   @override
