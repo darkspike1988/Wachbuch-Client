@@ -8,3 +8,11 @@ analyzer:
     # suggested `this._cache` initializing formal would make `_cache:` part of
     # the public constructor API. Keep that stable public API instead.
     prefer_initializing_formals: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
