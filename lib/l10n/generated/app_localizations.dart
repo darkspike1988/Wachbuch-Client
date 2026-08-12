@@ -122,6 +122,24 @@ abstract class AppLocalizations {
   /// **'Wechseln'**
   String get commonSwitch;
 
+  /// No description provided for @commonSave.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get commonSave;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In de, this message translates to:
+  /// **'Schließen'**
+  String get commonClose;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In de, this message translates to:
+  /// **'Erneut versuchen'**
+  String get commonRetry;
+
   /// No description provided for @noticeSessionExpired.
   ///
   /// In de, this message translates to:
@@ -278,6 +296,18 @@ abstract class AppLocalizations {
   /// **'Fahrzeug- und Gerätestatus der Wache'**
   String get moduleAssetsSubtitle;
 
+  /// No description provided for @moduleReportsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auswertung'**
+  String get moduleReportsTitle;
+
+  /// No description provided for @moduleReportsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mängel, Fälligkeiten und Einsatzklar-Quote'**
+  String get moduleReportsSubtitle;
+
   /// No description provided for @quickAccessTitle.
   ///
   /// In de, this message translates to:
@@ -302,6 +332,42 @@ abstract class AppLocalizations {
   /// **'Keine Mängel für diesen Filter.'**
   String get defectsEmpty;
 
+  /// No description provided for @defectAdd.
+  ///
+  /// In de, this message translates to:
+  /// **'Mangel anlegen'**
+  String get defectAdd;
+
+  /// No description provided for @defectCreateTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuen Mangel anlegen'**
+  String get defectCreateTitle;
+
+  /// No description provided for @defectTitleLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel'**
+  String get defectTitleLabel;
+
+  /// No description provided for @defectDescriptionLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Beschreibung'**
+  String get defectDescriptionLabel;
+
+  /// No description provided for @defectCategoryLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Kategorie'**
+  String get defectCategoryLabel;
+
+  /// No description provided for @defectPriorityLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Priorität'**
+  String get defectPriorityLabel;
+
   /// No description provided for @defectAssetLabel.
   ///
   /// In de, this message translates to:
@@ -313,6 +379,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Zuständig'**
   String get defectOwnerLabel;
+
+  /// No description provided for @defectOwnerSelf.
+  ///
+  /// In de, this message translates to:
+  /// **'Mir zuordnen'**
+  String get defectOwnerSelf;
 
   /// No description provided for @defectDueLabel.
   ///
@@ -331,6 +403,66 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Wartend'**
   String get defectStatusWaiting;
+
+  /// No description provided for @defectCreateFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Mangel konnte nicht angelegt werden.'**
+  String get defectCreateFailed;
+
+  /// No description provided for @defectPhotosTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos'**
+  String get defectPhotosTitle;
+
+  /// No description provided for @defectPhotosHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur Zustandsbilder des Mangels. Keine Patienten- oder Einsatzdaten fotografieren.'**
+  String get defectPhotosHint;
+
+  /// No description provided for @defectPhotosEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Fotos.'**
+  String get defectPhotosEmpty;
+
+  /// No description provided for @defectAddPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto hinzufügen'**
+  String get defectAddPhoto;
+
+  /// No description provided for @defectTakePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera'**
+  String get defectTakePhoto;
+
+  /// No description provided for @defectChoosePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotomediathek'**
+  String get defectChoosePhoto;
+
+  /// No description provided for @defectPhotoUploadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto konnte nicht hochgeladen werden.'**
+  String get defectPhotoUploadFailed;
+
+  /// No description provided for @defectPhotoTooLarge.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Bild darf maximal 2 MiB groß sein.'**
+  String get defectPhotoTooLarge;
+
+  /// No description provided for @defectPhotoUploaded.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto wurde hochgeladen.'**
+  String get defectPhotoUploaded;
 
   /// No description provided for @assetsBoardTitle.
   ///
@@ -445,6 +577,84 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Fällig heute / überfällig'**
   String get checklistDueSection;
+
+  /// No description provided for @reportsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auswertung'**
+  String get reportsTitle;
+
+  /// No description provided for @reportsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Leichte Stationsübersicht ohne individuelle Leistungsbewertung.'**
+  String get reportsHint;
+
+  /// No description provided for @reportsOpenDefects.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Mängel'**
+  String get reportsOpenDefects;
+
+  /// No description provided for @reportsOverdueDefects.
+  ///
+  /// In de, this message translates to:
+  /// **'Mängel überfällig'**
+  String get reportsOverdueDefects;
+
+  /// No description provided for @reportsOverdueChecks.
+  ///
+  /// In de, this message translates to:
+  /// **'Checks überfällig'**
+  String get reportsOverdueChecks;
+
+  /// No description provided for @reportsAssetReady.
+  ///
+  /// In de, this message translates to:
+  /// **'Assets einsatzklar'**
+  String get reportsAssetReady;
+
+  /// No description provided for @reportsInventoryOut.
+  ///
+  /// In de, this message translates to:
+  /// **'Pools ausgegeben'**
+  String get reportsInventoryOut;
+
+  /// No description provided for @reportsUnacked.
+  ///
+  /// In de, this message translates to:
+  /// **'Unquittierte Übergaben'**
+  String get reportsUnacked;
+
+  /// No description provided for @reportsOldestOpen.
+  ///
+  /// In de, this message translates to:
+  /// **'Ältester offener Mangel'**
+  String get reportsOldestOpen;
+
+  /// No description provided for @reportsDays.
+  ///
+  /// In de, this message translates to:
+  /// **'Tage'**
+  String get reportsDays;
+
+  /// No description provided for @reportsByOwner.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Mängel nach Zuständigkeit'**
+  String get reportsByOwner;
+
+  /// No description provided for @reportsNoOwner.
+  ///
+  /// In de, this message translates to:
+  /// **'Ohne Zuständigkeit'**
+  String get reportsNoOwner;
+
+  /// No description provided for @reportsPrivacyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Auswertung dient der Stationsorganisation, nicht zur Leistungsbewertung einzelner Beschäftigter.'**
+  String get reportsPrivacyHint;
 
   /// No description provided for @handoverAckButton.
   ///
@@ -983,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @qrScanCameraHint.
   ///
   /// In de, this message translates to:
-  /// **'Die Kamera wird nur zum Lesen der Server-Adresse genutzt. Es werden keine Fotos gespeichert oder hochgeladen.'**
+  /// **'Die Kamera wird hier nur zum Lesen der Server-Adresse genutzt. Es werden dabei keine Fotos gespeichert oder hochgeladen.'**
   String get qrScanCameraHint;
 
   /// No description provided for @qrScanInvalid.
@@ -1007,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @qrCameraDialogMessage.
   ///
   /// In de, this message translates to:
-  /// **'Wachbuch benötigt die Kamera ausschließlich, um den QR-Code mit der Server-Adresse Ihrer Wache zu scannen. Ohne Kamera können Sie die Adresse auch manuell eingeben.'**
+  /// **'Wachbuch benötigt die Kamera hier ausschließlich, um den QR-Code mit der Server-Adresse Ihrer Wache zu scannen. Ohne Kamera können Sie die Adresse auch manuell eingeben.'**
   String get qrCameraDialogMessage;
 
   /// No description provided for @qrCameraContinue.
@@ -1111,6 +1321,192 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Nicht angegeben'**
   String get handoverEnumUnknown;
+
+  /// No description provided for @chatTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wachenchat'**
+  String get chatTitle;
+
+  /// No description provided for @chatSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Ende-zu-Ende verschlüsselt'**
+  String get chatSubtitle;
+
+  /// No description provided for @chatSetupTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Chat-Schlüssel einrichten'**
+  String get chatSetupTitle;
+
+  /// No description provided for @chatSetupHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Lege eine Passphrase fest. Sie schützt deinen privaten Schlüssel und wird nie an den Server übertragen.'**
+  String get chatSetupHint;
+
+  /// No description provided for @chatSetupAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Schlüssel erstellen'**
+  String get chatSetupAction;
+
+  /// No description provided for @chatUnlockTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Chat entsperren'**
+  String get chatUnlockTitle;
+
+  /// No description provided for @chatUnlockHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gib deine Passphrase ein, um verschlüsselte Nachrichten zu lesen und zu schreiben.'**
+  String get chatUnlockHint;
+
+  /// No description provided for @chatUnlockAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Entsperren'**
+  String get chatUnlockAction;
+
+  /// No description provided for @chatPassphrase.
+  ///
+  /// In de, this message translates to:
+  /// **'Passphrase'**
+  String get chatPassphrase;
+
+  /// No description provided for @chatWrongPassphrase.
+  ///
+  /// In de, this message translates to:
+  /// **'Falsche Passphrase oder beschädigter Schlüssel.'**
+  String get chatWrongPassphrase;
+
+  /// No description provided for @chatComposeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Kurze Nachricht an die Wache …'**
+  String get chatComposeHint;
+
+  /// No description provided for @chatSend.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden'**
+  String get chatSend;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Nachrichten.'**
+  String get chatEmpty;
+
+  /// No description provided for @chatUnreadable.
+  ///
+  /// In de, this message translates to:
+  /// **'Nachricht nicht lesbar (kein Schlüssel für dich).'**
+  String get chatUnreadable;
+
+  /// No description provided for @chatLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Chat konnte nicht geladen werden.'**
+  String get chatLoadError;
+
+  /// No description provided for @chatMe.
+  ///
+  /// In de, this message translates to:
+  /// **'Ich'**
+  String get chatMe;
+
+  /// No description provided for @pinboardTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Pinnwand'**
+  String get pinboardTitle;
+
+  /// No description provided for @pinboardSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Aushänge und Hinweise für die Wache'**
+  String get pinboardSubtitle;
+
+  /// No description provided for @pinboardEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Aushänge an der Pinnwand.'**
+  String get pinboardEmpty;
+
+  /// No description provided for @pinboardCreate.
+  ///
+  /// In de, this message translates to:
+  /// **'Aushang anlegen'**
+  String get pinboardCreate;
+
+  /// No description provided for @pinboardFieldTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel'**
+  String get pinboardFieldTitle;
+
+  /// No description provided for @pinboardFieldBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Text'**
+  String get pinboardFieldBody;
+
+  /// No description provided for @pinboardCategory.
+  ///
+  /// In de, this message translates to:
+  /// **'Art'**
+  String get pinboardCategory;
+
+  /// No description provided for @pinboardPinned.
+  ///
+  /// In de, this message translates to:
+  /// **'Angepinnt'**
+  String get pinboardPinned;
+
+  /// No description provided for @pinboardSave.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get pinboardSave;
+
+  /// No description provided for @pinboardCancel.
+  ///
+  /// In de, this message translates to:
+  /// **'Abbrechen'**
+  String get pinboardCancel;
+
+  /// No description provided for @pinboardCategoryInfo.
+  ///
+  /// In de, this message translates to:
+  /// **'Info'**
+  String get pinboardCategoryInfo;
+
+  /// No description provided for @pinboardCategoryImportant.
+  ///
+  /// In de, this message translates to:
+  /// **'Wichtig'**
+  String get pinboardCategoryImportant;
+
+  /// No description provided for @pinboardCategoryEvent.
+  ///
+  /// In de, this message translates to:
+  /// **'Termin/Hinweis'**
+  String get pinboardCategoryEvent;
+
+  /// No description provided for @pinboardLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Pinnwand konnte nicht geladen werden.'**
+  String get pinboardLoadError;
+
+  /// No description provided for @pinboardCreated.
+  ///
+  /// In de, this message translates to:
+  /// **'Aushang wurde angelegt.'**
+  String get pinboardCreated;
 }
 
 class _AppLocalizationsDelegate
