@@ -247,5 +247,20 @@
   "chatEmpty": "Noch keine Nachrichten.",
   "chatUnreadable": "Nachricht nicht lesbar (kein Schlüssel für dich).",
   "chatLoadError": "Chat konnte nicht geladen werden.",
-  "chatMe": "Ich"
+  "chatMe": "Ich",
+  "pinboardTitle": "Pinnwand",
+  "pinboardSubtitle": "Aushänge und Hinweise für die Wache",
+  "pinboardEmpty": "Noch keine Aushänge an der Pinnwand.",
+  "pinboardCreate": "Aushang anlegen",
+  "pinboardFieldTitle": "Titel",
+  "pinboardFieldBody": "Text",
+  "pinboardCategory": "Art",
+  "pinboardPinned": "Angepinnt",
+  "pinboardSave": "Speichern",
+  "pinboardCancel": "Abbrechen",
+  "pinboardCategoryInfo": "Info",
+  "pinboardCategoryImportant": "Wichtig",
+  "pinboardCategoryEvent": "Termin/Hinweis",
+  "pinboardLoadError": "Pinnwand konnte nicht geladen werden.",
+  "pinboardCreated": "Aushang wurde angelegt."
 }

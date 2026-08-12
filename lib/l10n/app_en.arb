@@ -239,5 +239,20 @@
   "chatEmpty": "No messages yet.",
   "chatUnreadable": "Message not readable (no key for you).",
   "chatLoadError": "Could not load the chat.",
-  "chatMe": "Me"
+  "chatMe": "Me",
+  "pinboardTitle": "Pinboard",
+  "pinboardSubtitle": "Notices and hints for the station",
+  "pinboardEmpty": "No notices on the pinboard yet.",
+  "pinboardCreate": "New notice",
+  "pinboardFieldTitle": "Title",
+  "pinboardFieldBody": "Text",
+  "pinboardCategory": "Type",
+  "pinboardPinned": "Pinned",
+  "pinboardSave": "Save",
+  "pinboardCancel": "Cancel",
+  "pinboardCategoryInfo": "Info",
+  "pinboardCategoryImportant": "Important",
+  "pinboardCategoryEvent": "Event/Note",
+  "pinboardLoadError": "Could not load the pinboard.",
+  "pinboardCreated": "Notice created."
 }

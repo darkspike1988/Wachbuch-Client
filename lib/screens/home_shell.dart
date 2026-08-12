@@ -11,6 +11,7 @@ import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/screens/pinnwand_screen.dart';
 import 'package:wachbuch_mobile/screens/reports_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
@@ -651,6 +652,16 @@ class _ModuleTiles extends StatelessWidget {
         ),
       );
     }
+    if (modules['pinboard'] == true) {
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-pinboard',
+          icon: Icons.push_pin_outlined,
+          title: l.pinboardTitle,
+          subtitle: l.pinboardSubtitle,
+        ),
+      );
+    }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -702,6 +713,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = ReportsScreen(api: api);
       case 'module-tile-chat':
         screen = ChatScreen(api: api);
+      case 'module-tile-pinboard':
+        screen = PinnwandScreen(api: api);
       default:
         return;
     }
