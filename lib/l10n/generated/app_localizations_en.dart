@@ -709,6 +709,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatMe => 'Me';
 
   @override
+  String get groupsTitle => 'Groups';
+
+  @override
+  String get groupsSubtitle => 'Group chats (end-to-end)';
+
+  @override
+  String get groupsEmpty => 'No groups yet.';
+
+  @override
+  String get groupsCreate => 'Create group';
+
+  @override
+  String get groupName => 'Group name';
+
+  @override
+  String get groupMembers => 'Members';
+
+  @override
+  String get groupCreateAction => 'Create';
+
+  @override
+  String get groupSelectMembers => 'Select members';
+
+  @override
+  String get groupNoColleagues => 'No colleagues with keys available.';
+
+  @override
   String get pinboardTitle => 'Pinboard';
 
   @override

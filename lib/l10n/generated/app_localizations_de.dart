@@ -711,6 +711,34 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chatMe => 'Ich';
 
   @override
+  String get groupsTitle => 'Gruppen';
+
+  @override
+  String get groupsSubtitle => 'Gruppen-Chats (Ende-zu-Ende)';
+
+  @override
+  String get groupsEmpty => 'Noch keine Gruppen.';
+
+  @override
+  String get groupsCreate => 'Gruppe erstellen';
+
+  @override
+  String get groupName => 'Gruppenname';
+
+  @override
+  String get groupMembers => 'Mitglieder';
+
+  @override
+  String get groupCreateAction => 'Erstellen';
+
+  @override
+  String get groupSelectMembers => 'Mitglieder auswählen';
+
+  @override
+  String get groupNoColleagues =>
+      'Keine Kolleginnen und Kollegen mit Schlüsseln verfügbar.';
+
+  @override
   String get pinboardTitle => 'Pinnwand';
 
   @override

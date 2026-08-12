@@ -1418,6 +1418,60 @@ abstract class AppLocalizations {
   /// **'Ich'**
   String get chatMe;
 
+  /// No description provided for @groupsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gruppen'**
+  String get groupsTitle;
+
+  /// No description provided for @groupsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gruppen-Chats (Ende-zu-Ende)'**
+  String get groupsSubtitle;
+
+  /// No description provided for @groupsEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Gruppen.'**
+  String get groupsEmpty;
+
+  /// No description provided for @groupsCreate.
+  ///
+  /// In de, this message translates to:
+  /// **'Gruppe erstellen'**
+  String get groupsCreate;
+
+  /// No description provided for @groupName.
+  ///
+  /// In de, this message translates to:
+  /// **'Gruppenname'**
+  String get groupName;
+
+  /// No description provided for @groupMembers.
+  ///
+  /// In de, this message translates to:
+  /// **'Mitglieder'**
+  String get groupMembers;
+
+  /// No description provided for @groupCreateAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Erstellen'**
+  String get groupCreateAction;
+
+  /// No description provided for @groupSelectMembers.
+  ///
+  /// In de, this message translates to:
+  /// **'Mitglieder auswählen'**
+  String get groupSelectMembers;
+
+  /// No description provided for @groupNoColleagues.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Kolleginnen und Kollegen mit Schlüsseln verfügbar.'**
+  String get groupNoColleagues;
+
   /// No description provided for @pinboardTitle.
   ///
   /// In de, this message translates to:

@@ -9,6 +9,7 @@ import 'package:wachbuch_mobile/screens/assets_screen.dart';
 import 'package:wachbuch_mobile/screens/chat_screen.dart';
 import 'package:wachbuch_mobile/screens/checklisten_screen.dart';
 import 'package:wachbuch_mobile/screens/defects_screen.dart';
+import 'package:wachbuch_mobile/screens/groups_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
 import 'package:wachbuch_mobile/screens/pinnwand_screen.dart';
@@ -651,6 +652,14 @@ class _ModuleTiles extends StatelessWidget {
           subtitle: l.chatSubtitle,
         ),
       );
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-groups',
+          icon: Icons.groups_outlined,
+          title: l.groupsTitle,
+          subtitle: l.groupsSubtitle,
+        ),
+      );
     }
     if (modules['pinboard'] == true) {
       destinations.add(
@@ -713,6 +722,8 @@ class _ModuleTiles extends StatelessWidget {
         screen = ReportsScreen(api: api);
       case 'module-tile-chat':
         screen = ChatScreen(api: api);
+      case 'module-tile-groups':
+        screen = GroupsScreen(api: api);
       case 'module-tile-pinboard':
         screen = PinnwandScreen(api: api);
       default:

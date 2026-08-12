@@ -190,3 +190,40 @@ class MailDetailData {
   final ChatFeedItem envelope;
   final List<MailRecipientStatus> recipients;
 }
+
+class ChatGroupSummary {
+  const ChatGroupSummary({
+    required this.id,
+    required this.name,
+    required this.memberCount,
+    this.updatedAt,
+  });
+
+  factory ChatGroupSummary.fromJson(Map<String, dynamic> json) => ChatGroupSummary(
+        id: _readInt(json['id']),
+        name: (json['name'] ?? '').toString(),
+        memberCount: _readInt(json['member_count']),
+        updatedAt: _readDate(json['updated_at']),
+      );
+
+  final int id;
+  final String name;
+  final int memberCount;
+  final DateTime? updatedAt;
+}
+
+class GroupThreadData {
+  const GroupThreadData({
+    required this.id,
+    required this.name,
+    required this.isManager,
+    required this.members,
+    required this.messages,
+  });
+
+  final int id;
+  final String name;
+  final bool isManager;
+  final List<ChatMemberKey> members;
+  final List<ChatFeedItem> messages;
+}

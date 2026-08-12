@@ -779,6 +779,69 @@ class WachbuchApi {
     return MailDetailData(envelope: envelope, recipients: recipients);
   }
 
+  /// GET /api/v1/chat/groups/ — group rooms the user belongs to.
+  Future<List<ChatGroupSummary>> chatGroups() async {
+    final body = await _getJson('/api/v1/chat/groups/', moduleLabel: 'Nachrichten');
+    return _readList(body).map(ChatGroupSummary.fromJson).toList(growable: false);
+  }
+
+  /// POST /api/v1/chat/groups/ — create a group with initial members.
+  Future<int> createChatGroup({required String name, required List<int> memberIds}) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/chat/groups/'),
+          headers: _headers(),
+          body: jsonEncode({'name': name, 'member_ids': memberIds}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Nachrichten'));
+      return (body['id'] as num).toInt();
+    }, maxAttempts: 1);
+  }
+
+  /// GET /api/v1/chat/groups/{id}/ — members (with keys) and messages.
+  Future<GroupThreadData> groupThread(int id) async {
+    final body = await _getJson('/api/v1/chat/groups/$id/', moduleLabel: 'Nachrichten');
+    final members = (body['members'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
+    return GroupThreadData(
+      id: _readIntValue(body['id']),
+      name: (body['name'] ?? '').toString(),
+      isManager: body['is_manager'] == true,
+      members: members,
+      messages: _readList(body).map(ChatFeedItem.fromJson).toList(growable: false),
+    );
+  }
+
+  /// POST /api/v1/chat/groups/{id}/ — send a pre-encrypted group message.
+  Future<void> sendGroupMessage(int id, Map<String, dynamic> payload) =>
+      _postEnvelope('/api/v1/chat/groups/$id/', payload);
+
+  /// POST /api/v1/chat/groups/{id}/members/ — add/remove members (manager only).
+  Future<List<ChatMemberKey>> updateGroupMembers(
+    int id, {
+    List<int> add = const [],
+    List<int> remove = const [],
+  }) async {
+    return _withRetry(() async {
+      final response = await _send(
+        _client.post(
+          _uri('/api/v1/chat/groups/$id/members/'),
+          headers: _headers(),
+          body: jsonEncode({'add': add, 'remove': remove}),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Nachrichten'));
+      return (body['members'] as List? ?? const [])
+          .whereType<Map>()
+          .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
+          .toList(growable: false);
+    }, maxAttempts: 1);
+  }
+
   Future<void> _postEnvelope(String path, Map<String, dynamic> payload) async {
     await _withRetry(() async {
       final response = await _send(
