@@ -12,7 +12,9 @@ import 'package:wachbuch_mobile/screens/defects_screen.dart';
 import 'package:wachbuch_mobile/screens/groups_screen.dart';
 import 'package:wachbuch_mobile/screens/kaffeekasse_screen.dart';
 import 'package:wachbuch_mobile/screens/kalender_screen.dart';
+import 'package:wachbuch_mobile/screens/private_chat_screen.dart';
 import 'package:wachbuch_mobile/screens/reports_screen.dart';
+import 'package:wachbuch_mobile/screens/secure_mail_screen.dart';
 import 'package:wachbuch_mobile/services/connectivity_service.dart';
 import 'package:wachbuch_mobile/state/auth_state.dart';
 import 'package:wachbuch_mobile/state/handover_state.dart';
@@ -659,6 +661,22 @@ class _ModuleTiles extends StatelessWidget {
           subtitle: l.groupsSubtitle,
         ),
       );
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-private',
+          icon: Icons.chat_bubble_outline,
+          title: l.privateTitle,
+          subtitle: l.privateSubtitle,
+        ),
+      );
+      destinations.add(
+        _ModuleDestination(
+          key: 'module-tile-mail',
+          icon: Icons.mail_outline,
+          title: l.mailTitle,
+          subtitle: l.mailSubtitle,
+        ),
+      );
     }
     if (destinations.isEmpty) return const SizedBox.shrink();
 
@@ -713,6 +731,10 @@ class _ModuleTiles extends StatelessWidget {
         screen = ChatScreen(api: api);
       case 'module-tile-groups':
         screen = GroupsScreen(api: api);
+      case 'module-tile-private':
+        screen = PrivateChatScreen(api: api);
+      case 'module-tile-mail':
+        screen = SecureMailScreen(api: api);
       default:
         return;
     }

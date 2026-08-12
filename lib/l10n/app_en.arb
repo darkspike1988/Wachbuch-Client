@@ -249,5 +249,25 @@
   "groupMembers": "Members",
   "groupCreateAction": "Create",
   "groupSelectMembers": "Select members",
-  "groupNoColleagues": "No colleagues with keys available."
+  "groupNoColleagues": "No colleagues with keys available.",
+
+  "chatMessagingSetupHint": "Please set up your keys in the station chat first, then private chats and mail become readable.",
+  "privateTitle": "Private chats",
+  "privateSubtitle": "1:1, end-to-end",
+  "privateEmpty": "No private chats yet.",
+  "privateStart": "Start chat",
+  "privatePickColleague": "Choose a colleague",
+  "privateNoColleagues": "No colleagues with keys available.",
+  "mailTitle": "Mail",
+  "mailSubtitle": "Encrypted internal messages",
+  "mailInboxTab": "Inbox",
+  "mailSentTab": "Sent",
+  "mailEmpty": "No messages.",
+  "mailCompose": "New message",
+  "mailRecipients": "Recipients",
+  "mailSubject": "Subject",
+  "mailBody": "Message",
+  "mailSend": "Send",
+  "mailNoColleagues": "No recipients with keys available.",
+  "mailFrom": "From"
 }

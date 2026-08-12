@@ -257,5 +257,25 @@
   "groupMembers": "Mitglieder",
   "groupCreateAction": "Erstellen",
   "groupSelectMembers": "Mitglieder auswählen",
-  "groupNoColleagues": "Keine Kolleginnen und Kollegen mit Schlüsseln verfügbar."
+  "groupNoColleagues": "Keine Kolleginnen und Kollegen mit Schlüsseln verfügbar.",
+
+  "chatMessagingSetupHint": "Bitte zuerst im Wachenchat die Schlüssel einrichten, dann sind private Chats und Post lesbar.",
+  "privateTitle": "Private Chats",
+  "privateSubtitle": "1:1, Ende-zu-Ende",
+  "privateEmpty": "Noch keine privaten Chats.",
+  "privateStart": "Chat starten",
+  "privatePickColleague": "Kollegin oder Kollegen wählen",
+  "privateNoColleagues": "Keine Kolleginnen und Kollegen mit Schlüsseln verfügbar.",
+  "mailTitle": "Post",
+  "mailSubtitle": "Verschlüsselte interne Nachrichten",
+  "mailInboxTab": "Eingang",
+  "mailSentTab": "Ausgang",
+  "mailEmpty": "Keine Nachrichten.",
+  "mailCompose": "Neue Nachricht",
+  "mailRecipients": "Empfänger",
+  "mailSubject": "Betreff",
+  "mailBody": "Nachricht",
+  "mailSend": "Senden",
+  "mailNoColleagues": "Keine Empfänger mit Schlüsseln verfügbar.",
+  "mailFrom": "Von"
 }
