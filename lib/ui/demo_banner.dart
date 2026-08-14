@@ -29,13 +29,13 @@ class DemoBanner extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              const Icon(Icons.science_outlined, color: Color(0xFF1A1A1A)),
+              const Icon(Icons.science_outlined, color: WachbuchTokens.brandDeep),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   text,
                   style: const TextStyle(
-                    color: Color(0xFF1A1A1A),
+                    color: WachbuchTokens.brandDeep,
                     fontWeight: FontWeight.w600,
                     fontSize: WachbuchTokens.textBody,
                   ),
