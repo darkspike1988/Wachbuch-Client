@@ -190,5 +190,6 @@ setActiveTab(
 );
 
 if (initial && PROFILES[initial]) {
-  document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById("demo")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
 }
