@@ -5,16 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Wachbuch – selbst gehostetes Schichtbuch für Rettungsdienst, Feuerwehr und Polizei. Open Source, AGPL, mit Demo-Modus."
+      content="Wachbuch \u2013 selbst gehostetes Schichtbuch f\u00fcr Rettungsdienst, Feuerwehr und Polizei. Open Source, AGPL, mit Demo-Modus."
     />
-    <title>Wachbuch – Digitales Schichtbuch für Blaulichtorganisationen</title>
+    <meta name="theme-color" content="#0d47a1" />
+    <title>Wachbuch \u2013 Digitales Schichtbuch f\u00fcr Blaulichtorganisationen</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -22,9 +17,12 @@
 
     <header class="site-nav">
       <div class="nav-inner">
-        <a class="nav-brand" href="#top" aria-label="Wachbuch Start">Wachbuch</a>
+        <a class="nav-brand" href="#top" aria-label="Wachbuch Start">
+          <span class="nav-mark" aria-hidden="true"></span>
+          Wachbuch
+        </a>
         <nav aria-label="Hauptnavigation">
-          <a href="#fuer-wen">Für wen</a>
+          <a href="#fuer-wen">F\u00fcr wen</a>
           <a href="#funktionen">Funktionen</a>
           <a href="#demo">Demo</a>
           <a
@@ -38,20 +36,20 @@
     </header>
 
     <main id="top">
-      <section class="hero" aria-labelledby="hero-brand">
-        <div class="hero-atmosphere" aria-hidden="true">
+      <section class="hero" aria-labelledby="hero-headline">
+        <div class="hero-art" aria-hidden="true">
+          <div class="hero-blob hero-blob--blue"></div>
+          <div class="hero-blob hero-blob--amber"></div>
           <div class="hero-grid"></div>
-          <div class="hero-glow"></div>
-          <div class="hero-scan"></div>
         </div>
-        <div class="hero-content">
-          <p class="hero-brand" id="hero-brand">Wachbuch</p>
-          <h1 class="hero-headline">
-            Schichtübergabe, die in der Wache bleibt.
+        <div class="hero-content section-inner">
+          <p class="hero-eyebrow">Selbst gehostet \u00b7 Open Source \u00b7 AGPL</p>
+          <h1 id="hero-headline" class="hero-headline">
+            Schicht\u00fcbergabe,<br />die in der Wache bleibt.
           </h1>
           <p class="hero-lede">
-            Selbst gehostetes digitales Wachbuch für Rettungsdienst, Feuerwehr
-            und Polizei — offen, auditierbar, ohne Cloud-Zwang.
+            Digitales Wachbuch f\u00fcr Rettungsdienst, Feuerwehr und Polizei
+            \u2014 offen, auditierbar, ohne Cloud-Zwang.
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="app/">Demo-Modus starten</a>
@@ -62,38 +60,42 @@
               >Server &amp; Docs</a
             >
           </div>
+          <p class="hero-fineprint">
+            Kein Einsatzleit-, Alarmierungs- oder Patientensystem.
+          </p>
         </div>
       </section>
 
       <section class="section audience" id="fuer-wen" aria-labelledby="audience-title">
         <div class="section-inner">
+          <p class="section-eyebrow">F\u00fcr wen</p>
           <h2 id="audience-title">Eine App. Vier Blaulichtwelten.</h2>
           <p class="section-lede">
-            Dieselbe Struktur — Übergaben, Mängel, Statusboard, Checklisten —
-            mit Inhalten, die zu Ihrem Alltag passen.
+            Dieselbe Struktur \u2014 \u00dcbergaben, M\u00e4ngel, Statusboard, Checklisten
+            \u2014 mit Inhalten, die zu Ihrem Alltag passen.
           </p>
           <div class="audience-rail" role="list">
             <a class="audience-item" role="listitem" href="app/?service=rettungsdienst">
               <span class="audience-mark rd" aria-hidden="true"></span>
               <h3>Rettungsdienst</h3>
               <p>
-                RTW-Material, Funkstörungen, Medikamentenkühlung und klare
-                Schichtübergaben ohne Patientendaten.
+                RTW-Material, Funkst\u00f6rungen, Medikamentenk\u00fchlung und klare
+                Schicht\u00fcbergaben ohne Patientendaten.
               </p>
             </a>
             <a class="audience-item" role="listitem" href="app/?service=feuerwehr">
               <span class="audience-mark fw" aria-hidden="true"></span>
               <h3>Feuerwehr</h3>
               <p>
-                Gerätehaus, Atemschutz und Fahrzeugstatus — für Wachabteilung
-                und Übungsbetrieb.
+                Ger\u00e4tehaus, Atemschutz und Fahrzeugstatus \u2014 f\u00fcr Wachabteilung
+                und \u00dcbungsbetrieb.
               </p>
             </a>
             <a class="audience-item" role="listitem" href="app/?service=ffw">
               <span class="audience-mark ffw" aria-hidden="true"></span>
               <h3>Freiwillige Feuerwehr</h3>
               <p>
-                Asynchrone To-dos, Gerätehaus-Checks und Übungsalltag — ohne
+                Asynchrone To-dos, Ger\u00e4tehaus-Checks und \u00dcbungsalltag \u2014 ohne
                 schweres Verwaltungssystem.
               </p>
             </a>
@@ -101,7 +103,7 @@
               <span class="audience-mark pol" aria-hidden="true"></span>
               <h3>Polizei</h3>
               <p>
-                Dienstgruppenübergabe, Fuhrpark und Material — lokal betrieben,
+                Dienstgruppen\u00fcbergabe, Fuhrpark und Material \u2014 lokal betrieben,
                 nachvollziehbar dokumentiert.
               </p>
             </a>
@@ -111,14 +113,15 @@
 
       <section class="section features" id="funktionen" aria-labelledby="features-title">
         <div class="section-inner">
+          <p class="section-eyebrow">Funktionen</p>
           <h2 id="features-title">Was die App leistet</h2>
           <p class="section-lede">
-            Begleit-App für iOS und Android zum selbst gehosteten Wachbuch-Server.
+            Begleit-App f\u00fcr iOS und Android zum selbst gehosteten Wachbuch-Server.
           </p>
           <ul class="feature-list">
             <li>
-              <strong>Versionierte Übergaben</strong>
-              <span>Priorität, Status, Suche und Filter — auf einen Blick.</span>
+              <strong>Versionierte \u00dcbergaben</strong>
+              <span>Priorit\u00e4t, Status, Suche und Filter \u2014 auf einen Blick.</span>
             </li>
             <li>
               <strong>Module nach Bedarf</strong>
@@ -130,7 +133,7 @@
             </li>
             <li>
               <strong>Schichtgerecht lesbar</strong>
-              <span>Große Touch-Ziele, hoher Kontrast, hell/dunkel nach Sonnenstand.</span>
+              <span>Gro\u00dfe Touch-Ziele, hoher Kontrast, hell/dunkel nach Sonnenstand.</span>
             </li>
           </ul>
         </div>
@@ -139,10 +142,11 @@
       <section class="section demo" id="demo" aria-labelledby="demo-title">
         <div class="section-inner demo-layout">
           <div class="demo-copy">
-            <h2 id="demo-title">Demo-Modus</h2>
+            <p class="section-eyebrow">Demo</p>
+            <h2 id="demo-title">Sofort ausprobieren</h2>
             <p class="section-lede">
-              Sofort ausprobieren — mit Musterdaten für Ihre Organisation. Kein
-              Server, keine Anmeldung, keine echten Einsatzdaten.
+              Mit Musterdaten f\u00fcr Ihre Organisation. Kein Server, keine
+              Anmeldung, keine echten Einsatzdaten.
             </p>
             <div class="demo-tabs" role="tablist" aria-label="Demo-Organisation">
               <button
@@ -191,15 +195,15 @@
               </button>
             </div>
             <p class="demo-hint" id="demo-hint">
-              Wählen Sie eine Organisation — die Vorschau zeigt passende
-              Übergaben und Module.
+              W\u00e4hlen Sie eine Organisation \u2014 die Vorschau zeigt passende
+              \u00dcbergaben und Module.
             </p>
             <div class="demo-actions">
               <a class="btn btn-primary" id="demo-open-app" href="app/"
-                >Webapp öffnen</a
+                >Webapp \u00f6ffnen</a
               >
               <p class="demo-app-hint">
-                Mobile App: Startbildschirm →
+                Mobile App: Startbildschirm \u2192
                 <strong>Demo-Modus ausprobieren</strong>
               </p>
             </div>
@@ -217,7 +221,7 @@
                 <span>09:41</span>
                 <span>Wachbuch</span>
               </div>
-              <div class="demo-banner" id="demo-banner">Demo-Modus · Rettungsdienst</div>
+              <div class="demo-banner" id="demo-banner">Demo-Modus \u00b7 Rettungsdienst</div>
               <header class="phone-header">
                 <h3 id="demo-station">Rettungswache Musterstadt</h3>
                 <p id="demo-role">Schichtleitung</p>
@@ -235,9 +239,10 @@
 
       <section class="section selfhost" aria-labelledby="selfhost-title">
         <div class="section-inner selfhost-inner">
+          <p class="section-eyebrow">Selbst hosten</p>
           <h2 id="selfhost-title">Selbst hosten. Selbst entscheiden.</h2>
           <p>
-            Server und Client sind AGPL — Quellcode offen, Betrieb bei Ihnen.
+            Server und Client sind AGPL \u2014 Quellcode offen, Betrieb bei Ihnen.
             Keine Patienten-, Alarm- oder Einsatzdaten im Wachbuch.
           </p>
           <div class="selfhost-links">
@@ -263,7 +268,7 @@
 
     <footer class="site-footer">
       <div class="section-inner footer-inner">
-        <p><strong>Wachbuch</strong> · AGPL-3.0-or-later</p>
+        <p><strong>Wachbuch</strong> \u00b7 AGPL-3.0-or-later</p>
         <p>Kein Einsatzleit-, Alarmierungs- oder Patientendokumentationssystem.</p>
       </div>
     </footer>
