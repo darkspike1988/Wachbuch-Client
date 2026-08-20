@@ -104,6 +104,8 @@ Siehe `lib/theme/app_theme.dart` und `lib/theme/solar_theme.dart`.
 
 ### HighContrast (Emergency)
 `lib/theme/high_contrast_theme.dart` — Schwarz/Weiß mit maximalem Kontrast.
+`MaterialApp` setzt `highContrastTheme` / `highContrastDarkTheme`, sobald die
+Plattform den System-High-Contrast-Modus meldet. Solar bleibt der Standard.
 
 ## Barrierefreiheit
 

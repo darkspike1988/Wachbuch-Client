@@ -4,6 +4,8 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
 ## Unreleased
 
+- High-Contrast-Emergency-Themes sind an `MaterialApp` verdrahtet
+  (`highContrastTheme` / `highContrastDarkTheme`).
 - Logout ruft `DELETE /api/v1/token/` best-effort auf und räumt den lokalen
   Speicher danach in jedem Fall. Demo-Sitzungen bleiben ohne Netzaufruf.
 - Die Vibe-P0-P3-Änderungen (nicht existierendes `geolocator 14.1.0`,

@@ -14,6 +14,7 @@ import 'package:wachbuch_mobile/screens/home_shell.dart';
 import 'package:wachbuch_mobile/screens/login_screen.dart';
 import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
 import 'package:wachbuch_mobile/theme/app_theme.dart';
+import 'package:wachbuch_mobile/theme/high_contrast_theme.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
 
 Future<void> main() async {
@@ -370,6 +371,8 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
       supportedLocales: AppLocalizations.supportedLocales,
       theme: buildWachbuchTheme(Brightness.light),
       darkTheme: buildWachbuchTheme(Brightness.dark),
+      highContrastTheme: HighContrastTheme.light(),
+      highContrastDarkTheme: HighContrastTheme.dark(),
       themeMode: _themeMode,
       home: home,
     );
