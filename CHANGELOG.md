@@ -4,6 +4,7 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
 ## Unreleased
 
+- Gemeinsame Palette mit der Web-PWA: Primary `#0D47A1`, Fläche `#F7F9FC`.
 - High-Contrast-Emergency-Themes sind an `MaterialApp` verdrahtet
   (`highContrastTheme` / `highContrastDarkTheme`).
 - Logout ruft `DELETE /api/v1/token/` best-effort auf und räumt den lokalen

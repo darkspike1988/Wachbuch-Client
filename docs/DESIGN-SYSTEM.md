@@ -48,8 +48,14 @@ lesbar.
 
 | Token | Hex |
 | --- | --- |
+| `primary` | `#0D47A1` |
+| `brandHover` | `#082E63` |
 | `brandDeep` | `#17343D` |
 | `brandAccent` | `#2563EB` |
+| `surfaceLight` | `#F7F9FC` |
+| `surfaceDark` | `#0B1220` |
+
+Dieselben Werte gelten für die Web-PWA (`core/static/core/app.css`).
 
 ## Typography
 

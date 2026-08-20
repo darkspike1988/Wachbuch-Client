@@ -51,4 +51,13 @@ void main() {
       WachbuchTokens.touchTarget,
     );
   });
+
+  test('shared tokens match the web PWA palette', () {
+    expect(WachbuchTokens.primary, const Color(0xFF0D47A1));
+    expect(WachbuchTokens.surfaceLight, const Color(0xFFF7F9FC));
+    expect(WachbuchTokens.surfaceDark, const Color(0xFF0B1220));
+    expect(WachbuchTokens.brandHover, const Color(0xFF082E63));
+    expect(WachbuchTokens.brandDeep, const Color(0xFF17343D));
+    expect(WachbuchTokens.brandAccent, const Color(0xFF2563EB));
+  });
 }
