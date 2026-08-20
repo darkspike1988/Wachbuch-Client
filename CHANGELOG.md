@@ -2,6 +2,13 @@
 
 Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
+## Unreleased
+
+- Logout ruft `DELETE /api/v1/token/` best-effort auf und räumt den lokalen
+  Speicher danach in jedem Fall. Demo-Sitzungen bleiben ohne Netzaufruf.
+- Die Vibe-P0-P3-Änderungen (nicht existierendes `geolocator 14.1.0`,
+  unwirksames Certificate Pinning) sind von `main` zurückgenommen.
+
 ## 1.0.0 – Store-Release-Kandidat
 
 ### Wachalltag

@@ -296,7 +296,18 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _revokeCurrentTokenBestEffort() async {
+    final api = _api;
+    if (api == null) return;
+    try {
+      await api.revokeCurrentToken();
+    } catch (_) {
+      // Local logout must succeed even if the server is unreachable.
+    }
+  }
+
   Future<void> _logout({String? notice}) async {
+    await _revokeCurrentTokenBestEffort();
     await _clearCurrentApiCache();
     await widget.store.clearToken();
     if (!mounted) return;
@@ -310,6 +321,7 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
   }
 
   Future<void> _changeServer() async {
+    await _revokeCurrentTokenBestEffort();
     await _clearCurrentApiCache();
     await widget.store.clearAll();
     if (!mounted) return;

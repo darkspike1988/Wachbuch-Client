@@ -83,6 +83,21 @@ void main() {
       expect(calls, 1);
     });
 
+    test('token revoke is never automatically replayed', () async {
+      var calls = 0;
+      final api = WachbuchApi(
+        baseUrl: 'https://wache.example.org',
+        token: 'token',
+        client: MockClient((_) async {
+          calls++;
+          return serverError();
+        }),
+      );
+
+      await expectLater(api.revokeCurrentToken(), throwsA(isA<ApiException>()));
+      expect(calls, 1);
+    });
+
     test('MFA setup required is handled as an MFA requirement', () {
       final error = ApiException(
         403,
