@@ -277,6 +277,27 @@ class WachbuchApi {
     }, maxAttempts: 1);
   }
 
+  /// DELETE /api/v1/token/ — revoke the current app token.
+  ///
+  /// 401 is treated as success so logout still completes after an already
+  /// expired or previously revoked token.
+  Future<void> revokeCurrentToken() async {
+    if (token == null || token!.isEmpty) {
+      return;
+    }
+    await _withRetry(() async {
+      final response = await _send(
+        _client.delete(_uri('/api/v1/token/'), headers: _headers()),
+      );
+      if (response.statusCode == 200 ||
+          response.statusCode == 204 ||
+          response.statusCode == 401) {
+        return;
+      }
+      _decode(response);
+    }, maxAttempts: 1);
+  }
+
   /// GET /api/v1/me/ with encrypted offline fallback.
   Future<Map<String, dynamic>> me() =>
       _getJson('/api/v1/me/', cacheKey: 'me');

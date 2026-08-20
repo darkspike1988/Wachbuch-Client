@@ -167,6 +167,9 @@ class DemoWachbuchApi extends WachbuchApi {
   }
 
   @override
+  Future<void> revokeCurrentToken() async {}
+
+  @override
   Future<Map<String, dynamic>> me() async => Map<String, dynamic>.from(profile.me);
 
   @override

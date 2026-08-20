@@ -27,7 +27,7 @@ Diese Checkliste prüft **denselben fachlichen Ablauf in Demo und gegen einen ec
 | 11 | Wiederkehrende Checkliste abschließen | nächste Fälligkeit wird täglich/wöchentlich/monatlich weitergesetzt |
 | 12 | Auswertung öffnen | offene/überfällige Mängel, Checks, Einsatzklarquote, ausgegebene Pools und unquittierte Übergaben entsprechen dem Serverstand |
 | 13 | Nach erfolgreichem Online-Laden offline gehen | lesbare Cache-Daten bleiben verfügbar; 401/403 werden niemals durch Cache verdeckt |
-| 14 | Logout / Serverwechsel | Token wird entfernt; Cache darf nicht in eine andere Server-/Token-Sitzung hineinlecken |
+| 14 | Logout / Serverwechsel | `DELETE /api/v1/token/` wird best-effort aufgerufen; Token wird lokal entfernt; Cache darf nicht in eine andere Server-/Token-Sitzung hineinlecken |
 
 ## Fehlervertrag
 
