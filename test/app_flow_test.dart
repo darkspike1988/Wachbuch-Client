@@ -302,4 +302,16 @@ void main() {
       ThemeMode.dark,
     );
   });
+
+  testWidgets('MaterialApp wires high contrast emergency themes', (tester) async {
+    await tester.pumpWidget(WachbuchApp(store: _MemorySessionStore()));
+    await tester.pumpAndSettle();
+
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.highContrastTheme?.colorScheme.primary, const Color(0xFF000000));
+    expect(
+      app.highContrastDarkTheme?.colorScheme.primary,
+      const Color(0xFFFFFFFF),
+    );
+  });
 }

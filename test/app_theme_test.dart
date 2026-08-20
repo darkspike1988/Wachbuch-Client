@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wachbuch_mobile/theme/app_theme.dart';
+import 'package:wachbuch_mobile/theme/design_tokens.dart';
+import 'package:wachbuch_mobile/theme/high_contrast_theme.dart';
 
 void main() {
   test('light theme uses deterministic white-blue design tokens', () {
@@ -32,5 +34,21 @@ void main() {
       52,
     );
     expect(theme.inputDecorationTheme.constraints?.minHeight, 56);
+  });
+
+  test('high contrast emergency themes stay black and white', () {
+    final light = HighContrastTheme.light();
+    final dark = HighContrastTheme.dark();
+
+    expect(light.colorScheme.primary, const Color(0xFF000000));
+    expect(light.colorScheme.surface, const Color(0xFFFFFFFF));
+    expect(light.colorScheme.onSurface, const Color(0xFF000000));
+    expect(dark.colorScheme.primary, const Color(0xFFFFFFFF));
+    expect(dark.colorScheme.surface, const Color(0xFF000000));
+    expect(dark.colorScheme.onSurface, const Color(0xFFFFFFFF));
+    expect(
+      light.elevatedButtonTheme.style?.minimumSize?.resolve({})?.height,
+      WachbuchTokens.touchTarget,
+    );
   });
 }
