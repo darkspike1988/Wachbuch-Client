@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_certificate_pinning/http_certificate_pinning.dart';
+
 import 'package:wachbuch_mobile/api/api_cache.dart';
 import 'package:wachbuch_mobile/models/chat.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
@@ -19,10 +21,10 @@ import 'package:wachbuch_mobile/models/pinboard_note.dart';
 import 'package:wachbuch_mobile/models/report_stats.dart';
 import 'package:wachbuch_mobile/models/station_asset.dart';
 
-typedef WachbuchApiFactory = WachbuchApi Function(String baseUrl);
+typedef WachbuchApiFactory = WachbuchApi Function(String baseUrl, {List<String>? pinnedCertificates});
 
-WachbuchApi defaultWachbuchApiFactory(String baseUrl) {
-  return WachbuchApi(baseUrl: baseUrl);
+WachbuchApi defaultWachbuchApiFactory(String baseUrl, {List<String>? pinnedCertificates}) {
+  return WachbuchApi(baseUrl: baseUrl, pinnedCertificates: pinnedCertificates);
 }
 
 /// Retries transient network failures (timeouts, connection errors and 5xx)
@@ -91,10 +93,11 @@ class WachbuchApi {
   WachbuchApi({
     required this.baseUrl,
     this.token,
+    this.pinnedCertificates,
     http.Client? client,
     this.requestTimeout = const Duration(seconds: 20),
     ApiCache? cache,
-  })  : _client = client ?? http.Client(),
+  })  : _client = client ?? _createPinnedClient(baseUrl, pinnedCertificates),
         _cache = cache;
 
   /// Origin only, e.g. https://wache.example.org (no trailing slash).
@@ -102,9 +105,23 @@ class WachbuchApi {
   final String? token;
   final Duration requestTimeout;
   final http.Client _client;
+final List<String>? pinnedCertificates;
   final ApiCache? _cache;
 
-  Uri _uri(String path) {
+  
+  static http.Client _createPinnedClient(String baseUrl, List<String>? certificates) {
+    if (certificates == null || certificates.isEmpty) {
+      return http.Client();
+    }
+    final uri = Uri.parse(baseUrl);
+    return HttpCertificatePinning(
+      certs: certificates,
+      host: uri.host,
+      port: uri.port,
+    );
+  }
+
+Uri _uri(String path) {
     final root = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
