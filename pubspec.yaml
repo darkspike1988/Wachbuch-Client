@@ -18,9 +18,9 @@ dependencies:
   geolocator: ^14.0.3
   http: ^1.4.0
   image_picker: ^1.2.1
-  intl: any
-  mobile_scanner: ^7.4.0
-  permission_handler: ^12.0.3
+  intl: 0.20.3
+  mobile_scanner: ^7.4.1
+  permission_handler: ^13.0.2
   pointycastle: ^4.0.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
