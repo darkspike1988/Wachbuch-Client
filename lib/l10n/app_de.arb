@@ -110,6 +110,8 @@
   "handoverAckListTitle": "Quittierungen",
   "handoverAckEmpty": "Noch nicht quittiert.",
   "handoverAckFailed": "Quittierung fehlgeschlagen.",
+  "handoverAckLoading": "Quittierungen werden geladen …",
+  "handoverAckLoadFailed": "Quittierungen konnten nicht geladen werden.",
   "handoverAckStale": "Die Übergabe wurde zwischenzeitlich geändert. Bitte neu laden und erneut quittieren.",
   "handoverAckVersionUnknown": "Fassung der Übergabe unbekannt. Bitte neu laden, um zu quittieren.",
   "handoverAckLegacy": "Fassung unbekannt",

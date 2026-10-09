@@ -15,6 +15,7 @@ Open-Source-Begleit-App für das selbst gehostete **[Wachbuch](https://github.co
 | **Versionierung** | [docs/RELEASE-VERSIONING.md](docs/RELEASE-VERSIONING.md) |
 | **Secure-Storage-Migration** | [docs/SECURE-STORAGE-MIGRATION-1.0.md](docs/SECURE-STORAGE-MIGRATION-1.0.md) |
 | **Roadmap** | [ROADMAP.md](ROADMAP.md) |
+| **Architektur-/UX-Fahrplan** | [Form follows function](docs/FORM-FOLLOWS-FUNCTION-ROADMAP.md) |
 
 ## Quelle der Wahrheit
 

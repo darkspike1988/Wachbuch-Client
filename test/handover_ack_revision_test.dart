@@ -49,6 +49,7 @@ class _FakeHandoverApi extends WachbuchApi {
       'priority': detail['priority'],
       'status': detail['status'],
       'category': detail['category'],
+      'version': 2, // List preview must never supply the read detail revision.
     },
   ];
 
@@ -124,7 +125,72 @@ class _DelayedAcksApi extends _FakeHandoverApi {
   Future<List<HandoverAck>> handoverAcks(int id) => pending.future;
 }
 
+class _RetryAcksApi extends _FakeHandoverApi {
+  _RetryAcksApi() : super(detail: _detail());
+  int loads = 0;
+  @override
+  Future<List<HandoverAck>> handoverAcks(int id) async {
+    if (++loads == 1) throw Exception('Temporary connection failure');
+    return [];
+  }
+}
+
 void main() {
+  testWidgets(
+    'failed history load offers retry without claiming empty history',
+    (tester) async {
+      final api = _RetryAcksApi();
+      await _openSheet(tester, api);
+      expect(
+        find.text('Quittierungen konnten nicht geladen werden.'),
+        findsOneWidget,
+      );
+      expect(find.text('Noch nicht quittiert.'), findsNothing);
+      final retry = find.byKey(const Key('handover-acks-retry'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(api.loads, 2);
+      expect(find.text('Noch nicht quittiert.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('detail remains operable on narrow screen with large text', (
+    tester,
+  ) async {
+    final api = _FakeHandoverApi(detail: _detail());
+    await _openSheet(tester, api);
+    tester.view.physicalSize = const Size(320, 900);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(_ackButton);
+    await tester.tap(_ackButton);
+    await tester.pumpAndSettle();
+    expect(api.lastAckedVersion, 2);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('list revision never substitutes for missing detail revision', (
+    tester,
+  ) async {
+    final api = _FakeHandoverApi(detail: _detail(version: null));
+    await _openSheet(tester, api);
+    expect(tester.widget<FilledButton>(_ackButton).onPressed, isNull);
+    expect(api.ackCalls, 0);
+  });
+
+  testWidgets('pending receipt load is not displayed as an empty history', (
+    tester,
+  ) async {
+    final api = _DelayedAcksApi();
+    await _openSheet(tester, api);
+    expect(find.text('Quittierungen werden geladen …'), findsOneWidget);
+    expect(find.text('Noch nicht quittiert.'), findsNothing);
+    api.pending.complete([]);
+    await tester.pumpAndSettle();
+    expect(find.text('Noch nicht quittiert.'), findsOneWidget);
+  });
   for (final invalid in <String, double>{
     'infinite': double.infinity,
     'negative infinite': double.negativeInfinity,

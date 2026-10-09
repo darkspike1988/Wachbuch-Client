@@ -315,6 +315,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get handoverAckFailed => 'Quittierung fehlgeschlagen.';
 
   @override
+  String get handoverAckLoading => 'Quittierungen werden geladen …';
+
+  @override
+  String get handoverAckLoadFailed =>
+      'Quittierungen konnten nicht geladen werden.';
+
+  @override
   String get handoverAckStale =>
       'Die Übergabe wurde zwischenzeitlich geändert. Bitte neu laden und erneut quittieren.';
 
