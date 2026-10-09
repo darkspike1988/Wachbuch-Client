@@ -125,6 +125,24 @@ class _DelayedAcksApi extends _FakeHandoverApi {
 }
 
 void main() {
+  for (final invalid in <String, double>{
+    'infinite': double.infinity,
+    'negative infinite': double.negativeInfinity,
+    'NaN': double.nan,
+    'oversized finite': 1e30,
+  }.entries) {
+    testWidgets(
+      '${invalid.key} detail revision locks acknowledgement without crashing',
+      (tester) async {
+        final api = _FakeHandoverApi(detail: _detail(version: invalid.value));
+        await _openSheet(tester, api);
+        expect(tester.takeException(), isNull);
+        expect(tester.widget<FilledButton>(_ackButton).onPressed, isNull);
+        expect(api.ackCalls, 0);
+      },
+    );
+  }
+
   testWidgets('late ack GET cannot erase successful local acknowledgement', (
     tester,
   ) async {

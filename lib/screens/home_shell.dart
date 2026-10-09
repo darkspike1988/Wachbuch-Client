@@ -1399,7 +1399,7 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
           final author = rawAuthor is Map ? rawAuthor : null;
           final authorName = author?['display_name']?.toString();
           final details = item['details']?.toString().trim();
-          final currentVersion = _readRevision(item['version']);
+          final currentVersion = parseHandoverRevision(item['version']);
           final me =
               widget.currentUsername ??
               (widget.api is DemoWachbuchApi
@@ -1636,20 +1636,6 @@ String _formatTimestamp(Object? value) {
   String two(int number) => number.toString().padLeft(2, '0');
   return '${two(parsed.day)}.${two(parsed.month)}.${parsed.year}, '
       '${two(parsed.hour)}:${two(parsed.minute)} Uhr';
-}
-
-/// Reads a handover revision from a JSON value. Returns `null` when the value
-/// is missing or not a positive integer, so callers fail closed and never
-/// guess a default revision. See contract >= 1.4.0.
-int? _readRevision(Object? value) {
-  if (value is int) return value < 1 ? null : value;
-  if (value is double) {
-    if (value != value.roundToDouble()) return null;
-    final whole = value.toInt();
-    return whole < 1 ? null : whole;
-  }
-  final parsed = int.tryParse(value?.toString() ?? '');
-  return (parsed == null || parsed < 1) ? null : parsed;
 }
 
 class _AccountTab extends StatelessWidget {

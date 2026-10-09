@@ -18,7 +18,7 @@ class HandoverAck {
       handoverId: _readInt(json['handover_id'] ?? json['handoverId']),
       by: (json['by'] ?? json['user'] ?? '').toString().trim(),
       at: _readDate(json['at'] ?? json['created_at']) ?? DateTime.now(),
-      version: _readNullableInt(json['version']),
+      version: parseHandoverRevision(json['version']),
     );
   }
 
@@ -31,11 +31,11 @@ class HandoverAck {
   final int? version;
 
   Map<String, dynamic> toJson() => {
-        'handover_id': handoverId,
-        'by': by,
-        'at': at.toUtc().toIso8601String(),
-        if (version != null) 'version': version,
-      };
+    'handover_id': handoverId,
+    'by': by,
+    'at': at.toUtc().toIso8601String(),
+    if (version != null) 'version': version,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -64,10 +64,18 @@ int _readInt(Object? value) {
 /// Parses a nullable positive revision. Returns `null` for anything that is
 /// not a positive integer (missing, bool, non-numeric string, fractional
 /// number, zero or negative), so callers fail closed instead of guessing.
-int? _readNullableInt(Object? value) {
+int? parseHandoverRevision(Object? value) {
   if (value is int) return value < 1 ? null : value;
   if (value is double) {
-    if (value != value.roundToDouble()) return null;
+    // JSON exponent overflow can produce Infinity. Never let toInt throw or
+    // clamp an oversized floating-point value into an invented revision.
+    // Above 2^53-1, doubles cannot identify every integer revision exactly.
+    if (!value.isFinite ||
+        value < 1 ||
+        value > 9007199254740991 ||
+        value != value.roundToDouble()) {
+      return null;
+    }
     final whole = value.toInt();
     return whole < 1 ? null : whole;
   }
