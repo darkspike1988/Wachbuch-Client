@@ -5,14 +5,6 @@ import 'package:wachbuch_mobile/models/kalender_entry.dart';
 import 'package:wachbuch_mobile/ui/error_banner.dart';
 import 'package:wachbuch_mobile/ui/layout.dart';
 
-// Library loader for deferred import
-Future<void> loadLibrary() async {
-  // This function is called by the deferred import system
-  // No action needed, just ensures the library is loaded
-}
-
-part 'kalender_screen.dart';
-
 class KalenderScreen extends StatefulWidget {
   const KalenderScreen({super.key, required this.api});
 

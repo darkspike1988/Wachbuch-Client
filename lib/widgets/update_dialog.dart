@@ -225,10 +225,15 @@ class ForcedUpdateDialog extends StatelessWidget {
     required this.updateService,
   });
 
+  bool get _hasValidDownloadUrl {
+    final uri = Uri.tryParse(updateInfo.downloadUrl ?? '');
+    return uri != null && uri.hasScheme && uri.scheme == 'https';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // Prevent closing
+    return PopScope(
+      canPop: false,
       child: AlertDialog(
         title: Row(
           children: [
@@ -277,16 +282,17 @@ class ForcedUpdateDialog extends StatelessWidget {
           ),
         ),
         actions: [
-          ElevatedButton(
-            onPressed: () {
-              updateService.openDownloadUrl(updateInfo);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          if (_hasValidDownloadUrl)
+            ElevatedButton(
+              onPressed: () {
+                updateService.openDownloadUrl(updateInfo);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              child: const Text('Jetzt updaten'),
             ),
-            child: const Text('Jetzt updaten'),
-          ),
         ],
       ),
     );
