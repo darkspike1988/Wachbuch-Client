@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
@@ -38,6 +39,20 @@ jobs:
         run: flutter gen-l10n
       - run: flutter analyze
       - run: flutter test
+
+      # Release version contract guard. Validates only that the pubspec version
+      # is a well-formed MAJOR.MINOR.PATCH+BUILD triple. It deliberately does
+      # NOT require a version bump on every PR: unchanged versions and reruns
+      # are valid; only publishing the same version+build from new source is
+      # forbidden (enforced by the release orchestrator + build-identity ledger).
+      - name: Verify release version contract
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+          python3 scripts/release_version.py validate --json | tee release-version.json
+          python3 scripts/release_version.py check --kind report --input release-version.json
+          python3 scripts/release_version.py check --kind contract --input release/release-contract.json
+          python3 scripts/release_version.py docs-guard --json
 
   android:
     runs-on: ubuntu-latest

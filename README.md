@@ -8,10 +8,11 @@ Open-Source-Begleit-App für das selbst gehostete **[Wachbuch](https://github.co
 | **Server** | https://github.com/darkspike1988/Rettungswache-Wachbuch |
 | **Lizenz** | AGPL-3.0-or-later |
 | **API** | `/api/v1/` · Token-Auth |
-| **App-Version** | `1.0.0+12` |
-| **Produktiv-Paarung** | Server `0.16.x` |
+| **App-Version** | `1.0.0+12` (Quellstand; kein belegter Store-Upload) |
+| **Produktiv-Paarung** | Server-App `0.16.x` **und** API-Vertrag `1.4.0` (revisionsgebundene Quittungen) |
 | **E2E-Abnahme** | [docs/E2E-WACHALLTAG.md](docs/E2E-WACHALLTAG.md) |
 | **Store-Release** | [docs/STORE-RELEASE-1.0.md](docs/STORE-RELEASE-1.0.md) |
+| **Versionierung** | [docs/RELEASE-VERSIONING.md](docs/RELEASE-VERSIONING.md) |
 | **Secure-Storage-Migration** | [docs/SECURE-STORAGE-MIGRATION-1.0.md](docs/SECURE-STORAGE-MIGRATION-1.0.md) |
 | **Roadmap** | [ROADMAP.md](ROADMAP.md) |
 
@@ -94,7 +95,9 @@ Der Release-Workflow erzeugt zusätzlich Hashes, Zertifikatsberichte, Obfuskatio
 
 ## Server-Kopplung
 
-Der Vertrag liegt im Server-Repository unter `docs/API.md`, `docs/CLIENT.md` und `docs/openapi.yaml`. Die Kopplung erfolgt ausschließlich über den versionierten API-Vertrag – nicht durch Kopieren eines Client-Quellbaums in das Server-Repository.
+Der API-Vertrag liegt im Server-Repository unter `core/api/openapi_v1.yaml` mit `info.version: 1.4.0`. Die Kopplung erfolgt ausschließlich über diesen versionierten Vertrag – nicht durch Kopieren eines Client-Quellbaums in das Server-Repository.
+
+Die Server-App-Version (`0.16.x`) allein ist **kein** Kompatibilitätsnachweis. Die revisionsgebundene Quittierung (S2, `POST /api/v1/handovers/{id}/ack/` mit `version`) setzt den API-Vertrag `1.4.0` voraus. Client und Server müssen daher über den Vertragsstand `1.4.0` gekoppelt werden; die Server-Versionsnummer ist davon unabhängig und kein SemVer-Breaking-Change-Bump. Details zur Versionsführung: [docs/RELEASE-VERSIONING.md](docs/RELEASE-VERSIONING.md).
 
 ## Qualitätsgates
 

@@ -37,7 +37,7 @@ Alle wesentlichen Änderungen an Wachbuch Mobile werden hier dokumentiert.
 
 ### Store-Release
 
-- Version `1.0.0+11`.
+- Version `1.0.0+12`.
 - Production-ID Android: `de.wachbuch.mobile`.
 - Bundle-ID iOS/iPadOS: `de.wachbuch.wachbuchMobile`.
 - Android Signed Release mit echtem Upload-Key, API-36-, Permission-,

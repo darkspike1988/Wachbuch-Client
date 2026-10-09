@@ -11,6 +11,30 @@ on:
         description: Unique and strictly increasing Play version code
         required: true
         default: "12"
+  # Reusable entry point for the release orchestrator. Additive only: the
+  # workflow_dispatch above, all guards and all signing/verification steps are
+  # unchanged. The `environment: google-play` protection (required reviewers)
+  # still gates every invocation. Secrets must be passed explicitly; there is
+  # no secrets:inherit. This workflow uploads no artifact to Play by itself.
+  workflow_call:
+    inputs:
+      build_name:
+        description: Semantic version from pubspec.yaml, for example 1.0.0
+        required: true
+        type: string
+      build_number:
+        description: Unique and strictly increasing Play version code
+        required: true
+        type: string
+    secrets:
+      ANDROID_UPLOAD_KEYSTORE_BASE64:
+        required: true
+      ANDROID_UPLOAD_KEYSTORE_PASSWORD:
+        required: true
+      ANDROID_UPLOAD_KEY_ALIAS:
+        required: true
+      ANDROID_UPLOAD_KEY_PASSWORD:
+        required: true
 
 permissions:
   contents: read

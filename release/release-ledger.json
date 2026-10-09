@@ -1,0 +1,5 @@
+{
+  "schema": "wachbuch.release-ledger/v1",
+  "note": "Build-identity ledger: maps a published version+build to the exact commit SHA it was built from. Empty on purpose. Baseline 1.0.0+12 is the current SOURCE state and is NOT a proven store upload, so it is intentionally not recorded here.",
+  "entries": {}
+}
