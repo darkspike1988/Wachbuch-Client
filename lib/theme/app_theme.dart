@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'design_tokens.dart';
+
 /// Deterministic, field-readable Wachbuch design system.
 ///
 /// The palette follows Material 3 semantics with a calm white/blue identity.
@@ -43,17 +45,19 @@ ThemeData buildWachbuchTheme(Brightness brightness) {
   );
   final cardBorder = dark ? const Color(0xFF263650) : const Color(0xFFDCE4EF);
   final inputBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
     borderSide: BorderSide(color: cardBorder),
   );
   final buttonShape = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
   );
 
   return base.copyWith(
     scaffoldBackgroundColor: dark
         ? const Color(0xFF0B1220)
         : const Color(0xFFF7F9FC),
+    // General focus highlight; button focus borders are defined explicitly below.
+    focusColor: scheme.primary,
     textTheme: readableText,
     appBarTheme: AppBarTheme(
       elevation: 0,
@@ -72,7 +76,7 @@ ThemeData buildWachbuchTheme(Brightness brightness) {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(WachbuchTokens.radiusMd),
         side: BorderSide(color: cardBorder),
       ),
     ),
@@ -94,26 +98,59 @@ ThemeData buildWachbuchTheme(Brightness brightness) {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        shape: buttonShape,
-        textStyle: readableText.labelLarge,
-      ),
+      style:
+          FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: buttonShape,
+            textStyle: readableText.labelLarge,
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color:
+                    states.contains(WidgetState.focused) &&
+                        !states.contains(WidgetState.disabled)
+                    ? scheme.onPrimary
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        shape: buttonShape,
-        side: BorderSide(color: scheme.primary),
-        textStyle: readableText.labelLarge,
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: buttonShape,
+            side: BorderSide(color: scheme.primary),
+            textStyle: readableText.labelLarge,
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) return null;
+              return BorderSide(
+                color: scheme.primary,
+                width: states.contains(WidgetState.focused) ? 3 : 1,
+              );
+            }),
+          ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        shape: buttonShape,
-        textStyle: readableText.labelLarge,
-      ),
+      style:
+          TextButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            shape: buttonShape,
+            textStyle: readableText.labelLarge,
+          ).copyWith(
+            side: WidgetStateProperty.resolveWith(
+              (states) => BorderSide(
+                color:
+                    states.contains(WidgetState.focused) &&
+                        !states.contains(WidgetState.disabled)
+                    ? scheme.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
     ),
     searchBarTheme: SearchBarThemeData(
       backgroundColor: WidgetStatePropertyAll(scheme.surface),
@@ -135,7 +172,9 @@ ThemeData buildWachbuchTheme(Brightness brightness) {
         color: scheme.onPrimary,
       ),
       side: BorderSide(color: cardBorder),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
     ),
     navigationBarTheme: NavigationBarThemeData(

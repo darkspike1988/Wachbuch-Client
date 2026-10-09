@@ -686,6 +686,36 @@ abstract class AppLocalizations {
   /// **'Quittierung fehlgeschlagen.'**
   String get handoverAckFailed;
 
+  /// No description provided for @handoverAckLoading.
+  ///
+  /// In de, this message translates to:
+  /// **'Quittierungen werden geladen …'**
+  String get handoverAckLoading;
+
+  /// No description provided for @handoverAckLoadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Quittierungen konnten nicht geladen werden.'**
+  String get handoverAckLoadFailed;
+
+  /// No description provided for @handoverAckStale.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Übergabe wurde zwischenzeitlich geändert. Bitte neu laden und erneut quittieren.'**
+  String get handoverAckStale;
+
+  /// No description provided for @handoverAckVersionUnknown.
+  ///
+  /// In de, this message translates to:
+  /// **'Fassung der Übergabe unbekannt. Bitte neu laden, um zu quittieren.'**
+  String get handoverAckVersionUnknown;
+
+  /// No description provided for @handoverAckLegacy.
+  ///
+  /// In de, this message translates to:
+  /// **'Fassung unbekannt'**
+  String get handoverAckLegacy;
+
   /// No description provided for @handoverSearchHint.
   ///
   /// In de, this message translates to:

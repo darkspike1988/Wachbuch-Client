@@ -52,6 +52,7 @@ class _IntegrationApi extends WachbuchApi {
         'priority': 'urgent',
         'status': 'open',
         'category': 'material',
+        'version': 1,
       };
 
   @override

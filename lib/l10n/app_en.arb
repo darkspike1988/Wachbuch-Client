@@ -108,6 +108,11 @@
   "handoverAckListTitle": "Acknowledgements",
   "handoverAckEmpty": "Not acknowledged yet.",
   "handoverAckFailed": "Acknowledgement failed.",
+  "handoverAckLoading": "Loading acknowledgements …",
+  "handoverAckLoadFailed": "Acknowledgements could not be loaded.",
+  "handoverAckStale": "The handover changed in the meantime. Please reload and acknowledge again.",
+  "handoverAckVersionUnknown": "Handover revision unknown. Please reload to acknowledge.",
+  "handoverAckLegacy": "Revision unknown",
 
   "handoverSearchHint": "Search handovers",
   "handoverSearchClear": "Clear search",

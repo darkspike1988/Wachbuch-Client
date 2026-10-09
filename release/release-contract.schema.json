@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "wachbuch.release-contract/v1",
+  "title": "Wachbuch release contract",
+  "type": "object",
+  "required": [
+    "schema",
+    "versionScheme",
+    "appVersion",
+    "buildNumber",
+    "versionStringFormat",
+    "tagFormat",
+    "refs",
+    "identities",
+    "publishing",
+    "limits",
+    "server"
+  ],
+  "properties": {
+    "schema": {"type": "string", "enum": ["wachbuch.release-contract/v1"]},
+    "versionScheme": {"type": "string", "enum": ["semver-core+build"]},
+    "appVersion": {
+      "type": "object",
+      "required": ["format", "pattern", "leadingZeros", "prereleaseAllowed", "sourceOfTruth"],
+      "properties": {
+        "format": {"type": "string"},
+        "pattern": {"type": "string"},
+        "leadingZeros": {"type": "boolean"},
+        "prereleaseAllowed": {"type": "boolean"},
+        "sourceOfTruth": {"type": "string"}
+      }
+    },
+    "buildNumber": {
+      "type": "object",
+      "required": ["type", "pattern", "leadingZeros", "sharedAcrossAllAppVersions", "resetAllowed"],
+      "properties": {
+        "type": {"type": "string", "enum": ["positive-integer"]},
+        "pattern": {"type": "string"},
+        "leadingZeros": {"type": "boolean"},
+        "sharedAcrossAllAppVersions": {"type": "boolean"},
+        "resetAllowed": {"type": "boolean"},
+        "strictlyIncreasingForPublishedBuilds": {"type": "boolean"},
+        "ciRunAttemptIsNotStableBuildIdentity": {"type": "boolean"}
+      }
+    },
+    "versionStringFormat": {"type": "string"},
+    "tagFormat": {"type": "string"},
+    "refs": {"type": "object"},
+    "identities": {"type": "object"},
+    "publishing": {
+      "type": "object",
+      "required": ["autoPublishRequiresRepoVariable", "autoPublishDefaultEnabled"],
+      "properties": {
+        "autoPublishRequiresRepoVariable": {"type": "string"},
+        "autoPublishDefaultEnabled": {"type": "boolean"}
+      }
+    },
+    "limits": {"type": "object"},
+    "server": {"type": "object"},
+    "currentVersionReferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "pattern"],
+        "properties": {
+          "path": {"type": "string"},
+          "pattern": {"type": "string"}
+        }
+      }
+    }
+  }
+}

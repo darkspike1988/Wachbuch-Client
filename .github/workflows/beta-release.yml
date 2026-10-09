@@ -1,0 +1,130 @@
+name: Beta Release Preparation
+
+# Preparation only: main-only, immutable run SHA, read-only token, global lock.
+# No publisher jobs, no signing secrets, no workflow_run trigger.
+# Manual dry-runs produce a real version/SHA manifest and run reusable CI.
+# Opt-in push or manual publish requests fail until a durable publication ledger
+# and store processing verification have been implemented. Environment reviewer
+# rules are NOT confirmed. Merely enabling a variable must not permit uploads.
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: >-
+          Opt in to publishing this run. Also requires repository variable
+          WACHBUCH_BETA_RELEASE=true. Leave false for a safe dry run.
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One global release lock so two releases can never overlap.
+concurrency:
+  group: wachbuch-release
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    # On push, only run when beta automation was explicitly enabled. Manual
+    # dispatch always runs (useful for a dry-run release plan).
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' || vars.WACHBUCH_BETA_RELEASE == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      sha: ${{ steps.plan.outputs.sha }}
+      app_version: ${{ steps.plan.outputs.app_version }}
+      build_number: ${{ steps.plan.outputs.build_number }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Validate release version contract
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+          python3 scripts/release_version.py validate --require-main --ref "$GITHUB_REF" --json
+          python3 scripts/release_version.py docs-guard --json
+          python3 scripts/release_version.py check --kind contract --input release/release-contract.json
+
+      - name: Guard build identity and build the release plan
+        id: plan
+        env:
+          # Values are passed via env, never interpolated into the script body.
+          PUBLISH_INPUT: ${{ inputs.publish }}
+          BETA_ENABLED: ${{ vars.WACHBUCH_BETA_RELEASE }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          show="$(python3 scripts/release_version.py show --json)"
+          app_version="$(printf '%s' "$show" | python3 -c 'import json,sys; print(json.load(sys.stdin)["app_version"])')"
+          build_number="$(printf '%s' "$show" | python3 -c 'import json,sys; print(json.load(sys.stdin)["build_number"])')"
+          version="$app_version+$build_number"
+
+          # Fail closed if this version+build was already published from a
+          # different commit. Reruns of the same commit stay allowed.
+          python3 scripts/release_version.py publish-guard \
+            --ledger release/release-ledger.json \
+            --version "$version" --sha "$sha" --json
+
+          # A "release commit" changed the pubspec version vs its parent.
+          version_changed=false
+          if git rev-parse --verify --quiet HEAD~1 >/dev/null; then
+            prev="$(git show HEAD~1:pubspec.yaml 2>/dev/null | awk '/^version:/{print $2; exit}')"
+            if [ -n "$prev" ] && [ "$prev" != "$version" ]; then
+              version_changed=true
+            fi
+          fi
+
+          publish=false
+          if [ "${BETA_ENABLED}" = "true" ]; then
+            if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+              if [ "${PUBLISH_INPUT}" = "true" ]; then publish=true; fi
+            elif [ "${version_changed}" = "true" ]; then
+              publish=true
+            fi
+          fi
+
+          # Hard stop: no durable publication ledger/store verification yet.
+          if [ "$publish" = "true" ]; then
+            echo "::error::Automatic publishing blocked: durable build ledger and store processing checks missing"
+            exit 1
+          fi
+          export PLAN_SHA="$sha" PLAN_VERSION="$version"
+          python3 -c 'import json,os; from pathlib import Path; Path("release/plan.json").write_text(json.dumps({"source_sha": os.environ["PLAN_SHA"], "version": os.environ["PLAN_VERSION"], "publish": False, "blockers": ["durable_publication_ledger", "store_processing_verification"]}, indent=2) + "\n")'
+
+          {
+            echo "sha=$sha"
+            echo "app_version=$app_version"
+            echo "build_number=$build_number"
+            echo "publish=$publish"
+          } >> "$GITHUB_OUTPUT"
+          # publish is always false here: a true value stops the run above.
+          echo "version=$version version_changed=$version_changed publish=$publish sha=$sha"
+
+      - name: Upload release plan
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wachbuch-release-plan
+          path: |
+            release/release-contract.json
+            release/release-ledger.json
+            release/plan.json
+          if-no-files-found: error
+          retention-days: 30
+
+  # Reusable CI runs on every preparation run (dry run included).
+  ci:
+    needs: gate
+    uses: ./.github/workflows/ci.yml
+
+  # No publishing job is defined. Signed store pipelines stay manual until a
+  # durable publication ledger and store processing verification exist.

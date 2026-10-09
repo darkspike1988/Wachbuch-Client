@@ -1,0 +1,64 @@
+{
+  "schema": "wachbuch.release-contract/v1",
+  "versionScheme": "semver-core+build",
+  "appVersion": {
+    "format": "MAJOR.MINOR.PATCH",
+    "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+    "leadingZeros": false,
+    "prereleaseAllowed": false,
+    "sourceOfTruth": "pubspec.yaml:version"
+  },
+  "buildNumber": {
+    "type": "positive-integer",
+    "pattern": "^[1-9][0-9]*$",
+    "leadingZeros": false,
+    "sharedAcrossAllAppVersions": true,
+    "resetAllowed": false,
+    "strictlyIncreasingForPublishedBuilds": true,
+    "ciRunAttemptIsNotStableBuildIdentity": true
+  },
+  "versionStringFormat": "{appVersion}+{buildNumber}",
+  "tagFormat": "v{appVersion}+{buildNumber}",
+  "refs": {
+    "storeReleases": ["refs/heads/main"],
+    "publishingForbidden": ["pull_request", "unversioned_push"]
+  },
+  "identities": {
+    "android": "de.wachbuch.mobile",
+    "androidInternal": "de.wachbuch.mobile.internal",
+    "ios": "de.wachbuch.wachbuchMobile"
+  },
+  "publishing": {
+    "publishIsBuildIdentityBound": true,
+    "sameVersionBuildSameSourceOnly": true,
+    "rerunsAllowed": true,
+    "unchangedVersionOnOtherCommitsAllowed": true,
+    "autoPublishRequiresRepoVariable": "WACHBUCH_BETA_RELEASE",
+    "autoPublishDefaultEnabled": false,
+    "releaseCommitRequiresPubspecBump": true,
+    "pullRequestsNeverPublish": true,
+    "unversionedCommitPushesNeverPublish": true,
+    "globalConcurrencyGroup": "wachbuch-release",
+    "pinnedCommitSha": true
+  },
+  "limits": {
+    "buildNumberEnforcedMax": 2100000000,
+    "buildNumberOverflowBound": 2100000000,
+    "notes": [
+      "Apple CFBundleVersion is documented as one to three period-separated integers, numeric characters and periods only; a single integer (e.g. 10) is explicitly allowed. Apple documentation does not state a digit/length limit and none is enforced here.",
+      "Google Play versionCode ceiling 2100000000 is enforced for the shared build number; https://developer.android.com/studio/publish/versioning",
+      "--max-build can further restrict, never increase, the shared store ceiling."
+    ]
+  },
+  "server": {
+    "apiContractForRevisionBoundAcks": "1.4.0",
+    "pairedServerApp": "0.16.x",
+    "contractVersionIsIndependentOfServerAppVersion": true,
+    "note": "API contract 1.4.0 is the existing frozen contract that introduced revision-bound handover acknowledgements. It is not a strict-SemVer breaking-change bump and does not force an app SemVer major bump."
+  },
+  "currentVersionReferences": [
+    {"path": "README.md", "pattern": "App-Version\\*\\* \\| `([^`]+)`"},
+    {"path": "docs/STORE-RELEASE-1.0.md", "pattern": "Geplanter Build: \\*\\*([0-9][0-9.]*\\+[0-9]+)\\*\\*"},
+    {"path": "CHANGELOG.md", "pattern": "^- Version `([0-9][0-9.]*\\+[0-9]+)`\\.$"}
+  ]
+}

@@ -315,6 +315,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handoverAckFailed => 'Acknowledgement failed.';
 
   @override
+  String get handoverAckLoading => 'Loading acknowledgements …';
+
+  @override
+  String get handoverAckLoadFailed => 'Acknowledgements could not be loaded.';
+
+  @override
+  String get handoverAckStale =>
+      'The handover changed in the meantime. Please reload and acknowledge again.';
+
+  @override
+  String get handoverAckVersionUnknown =>
+      'Handover revision unknown. Please reload to acknowledge.';
+
+  @override
+  String get handoverAckLegacy => 'Revision unknown';
+
+  @override
   String get handoverSearchHint => 'Search handovers';
 
   @override

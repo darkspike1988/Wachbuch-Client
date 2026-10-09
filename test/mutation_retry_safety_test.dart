@@ -98,6 +98,27 @@ void main() {
       expect(calls, 1);
     });
 
+    test('handover acknowledgement is never automatically replayed', () async {
+      var calls = 0;
+      final api = WachbuchApi(
+        baseUrl: 'https://wache.example.org',
+        token: 'token',
+        client: MockClient((request) async {
+          calls++;
+          expect(request.method, 'POST');
+          expect(request.url.path, '/api/v1/handovers/3/ack/');
+          expect(jsonDecode(request.body), {'version': 5});
+          return serverError();
+        }),
+      );
+
+      await expectLater(
+        api.acknowledgeHandover(3, version: 5),
+        throwsA(isA<ApiException>()),
+      );
+      expect(calls, 1);
+    });
+
     test('MFA setup required is handled as an MFA requirement', () {
       final error = ApiException(
         403,
