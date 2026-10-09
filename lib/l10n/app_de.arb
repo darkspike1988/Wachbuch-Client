@@ -110,6 +110,9 @@
   "handoverAckListTitle": "Quittierungen",
   "handoverAckEmpty": "Noch nicht quittiert.",
   "handoverAckFailed": "Quittierung fehlgeschlagen.",
+  "handoverAckStale": "Die Übergabe wurde zwischenzeitlich geändert. Bitte neu laden und erneut quittieren.",
+  "handoverAckVersionUnknown": "Fassung der Übergabe unbekannt. Bitte neu laden, um zu quittieren.",
+  "handoverAckLegacy": "Fassung unbekannt",
 
   "handoverSearchHint": "Übergaben durchsuchen",
   "handoverSearchClear": "Suche löschen",

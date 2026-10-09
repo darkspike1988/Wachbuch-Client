@@ -1,10 +1,16 @@
 /// Acknowledgement that a handover was read/accepted.
-/// See docs/SCHEMA-WACHALLTAG.md.
+/// See docs/SCHEMA-WACHALLTAG.md and contract >= 1.4.0.
+///
+/// An acknowledgement is bound to a specific handover *revision* (`version`).
+/// `version` is `null` only for legacy acknowledgements recorded before
+/// revision-bound acknowledgement existed; a `null` version must never be
+/// treated as the current revision.
 class HandoverAck {
   const HandoverAck({
     required this.handoverId,
     required this.by,
     required this.at,
+    this.version,
   });
 
   factory HandoverAck.fromJson(Map<String, dynamic> json) {
@@ -12,6 +18,7 @@ class HandoverAck {
       handoverId: _readInt(json['handover_id'] ?? json['handoverId']),
       by: (json['by'] ?? json['user'] ?? '').toString().trim(),
       at: _readDate(json['at'] ?? json['created_at']) ?? DateTime.now(),
+      version: _readNullableInt(json['version']),
     );
   }
 
@@ -19,10 +26,15 @@ class HandoverAck {
   final String by;
   final DateTime at;
 
+  /// Handover revision this acknowledgement is bound to, or `null` for a
+  /// legacy acknowledgement whose revision is unknown.
+  final int? version;
+
   Map<String, dynamic> toJson() => {
         'handover_id': handoverId,
         'by': by,
         'at': at.toUtc().toIso8601String(),
+        if (version != null) 'version': version,
       };
 
   @override
@@ -32,10 +44,11 @@ class HandoverAck {
           runtimeType == other.runtimeType &&
           handoverId == other.handoverId &&
           by == other.by &&
-          at == other.at;
+          at == other.at &&
+          version == other.version;
 
   @override
-  int get hashCode => Object.hash(handoverId, by, at);
+  int get hashCode => Object.hash(handoverId, by, at, version);
 }
 
 DateTime? _readDate(Object? value) {
@@ -46,4 +59,18 @@ DateTime? _readDate(Object? value) {
 int _readInt(Object? value) {
   if (value is int) return value;
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+/// Parses a nullable positive revision. Returns `null` for anything that is
+/// not a positive integer (missing, bool, non-numeric string, fractional
+/// number, zero or negative), so callers fail closed instead of guessing.
+int? _readNullableInt(Object? value) {
+  if (value is int) return value < 1 ? null : value;
+  if (value is double) {
+    if (value != value.roundToDouble()) return null;
+    final whole = value.toInt();
+    return whole < 1 ? null : whole;
+  }
+  final parsed = int.tryParse(value?.toString() ?? '');
+  return (parsed == null || parsed < 1) ? null : parsed;
 }

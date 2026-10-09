@@ -31,15 +31,22 @@ Kein Einsatz-/Patienten-/Vorgangsbezug.
 | `due_label` | string | nein | Anzeigehilfe in Demos („heute 14:00“) |
 | `category` | `vehicle` \| `material` \| `safety` \| `facility` \| `key` \| `device` \| `task` | nein | Default `task` |
 
-### Geplante Endpoints (Server)
+### Endpoints (Server, eingefrorener Vertrag OpenAPI 1.4.0)
 
 ```
 GET    /api/v1/defects/
-GET    /api/v1/defects/{id}/
+GET    /api/v1/defects/{id}/          # Detail + events (max. 100) + attachments
 POST   /api/v1/defects/
-PATCH  /api/v1/defects/{id}/          # nur erlaubte Felder
+PATCH  /api/v1/defects/{id}/          # nur description, asset_ref, priority, owner, due_at
 POST   /api/v1/defects/{id}/status/   # { "status": "…" } append-only
 ```
+
+`PATCH /api/v1/defects/{id}/` ändert ausschließlich `description`, `asset_ref`,
+`priority`, `owner` und `due_at`. `title` und `category` sind bei der Erzeugung
+fest; mitgeschickt werden sie ignoriert und zählen nicht als Änderung. Ein Body
+ohne mindestens ein änderbares Feld wird mit `422` beantwortet. Der Client
+(`defectDetail`, `updateDefect`) setzt diese Regel um und sendet `title`/`category`
+nie mit.
 
 ## `asset` (StationAsset)
 
@@ -65,13 +72,27 @@ POST   /api/v1/assets/{id}/status/   # { "status": "…", "note": "…" }
 | `handover_id` | int | ja | Bezug Übergabe |
 | `by` | string | ja | Benutzer |
 | `at` | ISO-8601 | ja | Zeitstempel |
+| `version` | int \| null | nein | Gebundene Übergabe-Revision; `null` bei Legacy-Quittungen (vor revisionsgebundener Quittierung) |
 
-### Geplante Endpoints
+### Endpoints (Vertrag ≥ 1.4.0)
 
 ```
 GET    /api/v1/handovers/{id}/acks/
-POST   /api/v1/handovers/{id}/ack/    # idempotent pro User
+POST   /api/v1/handovers/{id}/ack/    # { "version": <positive int> } — Pflicht
 ```
+
+Die Quittung ist **revisionsgebunden** (S2): Der Client sendet im Body die
+`version` der tatsächlich gelesenen Übergabe. Fehlt `version` oder ist sie keine
+positive ganze Zahl (`null`, bool, String, Float, `0`, negativ), antwortet der
+Server mit `422`. Stimmt die gesendete Revision nicht mehr mit der aktuellen
+Server-Revision überein, antwortet er mit `409` und `error.code = "conflict"`.
+Der Client lädt dann **nicht** automatisch nach und quittiert **nicht**
+automatisch, sondern zeigt einen Neuladehinweis. `POST` ist idempotent pro
+Benutzer *und* Revision; die Antwort (`200` bei Wiederholung, `201` bei
+Neuanlage) enthält `version`. Der Client quittiert nie automatisch (kein
+Auto-Retry) und zählt eine alte Quittung nicht als „von Ihnen quittiert“ für
+eine neue Revision. Fehlt die Revision der Übergabe in der Antwort, ist die
+Quittieraktion gesperrt (fail closed) statt eine Revision zu erraten.
 
 ## `inventory` (Schlüssel / Pool)
 

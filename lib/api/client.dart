@@ -11,6 +11,7 @@ import 'package:wachbuch_mobile/models/chat.dart';
 import 'package:wachbuch_mobile/models/checkliste.dart';
 import 'package:wachbuch_mobile/models/defect.dart';
 import 'package:wachbuch_mobile/models/defect_attachment.dart';
+import 'package:wachbuch_mobile/models/defect_detail.dart';
 import 'package:wachbuch_mobile/models/handover_ack.dart';
 import 'package:wachbuch_mobile/models/inventory_item.dart';
 import 'package:wachbuch_mobile/models/kaffeekasse.dart';
@@ -53,12 +54,7 @@ Future<T> _withRetry<T>(
 }
 
 class ApiException implements Exception {
-  ApiException(
-    this.statusCode,
-    this.message, {
-    this.code,
-    this.correlationId,
-  });
+  ApiException(this.statusCode, this.message, {this.code, this.correlationId});
 
   final int statusCode;
   final String message;
@@ -94,8 +90,8 @@ class WachbuchApi {
     http.Client? client,
     this.requestTimeout = const Duration(seconds: 20),
     ApiCache? cache,
-  })  : _client = client ?? http.Client(),
-        _cache = cache;
+  }) : _client = client ?? http.Client(),
+       _cache = cache;
 
   /// Origin only, e.g. https://wache.example.org (no trailing slash).
   final String baseUrl;
@@ -299,8 +295,7 @@ class WachbuchApi {
   }
 
   /// GET /api/v1/me/ with encrypted offline fallback.
-  Future<Map<String, dynamic>> me() =>
-      _getJson('/api/v1/me/', cacheKey: 'me');
+  Future<Map<String, dynamic>> me() => _getJson('/api/v1/me/', cacheKey: 'me');
 
   /// GET /api/v1/handovers/ with encrypted offline fallback.
   Future<List<Map<String, dynamic>>> handovers() async {
@@ -309,10 +304,8 @@ class WachbuchApi {
   }
 
   /// GET /api/v1/handovers/{id}/
-  Future<Map<String, dynamic>> handoverDetail(int id) => _getJson(
-        '/api/v1/handovers/$id/',
-        cacheKey: 'handover_$id',
-      );
+  Future<Map<String, dynamic>> handoverDetail(int id) =>
+      _getJson('/api/v1/handovers/$id/', cacheKey: 'handover_$id');
 
   /// GET /api/v1/kalender/
   Future<List<KalenderEntry>> kalender() async {
@@ -360,7 +353,9 @@ class WachbuchApi {
           }),
         ),
       );
-      return PinboardNote.fromJson(_decode(_requireModule(response, 'Pinnwand')));
+      return PinboardNote.fromJson(
+        _decode(_requireModule(response, 'Pinnwand')),
+      );
     }, maxAttempts: 1);
   }
 
@@ -375,7 +370,11 @@ class WachbuchApi {
       );
       final body = _decode(response);
       if (body.isEmpty) return Checklist(id: id, title: '', completed: true);
-      return Checklist.fromJson({...body, 'id': body['checklist'] ?? id, 'completed': true});
+      return Checklist.fromJson({
+        ...body,
+        'id': body['checklist'] ?? id,
+        'completed': true,
+      });
     }, maxAttempts: 1);
   }
 
@@ -450,8 +449,67 @@ class WachbuchApi {
         ),
       );
       final body = _decode(_requireModule(response, 'Mängel'));
-      return Defect.fromJson(body.isEmpty ? {'id': id, 'status': status} : body);
+      return Defect.fromJson(
+        body.isEmpty ? {'id': id, 'status': status} : body,
+      );
     });
+  }
+
+  /// GET /api/v1/defects/{id}/ — defect plus history and photo metadata.
+  Future<DefectDetail> defectDetail(int id) async {
+    final body = await _getJson(
+      '/api/v1/defects/$id/',
+      cacheKey: 'defect_$id',
+      moduleLabel: 'Mängel',
+    );
+    return DefectDetail.fromJson(body);
+  }
+
+  /// PATCH /api/v1/defects/{id}/ — update only the fields the contract allows
+  /// to change after creation: `description`, `asset_ref`, `priority`, `owner`
+  /// and `due_at`. `title` and `category` are fixed at creation and are never
+  /// sent. A call without at least one changeable field mirrors the server rule
+  /// (`422`) locally, before any request. Not auto-retried: every accepted
+  /// PATCH appends a defect event, so the request is not side-effect free.
+  ///
+  /// Set [clearDueAt] to remove an existing `due_at` (sends an explicit null).
+  Future<Defect> updateDefect(
+    int id, {
+    String? description,
+    String? assetRef,
+    String? priority,
+    String? owner,
+    DateTime? dueAt,
+    bool clearDueAt = false,
+  }) async {
+    final payload = <String, dynamic>{
+      'description': ?description,
+      'asset_ref': ?assetRef,
+      'priority': ?priority,
+      'owner': ?owner,
+      if (clearDueAt)
+        'due_at': null
+      else if (dueAt != null)
+        'due_at': dueAt.toUtc().toIso8601String(),
+    };
+    if (payload.isEmpty) {
+      throw ApiException(
+        422,
+        'PATCH /api/v1/defects/$id/ benötigt mindestens ein änderbares Feld '
+        '(description, asset_ref, priority, owner, due_at).',
+      );
+    }
+    return _withRetry(() async {
+      final response = await _send(
+        _client.patch(
+          _uri('/api/v1/defects/$id/'),
+          headers: _headers(),
+          body: jsonEncode(payload),
+        ),
+      );
+      final body = _decode(_requireModule(response, 'Mängel'));
+      return Defect.fromJson(body.isEmpty ? {'id': id} : body);
+    }, maxAttempts: 1);
   }
 
   Future<List<DefectAttachment>> defectAttachments(int defectId) async {
@@ -460,9 +518,9 @@ class WachbuchApi {
       cacheKey: 'defect_${defectId}_attachments',
       moduleLabel: 'Mängel',
     );
-    return _readList(body)
-        .map(DefectAttachment.fromJson)
-        .toList(growable: false);
+    return _readList(
+      body,
+    ).map(DefectAttachment.fromJson).toList(growable: false);
   }
 
   Future<DefectAttachment> uploadDefectAttachment(
@@ -511,9 +569,7 @@ class WachbuchApi {
       cacheKey: 'assets',
       moduleLabel: 'Geräte',
     );
-    return _readList(body)
-        .map(StationAsset.fromJson)
-        .toList(growable: false);
+    return _readList(body).map(StationAsset.fromJson).toList(growable: false);
   }
 
   Future<StationAsset> createAsset({
@@ -557,9 +613,7 @@ class WachbuchApi {
       cacheKey: 'inventory',
       moduleLabel: 'Inventar',
     );
-    return _readList(body)
-        .map(InventoryItem.fromJson)
-        .toList(growable: false);
+    return _readList(body).map(InventoryItem.fromJson).toList(growable: false);
   }
 
   Future<InventoryItem> createInventoryItem({
@@ -575,7 +629,9 @@ class WachbuchApi {
           body: jsonEncode({'id': id, 'label': label, 'kind': kind}),
         ),
       );
-      return InventoryItem.fromJson(_decode(_requireModule(response, 'Inventar')));
+      return InventoryItem.fromJson(
+        _decode(_requireModule(response, 'Inventar')),
+      );
     }, maxAttempts: 1);
   }
 
@@ -616,25 +672,45 @@ class WachbuchApi {
     return _readList(body).map(HandoverAck.fromJson).toList(growable: false);
   }
 
-  /// Idempotent per handover/user via the server uniqueness constraint.
-  Future<HandoverAck> acknowledgeHandover(int id) async {
+  /// POST /api/v1/handovers/{id}/ack/ — acknowledge the revision that was
+  /// actually read.
+  ///
+  /// Contract >= 1.4.0 requires a positive [version] bound to the handover
+  /// revision the user saw. The server answers `422` for a missing, zero,
+  /// negative or non-integer version and `409 conflict` when the handover
+  /// changed since it was read; the `409` is surfaced unchanged so the UI can
+  /// prompt a reload instead of silently acknowledging a newer revision.
+  ///
+  /// Never auto-retried: the acknowledgement is not side-effect free and a
+  /// retry could bind a revision the user did not read.
+  ///
+  /// `async` keeps the local fail-closed guard a *future* error, so callers
+  /// awaiting the result (or `expectLater`) observe it like any other API
+  /// failure instead of a synchronous throw.
+  Future<HandoverAck> acknowledgeHandover(
+    int id, {
+    required int version,
+  }) async {
+    if (version < 1) {
+      throw ApiException(
+        422,
+        'Quittierung erfordert eine positive Version der gelesenen Übergabe.',
+      );
+    }
     return _withRetry(() async {
       final response = await _send(
         _client.post(
           _uri('/api/v1/handovers/$id/ack/'),
           headers: _headers(),
-          body: jsonEncode(const <String, dynamic>{}),
+          body: jsonEncode(<String, dynamic>{'version': version}),
         ),
       );
       final body = _decode(_requireModule(response, 'Quittierung'));
-      if (body.isEmpty) {
-        return HandoverAck(handoverId: id, by: '', at: DateTime.now());
-      }
       return HandoverAck.fromJson({
         ...body,
         'handover_id': body['handover_id'] ?? id,
       });
-    });
+    }, maxAttempts: 1);
   }
 
   Future<WachalltagReport> reportStats() async {
@@ -682,7 +758,10 @@ class WachbuchApi {
 
   /// GET /api/v1/chat/keys/ — public keys of station members.
   Future<List<ChatMemberKey>> chatMemberKeys() async {
-    final body = await _getJson('/api/v1/chat/keys/', moduleLabel: 'Nachrichten');
+    final body = await _getJson(
+      '/api/v1/chat/keys/',
+      moduleLabel: 'Nachrichten',
+    );
     final members = body['members'];
     if (members is! List) return const [];
     return members
@@ -703,14 +782,18 @@ class WachbuchApi {
 
   /// GET /api/v1/chat/private/ — conversations plus colleague key directory.
   Future<PrivateHome> privateConversations() async {
-    final body = await _getJson('/api/v1/chat/private/', moduleLabel: 'Nachrichten');
+    final body = await _getJson(
+      '/api/v1/chat/private/',
+      moduleLabel: 'Nachrichten',
+    );
     final colleagues = (body['colleagues'] as List? ?? const [])
         .whereType<Map>()
         .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
         .toList(growable: false);
     return PrivateHome(
-      conversations:
-          _readList(body).map(ChatConversation.fromJson).toList(growable: false),
+      conversations: _readList(
+        body,
+      ).map(ChatConversation.fromJson).toList(growable: false),
       colleagues: colleagues,
     );
   }
@@ -732,8 +815,13 @@ class WachbuchApi {
 
   /// GET /api/v1/chat/private/{id}/ — thread with peer keys and messages.
   Future<PrivateThreadData> privateThread(int id) async {
-    final body = await _getJson('/api/v1/chat/private/$id/', moduleLabel: 'Nachrichten');
-    final other = body['other'] is Map ? Map<String, dynamic>.from(body['other']) : const {};
+    final body = await _getJson(
+      '/api/v1/chat/private/$id/',
+      moduleLabel: 'Nachrichten',
+    );
+    final other = body['other'] is Map
+        ? Map<String, dynamic>.from(body['other'])
+        : const {};
     final peerKeys = (body['peer_keys'] as List? ?? const [])
         .whereType<Map>()
         .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
@@ -742,7 +830,9 @@ class WachbuchApi {
       otherId: _readIntValue(other['id']),
       otherName: (other['name'] ?? '').toString(),
       peerKeys: peerKeys,
-      messages: _readList(body).map(ChatFeedItem.fromJson).toList(growable: false),
+      messages: _readList(
+        body,
+      ).map(ChatFeedItem.fromJson).toList(growable: false),
     );
   }
 
@@ -788,11 +878,19 @@ class WachbuchApi {
 
   /// GET /api/v1/post/{id}/ — one mail (marks read) with recipient status.
   Future<MailDetailData> mailDetail(int id) async {
-    final body = await _getJson('/api/v1/post/$id/', moduleLabel: 'Nachrichten');
+    final body = await _getJson(
+      '/api/v1/post/$id/',
+      moduleLabel: 'Nachrichten',
+    );
     final envelope = body['envelope'] is Map
         ? ChatFeedItem.fromJson(Map<String, dynamic>.from(body['envelope']))
         : const ChatFeedItem(
-            id: 0, authorId: null, authorName: '', isOwn: false, isEncrypted: true);
+            id: 0,
+            authorId: null,
+            authorName: '',
+            isOwn: false,
+            isEncrypted: true,
+          );
     final recipients = (body['recipients'] as List? ?? const [])
         .whereType<Map>()
         .map((m) => MailRecipientStatus.fromJson(Map<String, dynamic>.from(m)))
@@ -802,12 +900,20 @@ class WachbuchApi {
 
   /// GET /api/v1/chat/groups/ — group rooms the user belongs to.
   Future<List<ChatGroupSummary>> chatGroups() async {
-    final body = await _getJson('/api/v1/chat/groups/', moduleLabel: 'Nachrichten');
-    return _readList(body).map(ChatGroupSummary.fromJson).toList(growable: false);
+    final body = await _getJson(
+      '/api/v1/chat/groups/',
+      moduleLabel: 'Nachrichten',
+    );
+    return _readList(
+      body,
+    ).map(ChatGroupSummary.fromJson).toList(growable: false);
   }
 
   /// POST /api/v1/chat/groups/ — create a group with initial members.
-  Future<int> createChatGroup({required String name, required List<int> memberIds}) async {
+  Future<int> createChatGroup({
+    required String name,
+    required List<int> memberIds,
+  }) async {
     return _withRetry(() async {
       final response = await _send(
         _client.post(
@@ -823,7 +929,10 @@ class WachbuchApi {
 
   /// GET /api/v1/chat/groups/{id}/ — members (with keys) and messages.
   Future<GroupThreadData> groupThread(int id) async {
-    final body = await _getJson('/api/v1/chat/groups/$id/', moduleLabel: 'Nachrichten');
+    final body = await _getJson(
+      '/api/v1/chat/groups/$id/',
+      moduleLabel: 'Nachrichten',
+    );
     final members = (body['members'] as List? ?? const [])
         .whereType<Map>()
         .map((m) => ChatMemberKey.fromJson(Map<String, dynamic>.from(m)))
@@ -833,7 +942,9 @@ class WachbuchApi {
       name: (body['name'] ?? '').toString(),
       isManager: body['is_manager'] == true,
       members: members,
-      messages: _readList(body).map(ChatFeedItem.fromJson).toList(growable: false),
+      messages: _readList(
+        body,
+      ).map(ChatFeedItem.fromJson).toList(growable: false),
     );
   }
 
@@ -866,7 +977,11 @@ class WachbuchApi {
   Future<void> _postEnvelope(String path, Map<String, dynamic> payload) async {
     await _withRetry(() async {
       final response = await _send(
-        _client.post(_uri(path), headers: _headers(), body: jsonEncode(payload)),
+        _client.post(
+          _uri(path),
+          headers: _headers(),
+          body: jsonEncode(payload),
+        ),
       );
       _decode(_requireModule(response, 'Nachrichten'));
     }, maxAttempts: 1);

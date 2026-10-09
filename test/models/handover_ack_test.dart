@@ -41,5 +41,56 @@ void main() {
       final ack = HandoverAck.fromJson({'handover_id': 1, 'by': 'x'});
       expect(ack.at.isAfter(before.subtract(const Duration(seconds: 2))), isTrue);
     });
+
+    test('parses positive revision and fails closed on invalid values', () {
+      expect(
+        HandoverAck.fromJson(
+          {'handover_id': 1, 'by': 'a', 'version': 3},
+        ).version,
+        3,
+      );
+      expect(
+        HandoverAck.fromJson(
+          {'handover_id': 1, 'by': 'a', 'version': '4'},
+        ).version,
+        4,
+      );
+      // legacy / unknown revision
+      expect(HandoverAck.fromJson({'handover_id': 1, 'by': 'a'}).version,
+          isNull);
+      expect(
+        HandoverAck.fromJson(
+          {'handover_id': 1, 'by': 'a', 'version': null},
+        ).version,
+        isNull,
+      );
+      // invalid values must never be guessed as the current revision
+      for (final invalid in <Object>[0, -2, true, 'abc', 2.5]) {
+        expect(
+          HandoverAck.fromJson(
+            {'handover_id': 1, 'by': 'a', 'version': invalid},
+          ).version,
+          isNull,
+          reason: 'version $invalid must fail closed',
+        );
+      }
+    });
+
+    test('toJson emits version only when known', () {
+      final withVersion = HandoverAck(
+        handoverId: 1,
+        by: 'bob',
+        at: DateTime.utc(2026, 8, 9, 6),
+        version: 2,
+      ).toJson();
+      expect(withVersion['version'], 2);
+
+      final legacy = HandoverAck(
+        handoverId: 1,
+        by: 'bob',
+        at: DateTime.utc(2026, 8, 9, 6),
+      ).toJson();
+      expect(legacy.containsKey('version'), isFalse);
+    });
   });
 }

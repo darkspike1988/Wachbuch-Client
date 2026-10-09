@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import '../theme/design_tokens.dart';
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.status,
-    this.label,
-  });
+  const StatusChip({super.key, required this.status, this.label});
 
   final String status;
   final String? label;
 
   @override
   Widget build(BuildContext context) {
-    final accent = WachbuchTokens.statusColor(status);
+    final soft = WachbuchTokens.statusSoft(status);
+    final line = WachbuchTokens.statusLine(status);
     final foreground = Theme.of(context).colorScheme.onSurface;
     final locale = Localizations.localeOf(context).languageCode;
     final text = label ?? _defaultLabel(status, locale);
@@ -27,9 +24,9 @@ class StatusChip extends StatelessWidget {
           vertical: 6,
         ),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.12),
-          border: Border.all(color: accent.withValues(alpha: 0.65)),
-          borderRadius: BorderRadius.circular(WachbuchTokens.radiusMd),
+          color: soft,
+          border: Border.all(color: line),
+          borderRadius: BorderRadius.circular(WachbuchTokens.radiusSm),
         ),
         constraints: const BoxConstraints(minHeight: 36),
         child: Row(
@@ -38,7 +35,7 @@ class StatusChip extends StatelessWidget {
             Container(
               width: 8,
               height: 8,
-              decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: line, shape: BoxShape.circle),
             ),
             const SizedBox(width: WachbuchTokens.spaceSm),
             Text(

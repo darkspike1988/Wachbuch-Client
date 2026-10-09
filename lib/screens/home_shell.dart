@@ -72,10 +72,7 @@ class _HomeShellState extends State<HomeShell> {
 
   Future<void> _reload() async {
     final generation = ++_reloadGeneration;
-    await Future.wait([
-      _authState.reload(),
-      _handoverState.reload(),
-    ]);
+    await Future.wait([_authState.reload(), _handoverState.reload()]);
     if (!mounted || generation != _reloadGeneration) {
       return;
     }
@@ -95,7 +92,8 @@ class _HomeShellState extends State<HomeShell> {
       _handoverState.lastError?.statusCode == 0;
 
   bool get _isDemo =>
-      widget.api is DemoWachbuchApi || DemoService.isDemoUrl(widget.api.baseUrl);
+      widget.api is DemoWachbuchApi ||
+      DemoService.isDemoUrl(widget.api.baseUrl);
 
   String? _demoServiceLabel(AppLocalizations l10n) {
     final service = widget.api is DemoWachbuchApi
@@ -248,7 +246,11 @@ class _HomeShellState extends State<HomeShell> {
         return Scaffold(
           appBar: appBar,
           body: Column(
-            children: [demoBanner, offlineBanner, Expanded(child: pages)],
+            children: [
+              demoBanner,
+              offlineBanner,
+              Expanded(child: pages),
+            ],
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _tab,
@@ -584,13 +586,33 @@ class _ModuleTiles extends StatelessWidget {
   static const _moduleTiles = <_ModuleTileSpec>[
     _ModuleTileSpec(['calendar'], 'module-tile-calendar', Icons.event_outlined),
     _ModuleTileSpec(['coffee'], 'module-tile-coffee', Icons.coffee_outlined),
-    _ModuleTileSpec(['checklists'], 'module-tile-checklists', Icons.checklist_outlined),
-    _ModuleTileSpec(['defects'], 'module-tile-defects', Icons.report_problem_outlined),
-    _ModuleTileSpec(['assets', 'inventory'], 'module-tile-assets', Icons.directions_car_outlined),
-    _ModuleTileSpec(['reports'], 'module-tile-reports', Icons.insights_outlined),
+    _ModuleTileSpec(
+      ['checklists'],
+      'module-tile-checklists',
+      Icons.checklist_outlined,
+    ),
+    _ModuleTileSpec(
+      ['defects'],
+      'module-tile-defects',
+      Icons.report_problem_outlined,
+    ),
+    _ModuleTileSpec(
+      ['assets', 'inventory'],
+      'module-tile-assets',
+      Icons.directions_car_outlined,
+    ),
+    _ModuleTileSpec(
+      ['reports'],
+      'module-tile-reports',
+      Icons.insights_outlined,
+    ),
     _ModuleTileSpec(['chat'], 'module-tile-chat', Icons.forum_outlined),
     _ModuleTileSpec(['chat'], 'module-tile-groups', Icons.groups_outlined),
-    _ModuleTileSpec(['pinboard'], 'module-tile-pinboard', Icons.push_pin_outlined),
+    _ModuleTileSpec(
+      ['pinboard'],
+      'module-tile-pinboard',
+      Icons.push_pin_outlined,
+    ),
   ];
 
   @override
@@ -611,10 +633,7 @@ class _ModuleTiles extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(
-          icon: Icons.apps_outlined,
-          title: l.quickAccessTitle,
-        ),
+        _SectionTitle(icon: Icons.apps_outlined, title: l.quickAccessTitle),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -815,8 +834,8 @@ class _ModuleTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -1140,7 +1159,9 @@ class _HandoverCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title?.isNotEmpty == true ? title! : l.handoverFallback,
+                          title?.isNotEmpty == true
+                              ? title!
+                              : l.handoverFallback,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium,
@@ -1249,7 +1270,10 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
       final acks = await widget.api.handoverAcks(widget.handoverId);
       if (!mounted) return;
       setState(() {
-        _acks = acks;
+        // The GET snapshot can predate a successful POST whose response
+        // arrived first. Receipts are append-only: preserve locally confirmed
+        // receipts while retaining every historical row from the server.
+        _acks = [...acks, ..._acks.where((ack) => !acks.contains(ack))];
         _acksSupported = true;
       });
     } on ApiException catch (error) {
@@ -1265,17 +1289,22 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
     }
   }
 
-  Future<void> _acknowledge(AppLocalizations l) async {
+  Future<void> _acknowledge(AppLocalizations l, int version) async {
     setState(() {
       _acking = true;
       _ackError = null;
     });
     try {
-      final ack = await widget.api.acknowledgeHandover(widget.handoverId);
+      final ack = await widget.api.acknowledgeHandover(
+        widget.handoverId,
+        version: version,
+      );
       if (!mounted) return;
       setState(() {
         _acks = [
-          ..._acks.where((item) => item.by != ack.by),
+          ..._acks.where(
+            (item) => !(item.by == ack.by && item.version == ack.version),
+          ),
           ack,
         ];
         _acking = false;
@@ -1284,7 +1313,11 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
       if (!mounted) return;
       setState(() {
         _acking = false;
-        _ackError = error.message;
+        // 409 stale: the handover changed after it was read. Never fetch or
+        // acknowledge the current revision automatically — prompt a reload.
+        _ackError = error.statusCode == 409
+            ? l.handoverAckStale
+            : error.message;
       });
     } catch (_) {
       if (!mounted) return;
@@ -1317,14 +1350,14 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.defectCreateFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.defectCreateFailed)));
     } finally {
       if (mounted) setState(() => _creatingDefect = false);
     }
@@ -1366,13 +1399,20 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
           final author = rawAuthor is Map ? rawAuthor : null;
           final authorName = author?['display_name']?.toString();
           final details = item['details']?.toString().trim();
-          final version = item['version'];
-          final me = widget.currentUsername ??
+          final currentVersion = _readRevision(item['version']);
+          final me =
+              widget.currentUsername ??
               (widget.api is DemoWachbuchApi
                   ? (widget.api as DemoWachbuchApi).profile.username
                   : null);
+          // Only an acknowledgement by this user bound to the *current*
+          // revision counts as "by you". Older receipts (other revision) and
+          // legacy receipts without a revision (version == null) must not.
           final alreadyAcked =
-              me != null && _acks.any((ack) => ack.by == me);
+              me != null &&
+              currentVersion != null &&
+              _acks.any((ack) => ack.by == me && ack.version == currentVersion);
+          final versionUnknown = currentVersion == null;
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               24,
@@ -1428,46 +1468,50 @@ class _HandoverDetailSheetState extends State<_HandoverDetailSheet> {
                       _formatTimestamp(item['updated_at']),
                     ),
                   ),
-                if (version != null)
+                if (currentVersion != null)
                   _DetailRow(
                     icon: Icons.history,
-                    value: l.detailsVersion(version.toString()),
+                    value: l.detailsVersion(currentVersion.toString()),
                   ),
                 if (_acksSupported) ...[
                   const SizedBox(height: 16),
                   Text(
                     l.handoverAckListTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (_acks.isEmpty)
                     Text(
                       l.handoverAckEmpty,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     )
                   else
                     ..._acks.map(
                       (ack) => _DetailRow(
                         icon: Icons.verified_outlined,
-                        value:
-                            '${ack.by} · ${_formatTimestamp(ack.at.toIso8601String())}',
+                        value: ack.version == null
+                            ? '${ack.by} · ${_formatTimestamp(ack.at.toIso8601String())} · ${l.handoverAckLegacy}'
+                            : '${ack.by} · ${l.detailsVersion(ack.version!.toString())} · ${_formatTimestamp(ack.at.toIso8601String())}',
                       ),
                     ),
+                  if (versionUnknown) ...[
+                    const SizedBox(height: 8),
+                    ErrorBanner(message: l.handoverAckVersionUnknown),
+                  ],
                   if (_ackError != null) ...[
                     const SizedBox(height: 8),
                     ErrorBanner(message: _ackError!),
                   ],
                   const SizedBox(height: 12),
                   FilledButton.icon(
-                    onPressed: _acking || alreadyAcked
+                    key: const Key('handover-ack'),
+                    onPressed: _acking || alreadyAcked || versionUnknown
                         ? null
-                        : () => _acknowledge(l),
+                        : () => _acknowledge(l, currentVersion),
                     icon: _acking
                         ? const SizedBox(
                             width: 18,
@@ -1592,6 +1636,20 @@ String _formatTimestamp(Object? value) {
   String two(int number) => number.toString().padLeft(2, '0');
   return '${two(parsed.day)}.${two(parsed.month)}.${parsed.year}, '
       '${two(parsed.hour)}:${two(parsed.minute)} Uhr';
+}
+
+/// Reads a handover revision from a JSON value. Returns `null` when the value
+/// is missing or not a positive integer, so callers fail closed and never
+/// guess a default revision. See contract >= 1.4.0.
+int? _readRevision(Object? value) {
+  if (value is int) return value < 1 ? null : value;
+  if (value is double) {
+    if (value != value.roundToDouble()) return null;
+    final whole = value.toInt();
+    return whole < 1 ? null : whole;
+  }
+  final parsed = int.tryParse(value?.toString() ?? '');
+  return (parsed == null || parsed < 1) ? null : parsed;
 }
 
 class _AccountTab extends StatelessWidget {

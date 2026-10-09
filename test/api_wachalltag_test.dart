@@ -147,7 +147,7 @@ void main() {
       expect(back.isOut, isFalse);
     });
 
-    test('handover ack list and post', () async {
+    test('handover ack list and revision-bound post', () async {
       final client = MockClient((request) async {
         if (request.method == 'GET') {
           expect(request.url.path, '/api/v1/handovers/3/acks/');
@@ -164,20 +164,241 @@ void main() {
             200,
           );
         }
+        expect(request.method, 'POST');
         expect(request.url.path, '/api/v1/handovers/3/ack/');
+        // The acknowledgement must carry the exact revision that was read.
+        expect(jsonDecode(request.body), {'version': 7});
         return http.Response(
           jsonEncode({
             'handover_id': 3,
             'by': 'michael',
             'at': '2026-08-09T07:00:00Z',
+            'version': 7,
           }),
-          200,
+          201,
         );
       });
 
       final api = WachbuchApi(baseUrl: baseUrl, token: 't', client: client);
-      expect((await api.handoverAcks(3)).single.by, 'alice');
-      expect((await api.acknowledgeHandover(3)).by, 'michael');
+      final acks = await api.handoverAcks(3);
+      expect(acks.single.by, 'alice');
+      expect(acks.single.version, isNull); // legacy ack, revision unknown
+      final posted = await api.acknowledgeHandover(3, version: 7);
+      expect(posted.by, 'michael');
+      expect(posted.version, 7);
+    });
+
+    test('stale acknowledgement surfaces 409 conflict unchanged', () async {
+      var calls = 0;
+      final client = MockClient((request) async {
+        calls++;
+        expect(jsonDecode(request.body), {'version': 1});
+        return http.Response(
+          jsonEncode({
+            'ok': false,
+            'error': {
+              'code': 'conflict',
+              'message': 'Die Uebergabe wurde zwischenzeitlich geaendert.',
+              'correlation_id': 'corr-409',
+            },
+          }),
+          409,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final api = WachbuchApi(baseUrl: baseUrl, token: 't', client: client);
+      await expectLater(
+        api.acknowledgeHandover(3, version: 1),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 409)
+              .having((e) => e.code, 'code', 'conflict')
+              .having((e) => e.correlationId, 'correlationId', 'corr-409'),
+        ),
+      );
+      // A stale acknowledgement must never be replayed automatically.
+      expect(calls, 1);
+    });
+
+    test('non-positive acknowledgement version fails closed locally', () async {
+      var calls = 0;
+      final api = WachbuchApi(
+        baseUrl: baseUrl,
+        token: 't',
+        client: MockClient((_) async {
+          calls++;
+          return http.Response('{}', 200);
+        }),
+      );
+      await expectLater(
+        api.acknowledgeHandover(3, version: 0),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 422),
+        ),
+      );
+      expect(calls, 0);
+    });
+  });
+
+  group('WachbuchApi defect detail and PATCH (contract 1.3.1)', () {
+    test('GET defect detail parses events and attachment metadata', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.path, '/api/v1/defects/7/');
+        expect(request.headers['Authorization'], 'Token wb_test');
+        return http.Response(
+          jsonEncode({
+            'ok': true,
+            'id': 7,
+            'title': 'Tür defekt',
+            'status': 'in_progress',
+            'priority': 'important',
+            'category': 'facility',
+            'attachment_count': 1,
+            'events': [
+              {
+                'kind': 'status',
+                'from_status': 'open',
+                'to_status': 'in_progress',
+                'by': 'alice',
+                'at': '2026-08-09T06:00:00Z',
+              },
+              {
+                'kind': 'created',
+                'from_status': null,
+                'to_status': 'open',
+                'by': 'bob',
+                'at': '2026-08-08T06:00:00Z',
+              },
+            ],
+            'attachments': [
+              {
+                'id': 3,
+                'defect_id': 7,
+                'filename': 'tuer.jpg',
+                'content_type': 'image/jpeg',
+                'size': 2048,
+                'uploaded_by': 'alice',
+                'download_url': '/api/v1/attachments/3/',
+              },
+            ],
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final detail = await WachbuchApi(
+        baseUrl: baseUrl,
+        token: 'wb_test',
+        client: client,
+      ).defectDetail(7);
+
+      expect(detail.defect.id, 7);
+      expect(detail.defect.status, 'in_progress');
+      expect(detail.events.length, 2);
+      expect(detail.events.first.kind, 'status');
+      expect(detail.events.first.toStatus, 'in_progress');
+      expect(detail.events.last.fromStatus, isNull);
+      expect(detail.attachments.single.filename, 'tuer.jpg');
+    });
+
+    test('PATCH defect sends only changeable fields (no title/category)', () async {
+      late Map<String, dynamic> sent;
+      final client = MockClient((request) async {
+        expect(request.method, 'PATCH');
+        expect(request.url.path, '/api/v1/defects/7/');
+        expect(request.headers['Authorization'], 'Token wb_test');
+        sent = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'ok': true,
+            'id': 7,
+            'title': 'Tür defekt',
+            'status': 'open',
+            'priority': 'urgent',
+            'owner': 'alice',
+            'category': 'facility',
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final updated = await WachbuchApi(
+        baseUrl: baseUrl,
+        token: 'wb_test',
+        client: client,
+      ).updateDefect(7, priority: 'urgent', owner: 'alice', description: 'neu');
+
+      expect(sent.keys.toSet(), {'priority', 'owner', 'description'});
+      expect(sent.containsKey('title'), isFalse);
+      expect(sent.containsKey('category'), isFalse);
+      expect(updated.priority, 'urgent');
+    });
+
+    test('PATCH defect clears the due date with an explicit null', () async {
+      late Map<String, dynamic> sent;
+      final client = MockClient((request) async {
+        sent = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({'ok': true, 'id': 7, 'title': 'x'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      await WachbuchApi(
+        baseUrl: baseUrl,
+        token: 't',
+        client: client,
+      ).updateDefect(7, clearDueAt: true);
+
+      expect(sent.containsKey('due_at'), isTrue);
+      expect(sent['due_at'], isNull);
+    });
+
+    test('PATCH defect rejects an empty body locally with 422', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response('{}', 200);
+      });
+
+      await expectLater(
+        WachbuchApi(baseUrl: baseUrl, token: 't', client: client).updateDefect(7),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 422),
+        ),
+      );
+      expect(calls, 0);
+    });
+
+    test('PATCH defect surfaces a canonical server error unchanged', () async {
+      final client = MockClient((_) async => http.Response(
+            jsonEncode({
+              'ok': false,
+              'error': {
+                'code': 'validation_error',
+                'message': 'Keine aenderbaren Felder angegeben.',
+                'correlation_id': 'corr-9',
+              },
+            }),
+            422,
+            headers: {'content-type': 'application/json'},
+          ));
+
+      await expectLater(
+        WachbuchApi(baseUrl: baseUrl, token: 't', client: client)
+            .updateDefect(7, priority: 'urgent'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 422)
+              .having((e) => e.code, 'code', 'validation_error')
+              .having((e) => e.correlationId, 'correlationId', 'corr-9'),
+        ),
+      );
     });
   });
 }

@@ -453,14 +453,39 @@ class DemoWachbuchApi extends WachbuchApi {
   }
 
   @override
-  Future<HandoverAck> acknowledgeHandover(int id) async {
-    final exists = profile.handovers.any((entry) => entry['id'] == id);
-    if (!exists) throw ApiException(404, 'Übergabe nicht gefunden.');
+  Future<HandoverAck> acknowledgeHandover(int id, {required int version}) async {
+    Map<String, dynamic>? entry;
+    for (final item in profile.handovers) {
+      if (item['id'] == id) {
+        entry = item;
+        break;
+      }
+    }
+    if (entry == null) throw ApiException(404, 'Übergabe nicht gefunden.');
+    if (version < 1) {
+      throw ApiException(422, 'version muss eine positive ganze Zahl sein.');
+    }
+    // Revision-bound like the real server: a stale revision is rejected with
+    // 409 conflict and never acknowledged.
+    if (_readRevision(entry['version']) != version) {
+      throw ApiException(
+        409,
+        'Die Übergabe wurde zwischenzeitlich geändert.',
+        code: 'conflict',
+      );
+    }
     final by = profile.username;
     final current = _acks.putIfAbsent(id, () => <HandoverAck>[]);
-    final existing = current.where((ack) => ack.by == by);
+    final existing = current.where(
+      (ack) => ack.by == by && ack.version == version,
+    );
     if (existing.isNotEmpty) return existing.first;
-    final ack = HandoverAck(handoverId: id, by: by, at: DateTime.now());
+    final ack = HandoverAck(
+      handoverId: id,
+      by: by,
+      at: DateTime.now(),
+      version: version,
+    );
     current.add(ack);
     return ack;
   }
@@ -489,7 +514,9 @@ class DemoWachbuchApi extends WachbuchApi {
       unacknowledgedActiveHandovers: profile.handovers
           .where((h) => h['status'] != 'done')
           .where((h) => !(_acks[h['id']] ?? const <HandoverAck>[])
-              .any((ack) => ack.by == profile.username))
+              .any((ack) =>
+                  ack.by == profile.username &&
+                  ack.version == _readRevision(h['version'])))
           .length,
       oldestOpenDays: 0,
       defectsByOwner: owners.entries
@@ -517,4 +544,17 @@ class DemoWachbuchApi extends WachbuchApi {
   void close() {
     // Noop client — nothing to close.
   }
+}
+
+/// Parses a nullable positive handover revision, returning `null` for anything
+/// that is not a positive integer (fail closed, never guess a revision).
+int? _readRevision(Object? value) {
+  if (value is int) return value < 1 ? null : value;
+  if (value is double) {
+    if (value != value.roundToDouble()) return null;
+    final whole = value.toInt();
+    return whole < 1 ? null : whole;
+  }
+  final parsed = int.tryParse(value?.toString() ?? '');
+  return (parsed == null || parsed < 1) ? null : parsed;
 }
