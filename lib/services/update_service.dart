@@ -178,13 +178,18 @@ class UpdateService {
     return false;
   }
 
-  /// Open the download URL in a browser
+  /// Open the download URL in a browser.
+  /// Only HTTPS URLs are accepted; the server controls the URL and must not
+  /// be able to trigger arbitrary app schemes or plain-HTTP downloads.
   Future<bool> openDownloadUrl(UpdateInfo updateInfo) async {
-    if (updateInfo.downloadUrl != null && updateInfo.downloadUrl!.isNotEmpty) {
-      final uri = Uri.parse(updateInfo.downloadUrl!);
-      if (await canLaunchUrl(uri)) {
-        return await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+    final raw = updateInfo.downloadUrl;
+    if (raw == null || raw.isEmpty) return false;
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !uri.hasScheme || uri.scheme != 'https') {
+      return false;
+    }
+    if (await canLaunchUrl(uri)) {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
     return false;
   }
