@@ -281,3 +281,25 @@ Uint8List _unwrapKey(Map<String, dynamic> wrap, Map<String, dynamic> privateJwk)
   }
   return _gcmDecrypt(kek, _b64uDecode(parts[0]), _b64uDecode(parts[1]));
 }
+
+/// Deterministic fingerprint of an EC P-256 public key.
+///
+/// SHA-256 over the canonical form `crv|x|y` (base64url values as stored),
+/// hex-encoded and grouped into 8 blocks of 8 hex characters. Identical to
+/// the server-side fingerprint (core/messaging.py key_fingerprint) so
+/// colleagues can compare keys visually or via QR.
+String? keyFingerprint(Map<String, dynamic>? publicJwk) {
+  if (publicJwk == null) return null;
+  final crv = publicJwk['crv']?.toString() ?? '';
+  final x = publicJwk['x']?.toString() ?? '';
+  final y = publicJwk['y']?.toString() ?? '';
+  if (x.isEmpty || y.isEmpty) return null;
+  final canonical = utf8.encode('$crv|$x|$y');
+  final digest = sha256.convert(canonical);
+  final hex = digest.toString();
+  final blocks = <String>[];
+  for (var i = 0; i < 32; i += 8) {
+    blocks.add(hex.substring(i, i + 8));
+  }
+  return blocks.join(' ');
+}

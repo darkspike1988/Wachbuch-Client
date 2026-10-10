@@ -820,4 +820,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String updateVersionEntry(String version) {
     return 'Version $version';
   }
+  @override
+  String get keyVerifyTitle => 'Schlüssel verifizieren';
+  @override
+  String get keyVerifyExplanation => 'Vergleiche den Fingerprint deines Schlüssels mit dem deiner Kolleginnen und Kollegen – persönlich oder per QR-Scan. Stimmen sie überein, ist der Schlüssel echt.';
+  @override
+  String get keyVerifyOwnKey => 'Dein Schlüssel';
+  @override
+  String get keyVerifyOwnTag => '(du)';
+  @override
+  String get keyVerifyVerifiedTag => 'verifiziert';
+  @override
+  String get keyVerifyScanAction => 'Per Scan verifizieren';
+  @override
+  String get keyVerifyScanTitle => 'Fingerprint scannen';
+  @override
+  String keyVerifyMatch(String name) {
+    return 'Fingerprint stimmt mit $name überein.';
+  }
+  @override
+  String get keyVerifyNoMatch => 'Kein Mitglied mit diesem Fingerprint gefunden.';
+  @override
+  String get keyVerifyCopied => 'Fingerprint kopiert.';
 }

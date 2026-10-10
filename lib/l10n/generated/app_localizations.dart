@@ -1645,6 +1645,66 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Version {version}'**
   String updateVersionEntry(String version);
+
+  /// No description provided for @keyVerifyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schlüssel verifizieren'**
+  String get keyVerifyTitle;
+
+  /// No description provided for @keyVerifyExplanation.
+  ///
+  /// In de, this message translates to:
+  /// **'Vergleiche den Fingerprint deines Schlüssels mit dem deiner Kolleginnen und Kollegen – persönlich oder per QR-Scan. Stimmen sie überein, ist der Schlüssel echt.'**
+  String get keyVerifyExplanation;
+
+  /// No description provided for @keyVerifyOwnKey.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Schlüssel'**
+  String get keyVerifyOwnKey;
+
+  /// No description provided for @keyVerifyOwnTag.
+  ///
+  /// In de, this message translates to:
+  /// **'(du)'**
+  String get keyVerifyOwnTag;
+
+  /// No description provided for @keyVerifyVerifiedTag.
+  ///
+  /// In de, this message translates to:
+  /// **'verifiziert'**
+  String get keyVerifyVerifiedTag;
+
+  /// No description provided for @keyVerifyScanAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Per Scan verifizieren'**
+  String get keyVerifyScanAction;
+
+  /// No description provided for @keyVerifyScanTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fingerprint scannen'**
+  String get keyVerifyScanTitle;
+
+  /// No description provided for @keyVerifyMatch.
+  ///
+  /// In de, this message translates to:
+  /// **'Fingerprint stimmt mit {name} überein.'**
+  String keyVerifyMatch(String name);
+
+  /// No description provided for @keyVerifyNoMatch.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Mitglied mit diesem Fingerprint gefunden.'**
+  String get keyVerifyNoMatch;
+
+  /// No description provided for @keyVerifyCopied.
+  ///
+  /// In de, this message translates to:
+  /// **'Fingerprint kopiert.'**
+  String get keyVerifyCopied;
 }
 
 class _AppLocalizationsDelegate

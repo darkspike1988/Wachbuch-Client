@@ -158,5 +158,20 @@ void main() {
       E2ee.decryptEnvelope(envelope, Map<String, dynamic>.from(_recipientPrivateJwk)),
       message,
     );
+  
+  test('keyFingerprint matches server algorithm (R-020 interop)', () {
+    // Reference vector computed with the server implementation
+    // core/messaging.py key_fingerprint over the canonical form crv|x|y.
+    const jwk = {
+      'kty': 'EC',
+      'crv': 'P-256',
+      'x': 'AZQtv9vAQ-cNiNrOIXNMnoltPWutBNOBKBaT-vVGU1M',
+      'y': 'X-eE4z_DhcDRcTARZ7-_DM0KtrG4dnc3M9lFEJAJFa0',
+    };
+    const expected = '9ec5edaf 05c3d6e7 04c48669 4fada691';
+    expect(keyFingerprint(jwk), expected);
+    expect(keyFingerprint(null), isNull);
+    expect(keyFingerprint({'kty': 'EC', 'crv': 'P-256'}), isNull);
   });
+});
 }

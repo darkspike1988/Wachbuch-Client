@@ -278,5 +278,15 @@
   "updateClose": "Close",
   "updateDownload": "Download update",
   "updateNow": "Update now",
-  "updateVersionEntry": "Version {version}"
+  "updateVersionEntry": "Version {version}",
+  "keyVerifyTitle": "Verify keys",
+  "keyVerifyExplanation": "Compare your key fingerprint with your colleagues' \u2014 in person or by scanning a QR code. Matching fingerprints mean the key is genuine.",
+  "keyVerifyOwnKey": "Your key",
+  "keyVerifyOwnTag": "(you)",
+  "keyVerifyVerifiedTag": "verified",
+  "keyVerifyScanAction": "Verify by scan",
+  "keyVerifyScanTitle": "Scan fingerprint",
+  "keyVerifyMatch": "Fingerprint matches {name}.",
+  "keyVerifyNoMatch": "No member with this fingerprint found.",
+  "keyVerifyCopied": "Fingerprint copied."
 }

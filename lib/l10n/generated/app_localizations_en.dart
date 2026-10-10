@@ -817,4 +817,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String updateVersionEntry(String version) {
     return 'Version $version';
   }
+  @override
+  String get keyVerifyTitle => 'Verify keys';
+  @override
+  String get keyVerifyExplanation => "Compare your key fingerprint with your colleagues' — in person or by scanning a QR code. Matching fingerprints mean the key is genuine.";
+  @override
+  String get keyVerifyOwnKey => 'Your key';
+  @override
+  String get keyVerifyOwnTag => '(you)';
+  @override
+  String get keyVerifyVerifiedTag => 'verified';
+  @override
+  String get keyVerifyScanAction => 'Verify by scan';
+  @override
+  String get keyVerifyScanTitle => 'Scan fingerprint';
+  @override
+  String keyVerifyMatch(String name) {
+    return 'Fingerprint matches $name.';
+  }
+  @override
+  String get keyVerifyNoMatch => 'No member with this fingerprint found.';
+  @override
+  String get keyVerifyCopied => 'Fingerprint copied.';
 }
