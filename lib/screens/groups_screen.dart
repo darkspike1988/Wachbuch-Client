@@ -84,7 +84,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               isScrollControlled: true,
-              builder: (_) => KeyVerificationSheet(api: widget.api),
+              builder: (_) => KeyVerificationSheet(
+                api: widget.api,
+                session: widget.session,
+              ),
             ),
             tooltip: l.keyVerifyTitle,
             icon: const Icon(Icons.verified_user_outlined),

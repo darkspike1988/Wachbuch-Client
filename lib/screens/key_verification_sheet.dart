@@ -6,19 +6,40 @@ import 'package:wachbuch_mobile/api/client.dart';
 import 'package:wachbuch_mobile/crypto/e2ee.dart' as e2ee;
 import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
 import 'package:wachbuch_mobile/models/chat.dart';
+import 'package:wachbuch_mobile/state/crypto_session.dart';
 import 'package:wachbuch_mobile/state/verified_keys_store.dart';
 
 /// Key verification sheet (R-020): colleagues compare E2EE key fingerprints.
 ///
-/// Shows the own fingerprint as QR code (long-press to copy) and the station
-/// members' fingerprints. Verified fingerprints are persisted per server
-/// (VerifiedKeysStore); a changed fingerprint of a previously verified
-/// colleague triggers a key-change warning. "Verify by scan" opens the
-/// camera and matches a scanned fingerprint against the member list.
+/// The **own** fingerprint is always derived on-device from the unlocked
+/// private scalar ([e2ee.ownFingerprintFromPrivate]) as the public point
+/// `Q = d*G`; the server-reported own key/fingerprint is never trusted and can
+/// never be substituted. A **colleague** fingerprint is only ever computed from
+/// the server-supplied public JWK ([e2ee.validatedKeyFingerprint]); invalid or
+/// off-curve keys are dropped (fail closed). If a server-reported member
+/// fingerprint disagrees with the locally computed one, a tampering warning is
+/// shown and the server value is never displayed or persisted.
+///
+/// Verified fingerprints are persisted per **(account, server, colleague)** in
+/// [VerifiedKeysStore]. The account identity is resolved from the authenticated
+/// user (`/me/` -> `user.id`/`username`) exactly once and captured immutably for
+/// the lifetime of the sheet, so a logout/account switch cannot redirect a write
+/// into another account's namespace.
 class KeyVerificationSheet extends StatefulWidget {
-  const KeyVerificationSheet({super.key, required this.api});
+  KeyVerificationSheet({
+    super.key,
+    required this.api,
+    CryptoSession? session,
+    this.accountKey,
+  }) : session = session ?? CryptoSession.instance;
 
   final WachbuchApi api;
+  final CryptoSession session;
+
+  /// Immutable account identity supplied by the caller. When `null`, the sheet
+  /// resolves it from `api.me()` once. If neither yields a value the sheet fails
+  /// closed: it shows no stored state and refuses to persist verifications.
+  final String? accountKey;
 
   @override
   State<KeyVerificationSheet> createState() => _KeyVerificationSheetState();
@@ -27,59 +48,183 @@ class KeyVerificationSheet extends StatefulWidget {
 class _KeyVerificationSheetState extends State<KeyVerificationSheet> {
   bool _loading = true;
   String? _error;
-  String? _ownFingerprint;
   List<ChatMemberKey> _members = const [];
-  final VerifiedKeysStore _store = VerifiedKeysStore();
+
+  /// Locally validated fingerprint per member (userId -> fingerprint). Members
+  /// whose server key is missing/invalid are absent (hidden, fail closed).
+  final Map<int, String> _fingerprints = {};
+
+  /// Members whose server-reported fingerprint disagrees with the computed one.
+  final Set<int> _serverMismatch = {};
+
+  /// The server reported an own key/fingerprint that disagrees with the one
+  /// derived from the local private scalar (diagnostic only; never trusted).
+  bool _ownMismatch = false;
+
+  /// Stored (verified) fingerprint per member (userId -> fingerprint).
   final Map<int, String> _verified = {};
-  final Map<int, String> _changed = {};
+
+  /// Members whose stored fingerprint no longer matches the current one.
+  final Set<int> _changed = {};
+
   bool _showOwnQr = false;
+
+  /// Captured account identity (immutable once resolved).
+  String? _accountKey;
+  VerifiedKeysStore? _store;
+  int _loadVersion = 0;
 
   @override
   void initState() {
     super.initState();
+    _accountKey = widget.accountKey;
+    widget.session.addListener(_sessionChanged);
     _load();
   }
 
+  void _sessionChanged() {
+    if (mounted) setState(() => _showOwnQr = false);
+  }
+
+  @override
+  void dispose() {
+    widget.session.removeListener(_sessionChanged);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(KeyVerificationSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.session != widget.session) {
+      oldWidget.session.removeListener(_sessionChanged);
+      widget.session.addListener(_sessionChanged);
+    }
+    if (oldWidget.api != widget.api ||
+        oldWidget.session != widget.session ||
+        oldWidget.accountKey != widget.accountKey) {
+      _accountKey = widget.accountKey;
+      _store = null;
+      _showOwnQr = false;
+      _members = const [];
+      _fingerprints.clear();
+      _verified.clear();
+      _changed.clear();
+      _serverMismatch.clear();
+      _ownMismatch = false;
+      _load();
+    }
+  }
+
+  String? get _ownFingerprint =>
+      e2ee.ownFingerprintFromPrivate(widget.session.privateJwk);
+
+  Future<String?> _resolveAccountKey() async {
+    final provided = widget.accountKey;
+    if (provided != null && provided.isNotEmpty) return provided;
+    try {
+      final me = await widget.api.me();
+      final user = me['user'];
+      if (user is Map) {
+        final id = user['id'];
+        if (id != null && id.toString().isNotEmpty) return id.toString();
+        final name = user['username']?.toString();
+        if (name != null && name.isNotEmpty) return name;
+      }
+      final top = me['username']?.toString();
+      if (top != null && top.isNotEmpty) return top;
+    } catch (_) {
+      // Fail closed: no account identity -> no reads or writes.
+    }
+    return null;
+  }
+
   Future<void> _load() async {
+    final version = ++_loadVersion;
+    final api = widget.api;
+    final session = widget.session;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final identity = await widget.api.chatIdentity();
-      final members = await widget.api.chatMemberKeys();
-      final jwk = identity['public_jwk'];
-      final own = identity['fingerprint'] is String &&
-              (identity['fingerprint'] as String).isNotEmpty
-          ? identity['fingerprint'] as String
-          : e2ee.keyFingerprint(
-              jwk is Map ? Map<String, dynamic>.from(jwk) : null,
+      final accountKey = _accountKey ?? await _resolveAccountKey();
+      if (!mounted || version != _loadVersion) return;
+      _accountKey = accountKey;
+      final store = accountKey == null
+          ? null
+          : VerifiedKeysStore(accountKey: accountKey);
+      _store = store;
+      final members = await api.chatMemberKeys();
+      final stored = store == null
+          ? <String, String>{}
+          : await store.allFor(api.baseUrl);
+
+      // The server-reported own key is only ever used as a diagnostic; the
+      // displayed/QR own fingerprint is derived from the local private scalar.
+      String? serverOwnFingerprint;
+      try {
+        final identity = await api.chatIdentity();
+        final reported = identity['fingerprint'];
+        if (reported is String && reported.isNotEmpty) {
+          serverOwnFingerprint = reported;
+        } else {
+          final jwk = identity['public_jwk'];
+          if (jwk is Map) {
+            serverOwnFingerprint = e2ee.keyFingerprint(
+              Map<String, dynamic>.from(jwk),
             );
-      final stored = await _store.allFor(widget.api.baseUrl);
-      if (!mounted) return;
+          }
+        }
+      } catch (_) {
+        // Ignore: the own key is derived locally regardless of the server.
+      }
+      final own = e2ee.ownFingerprintFromPrivate(session.privateJwk);
+      final ownMismatch =
+          own != null &&
+          serverOwnFingerprint != null &&
+          serverOwnFingerprint != own;
+      if (!mounted || version != _loadVersion) return;
+
+      final fingerprints = <int, String>{};
+      final mismatch = <int>{};
       final verified = <int, String>{};
-      final changed = <int, String>{};
+      final changed = <int>{};
       for (final member in members) {
-        final fp = member.fingerprint;
-        if (fp == null) continue;
+        final computed = e2ee.validatedKeyFingerprint(member.publicJwk);
+        if (computed == null) continue; // invalid server key -> hidden
+        fingerprints[member.userId] = computed;
+        final reported = member.fingerprint;
+        if (reported != null && reported.isNotEmpty && reported != computed) {
+          mismatch.add(member.userId);
+        }
         final previous = stored[member.userId.toString()];
         if (previous != null) {
-          if (previous == fp) {
-            verified[member.userId] = fp;
+          if (previous == computed) {
+            verified[member.userId] = computed;
           } else {
-            changed[member.userId] = fp;
+            changed.add(member.userId);
           }
         }
       }
       setState(() {
-        _ownFingerprint = own;
         _members = members;
-        _verified.addAll(verified);
-        _changed.addAll(changed);
+        _fingerprints
+          ..clear()
+          ..addAll(fingerprints);
+        _serverMismatch
+          ..clear()
+          ..addAll(mismatch);
+        _ownMismatch = ownMismatch;
+        _verified
+          ..clear()
+          ..addAll(verified);
+        _changed
+          ..clear()
+          ..addAll(changed);
         _loading = false;
       });
     } on ApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted || version != _loadVersion) return;
       setState(() {
         _error = error.message;
         _loading = false;
@@ -88,6 +233,7 @@ class _KeyVerificationSheetState extends State<KeyVerificationSheet> {
   }
 
   Future<void> _verifyByScan() async {
+    final version = _loadVersion;
     final l = AppLocalizations.of(context)!;
     final scanned = await showDialog<String>(
       context: context,
@@ -119,33 +265,44 @@ class _KeyVerificationSheetState extends State<KeyVerificationSheet> {
         ),
       ),
     );
-    if (scanned == null || scanned.isEmpty || !mounted) return;
+    if (scanned == null ||
+        scanned.isEmpty ||
+        !mounted ||
+        version != _loadVersion) {
+      return;
+    }
     final normalized = scanned.replaceAll(RegExp(r'\s+'), '').toLowerCase();
-    final match = _members.where((m) {
-      final fp = m.fingerprint;
-      return fp != null &&
-          fp.replaceAll(RegExp(r'\s+'), '').toLowerCase() == normalized;
-    }).toList(growable: false);
-    final message = match.isEmpty
+    final match = _members
+        .where((m) {
+          final fp = _fingerprints[m.userId];
+          return fp != null &&
+              fp.replaceAll(RegExp(r'\s+'), '').toLowerCase() == normalized;
+        })
+        .toList(growable: false);
+    final message = match.length != 1
         ? l.keyVerifyNoMatch
-        : l.keyVerifyMatch(match.first.label);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-    if (match.isNotEmpty) {
-      await _confirmVerified(match.first);
+        : l.keyVerifyMatch(match.single.label);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+    if (match.length == 1) {
+      await _confirmVerified(match.single);
     }
   }
 
   Future<void> _confirmVerified(ChatMemberKey member) async {
-    final changed = await _store.markVerified(
+    final version = _loadVersion;
+    final fingerprint = _fingerprints[member.userId];
+    final store = _store;
+    if (fingerprint == null || store == null) return;
+    final changed = await store.markVerified(
       widget.api.baseUrl,
       member.userId,
-      member.fingerprint!,
+      fingerprint,
     );
-    if (!mounted) return;
+    if (!mounted || version != _loadVersion) return;
     setState(() {
-      _verified[member.userId] = member.fingerprint!;
+      _verified[member.userId] = fingerprint;
       _changed.remove(member.userId);
     });
     final l = AppLocalizations.of(context)!;
@@ -157,8 +314,11 @@ class _KeyVerificationSheetState extends State<KeyVerificationSheet> {
   }
 
   Future<void> _revoke(ChatMemberKey member) async {
-    await _store.remove(widget.api.baseUrl, member.userId);
-    if (!mounted) return;
+    final version = _loadVersion;
+    final store = _store;
+    if (store == null) return;
+    await store.remove(widget.api.baseUrl, member.userId);
+    if (!mounted || version != _loadVersion) return;
     setState(() => _verified.remove(member.userId));
   }
 
@@ -166,109 +326,144 @@ class _KeyVerificationSheetState extends State<KeyVerificationSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final own = _ownFingerprint;
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  l.keyVerifyTitle,
-                  style: theme.textTheme.titleLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l.keyVerifyTitle,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _verifyByScan,
+                    tooltip: l.keyVerifyScanAction,
+                    icon: const Icon(Icons.qr_code_scanner),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l.keyVerifyExplanation,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              IconButton(
-                onPressed: _verifyByScan,
-                tooltip: l.keyVerifyScanAction,
-                icon: const Icon(Icons.qr_code_scanner),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l.keyVerifyExplanation,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_error != null)
-            Text(_error!, style: TextStyle(color: theme.colorScheme.error))
-          else ...[
-            if (_changed.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: theme.colorScheme.onErrorContainer),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        l.keyVerifyChangedWarning(_changed.length),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onErrorContainer,
+              const SizedBox(height: 12),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                Text(_error!, style: TextStyle(color: theme.colorScheme.error))
+              else ...[
+                if (_changed.isNotEmpty)
+                  _Banner(
+                    color: theme.colorScheme.errorContainer,
+                    onColor: theme.colorScheme.onErrorContainer,
+                    icon: Icons.warning_amber_rounded,
+                    text: l.keyVerifyChangedWarning(_changed.length),
+                  ),
+                if (_serverMismatch.isNotEmpty || _ownMismatch)
+                  _Banner(
+                    color: theme.colorScheme.errorContainer,
+                    onColor: theme.colorScheme.onErrorContainer,
+                    icon: Icons.gpp_maybe_outlined,
+                    text: l.keyVerifyServerMismatch(
+                      _serverMismatch.length + (_ownMismatch ? 1 : 0),
+                    ),
+                  ),
+                if (own == null)
+                  // Locked session: no own key/QR, point at the unlock flow.
+                  Text(l.chatUnlockHint, style: theme.textTheme.bodyMedium)
+                else ...[
+                  _FingerprintCard(
+                    label: l.keyVerifyOwnKey,
+                    fingerprint: own,
+                    own: true,
+                    verified: true,
+                    onToggleQr: () => setState(() => _showOwnQr = !_showOwnQr),
+                  ),
+                  if (_showOwnQr)
+                    Center(
+                      child: Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(top: 8),
+                        child: QrImageView(
+                          data: own,
+                          semanticsLabel: own,
+                          version: QrVersions.auto,
+                          size: 180,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            if (_ownFingerprint != null)
-              _FingerprintCard(
-                label: l.keyVerifyOwnKey,
-                fingerprint: _ownFingerprint!,
-                own: true,
-                verified: true,
-                onToggleQr: () =>
-                    setState(() => _showOwnQr = !_showOwnQr),
-              ),
-            if (_showOwnQr && _ownFingerprint != null)
-              Center(
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(top: 8),
-                  child: QrImageView(
-                    data: _ownFingerprint!,
-                    version: QrVersions.auto,
-                    size: 180,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final member in _members)
-                    if (member.fingerprint != null)
-                      _FingerprintCard(
-                        label: member.label,
-                        fingerprint: member.fingerprint!,
-                        own: false,
-                        verified: _verified.containsKey(member.userId),
-                        changed: _changed.containsKey(member.userId),
-                        onVerify: () => _confirmVerified(member),
-                        onRevoke: () => _revoke(member),
-                      ),
                 ],
-              ),
+                const SizedBox(height: 8),
+                for (final member in _members)
+                  if (_fingerprints.containsKey(member.userId))
+                    _FingerprintCard(
+                      label: member.label,
+                      fingerprint: _fingerprints[member.userId]!,
+                      own: false,
+                      verified: _verified.containsKey(member.userId),
+                      changed: _changed.contains(member.userId),
+                      onVerify: () => _confirmVerified(member),
+                      onRevoke: () => _revoke(member),
+                    ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Banner extends StatelessWidget {
+  const _Banner({
+    required this.color,
+    required this.onColor,
+    required this.icon,
+    required this.text,
+  });
+
+  final Color color;
+  final Color onColor;
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: onColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: onColor),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -306,9 +501,9 @@ class _FingerprintCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onLongPress: () {
           Clipboard.setData(ClipboardData(text: fingerprint));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l.keyVerifyCopied)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.keyVerifyCopied)));
         },
         child: Card(
           margin: EdgeInsets.zero,
@@ -320,13 +515,13 @@ class _FingerprintCard extends StatelessWidget {
                   verified
                       ? Icons.verified_outlined
                       : changed
-                          ? Icons.warning_amber_rounded
-                          : Icons.key_outlined,
+                      ? Icons.warning_amber_rounded
+                      : Icons.key_outlined,
                   color: verified
                       ? theme.colorScheme.primary
                       : changed
-                          ? theme.colorScheme.error
-                          : null,
+                      ? theme.colorScheme.error
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

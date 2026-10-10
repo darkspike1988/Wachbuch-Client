@@ -208,8 +208,13 @@ class ForcedUpdateDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
+    // A forced update may only block the user while there is actually
+    // something to act on. Without a valid HTTPS download URL the dialog would
+    // be a dead end (no button, no way to dismiss), so it must remain
+    // dismissible. We never invent a fallback URL.
+    final hasAction = _hasValidDownloadUrl;
     return PopScope(
-      canPop: false,
+      canPop: !hasAction,
       child: AlertDialog(
         title: Row(
           children: [
@@ -266,6 +271,13 @@ class ForcedUpdateDialog extends StatelessWidget {
                 foregroundColor: theme.colorScheme.onPrimary,
               ),
               child: Text(l.updateNow),
+            )
+          else
+            // No usable download target: offer an explicit way out instead of
+            // trapping the user in a blocking dialog.
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l.updateClose),
             ),
         ],
       ),

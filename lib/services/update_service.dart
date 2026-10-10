@@ -118,18 +118,12 @@ class UpdateService {
       final currentVersion = packageInfo.version;
       final platform = _getPlatform();
 
-      // Check if we should check for updates (rate limiting)
+      // Rate limiting: at most one network check per interval.
       final prefs = await SharedPreferences.getInstance();
       final lastCheck = prefs.getString(_lastUpdateCheckKey);
-
       if (lastCheck != null) {
         final lastCheckDate = DateTime.parse(lastCheck);
         if (DateTime.now().difference(lastCheckDate) < _updateCheckInterval) {
-          // Check if user ignored this version
-          final ignoredVersion = prefs.getString(_ignoredVersionKey);
-          if (ignoredVersion == currentVersion) {
-            return null; // User ignored this version
-          }
           return null; // Too soon to check again
         }
       }
@@ -143,13 +137,23 @@ class UpdateService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        
+
         if (data['ok'] as bool? ?? false) {
           final updateInfo = UpdateInfo.fromJson(data);
-          
+
           // Save last check time
           await prefs.setString(_lastUpdateCheckKey, DateTime.now().toIso8601String());
-          
+
+          // Honour a previously ignored version. `ignoreUpdate()` stores the
+          // *latest* (offered) version, so the comparison must be against the
+          // version the server just reported — not the installed version.
+          final ignoredVersion = prefs.getString(_ignoredVersionKey);
+          if (ignoredVersion != null &&
+              ignoredVersion.isNotEmpty &&
+              ignoredVersion == updateInfo.latestVersion) {
+            return null; // User ignored this version
+          }
+
           return updateInfo;
         }
       }

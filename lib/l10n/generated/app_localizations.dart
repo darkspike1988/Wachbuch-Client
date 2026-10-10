@@ -1578,19 +1578,19 @@ abstract class AppLocalizations {
   ///
   /// In de, this message translates to:
   /// **'Aktuelle Version: {version}'**
-  String updateCurrentVersion(String version);
+  String updateCurrentVersion(Object version);
 
   /// No description provided for @updateNewVersion.
   ///
   /// In de, this message translates to:
   /// **'Neue Version: {version}'**
-  String updateNewVersion(String version);
+  String updateNewVersion(Object version);
 
   /// No description provided for @updateReleasedAt.
   ///
   /// In de, this message translates to:
   /// **'Veröffentlicht am: {date}'**
-  String updateReleasedAt(String date);
+  String updateReleasedAt(Object date);
 
   /// No description provided for @updateWhatsNew.
   ///
@@ -1614,7 +1614,7 @@ abstract class AppLocalizations {
   ///
   /// In de, this message translates to:
   /// **'Erforderliche Version: {version}'**
-  String updateRequiredVersion(String version);
+  String updateRequiredVersion(Object version);
 
   /// No description provided for @updateLater.
   ///
@@ -1644,7 +1644,7 @@ abstract class AppLocalizations {
   ///
   /// In de, this message translates to:
   /// **'Version {version}'**
-  String updateVersionEntry(String version);
+  String updateVersionEntry(Object version);
 
   /// No description provided for @keyVerifyTitle.
   ///
@@ -1692,7 +1692,7 @@ abstract class AppLocalizations {
   ///
   /// In de, this message translates to:
   /// **'Fingerprint stimmt mit {name} überein.'**
-  String keyVerifyMatch(String name);
+  String keyVerifyMatch(Object name);
 
   /// No description provided for @keyVerifyNoMatch.
   ///
@@ -1728,7 +1728,7 @@ abstract class AppLocalizations {
   ///
   /// In de, this message translates to:
   /// **'Geänderter Schlüssel von {name} erneut verifiziert.'**
-  String keyVerifyReverified(String name);
+  String keyVerifyReverified(Object name);
 
   /// No description provided for @keyVerifyChangedTag.
   ///
@@ -1739,8 +1739,14 @@ abstract class AppLocalizations {
   /// No description provided for @keyVerifyChangedWarning.
   ///
   /// In de, this message translates to:
-  /// **'{count, plural, other {...}}'**
-  String keyVerifyChangedWarning(int count);
+  /// **'{count, plural, one {{count} verifizierter Schlüssel hat sich geändert} other {{count} verifizierte Schlüssel haben sich geändert}}. Bitte persönlich erneut prüfen.'**
+  String keyVerifyChangedWarning(num count);
+
+  /// No description provided for @keyVerifyServerMismatch.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, one {{count} vom Server gemeldeter Fingerprint weicht vom Schlüssel ab} other {{count} vom Server gemeldete Fingerprints weichen vom Schlüssel ab}}. Mögliche Server-Manipulation – nicht verifizieren.'**
+  String keyVerifyServerMismatch(num count);
 }
 
 class _AppLocalizationsDelegate

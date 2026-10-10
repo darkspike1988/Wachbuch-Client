@@ -782,90 +782,132 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pinboardCreated => 'Aushang wurde angelegt.';
+
   @override
   String get updateTitleAvailable => 'Neue Version verfügbar';
+
   @override
   String get updateTitleRequired => 'Wichtiges Update erforderlich';
+
   @override
-  String updateCurrentVersion(String version) {
+  String updateCurrentVersion(Object version) {
     return 'Aktuelle Version: $version';
   }
+
   @override
-  String updateNewVersion(String version) {
+  String updateNewVersion(Object version) {
     return 'Neue Version: $version';
   }
+
   @override
-  String updateReleasedAt(String date) {
+  String updateReleasedAt(Object date) {
     return 'Veröffentlicht am: $date';
   }
+
   @override
   String get updateWhatsNew => 'Was gibt es Neues?';
+
   @override
-  String get updateRequiredNotice => 'Dieses Update ist erforderlich, um die App weiter nutzen zu können.';
+  String get updateRequiredNotice =>
+      'Dieses Update ist erforderlich, um die App weiter nutzen zu können.';
+
   @override
-  String get updateForceExplanation => 'Um die App weiter nutzen zu können, musst du auf die neueste Version updaten.';
+  String get updateForceExplanation =>
+      'Um die App weiter nutzen zu können, musst du auf die neueste Version updaten.';
+
   @override
-  String updateRequiredVersion(String version) {
+  String updateRequiredVersion(Object version) {
     return 'Erforderliche Version: $version';
   }
+
   @override
   String get updateLater => 'Später erinnern';
+
   @override
   String get updateClose => 'Schließen';
+
   @override
   String get updateDownload => 'Update herunterladen';
+
   @override
   String get updateNow => 'Jetzt updaten';
+
   @override
-  String updateVersionEntry(String version) {
+  String updateVersionEntry(Object version) {
     return 'Version $version';
   }
+
   @override
   String get keyVerifyTitle => 'Schlüssel verifizieren';
+
   @override
-  String get keyVerifyExplanation => 'Vergleiche den Fingerprint deines Schlüssels mit dem deiner Kolleginnen und Kollegen – persönlich oder per QR-Scan. Stimmen sie überein, ist der Schlüssel echt.';
+  String get keyVerifyExplanation =>
+      'Vergleiche den Fingerprint deines Schlüssels mit dem deiner Kolleginnen und Kollegen – persönlich oder per QR-Scan. Stimmen sie überein, ist der Schlüssel echt.';
+
   @override
   String get keyVerifyOwnKey => 'Dein Schlüssel';
+
   @override
   String get keyVerifyOwnTag => '(du)';
+
   @override
   String get keyVerifyVerifiedTag => 'verifiziert';
+
   @override
   String get keyVerifyScanAction => 'Per Scan verifizieren';
+
   @override
   String get keyVerifyScanTitle => 'Fingerprint scannen';
+
   @override
-  String keyVerifyMatch(String name) {
+  String keyVerifyMatch(Object name) {
     return 'Fingerprint stimmt mit $name überein.';
   }
+
   @override
-  String get keyVerifyNoMatch => 'Kein Mitglied mit diesem Fingerprint gefunden.';
+  String get keyVerifyNoMatch =>
+      'Kein Mitglied mit diesem Fingerprint gefunden.';
+
   @override
   String get keyVerifyCopied => 'Fingerprint kopiert.';
+
   @override
   String get keyVerifyShowQr => 'QR-Code anzeigen';
+
   @override
   String get keyVerifyConfirmAction => 'Als verifiziert markieren';
+
   @override
   String get keyVerifyRevoke => 'Verifizierung zurückziehen';
+
   @override
-  String keyVerifyReverified(String name) {
+  String keyVerifyReverified(Object name) {
     return 'Geänderter Schlüssel von $name erneut verifiziert.';
   }
+
   @override
   String get keyVerifyChangedTag => 'Schlüssel geändert!';
+
   @override
-  String keyVerifyChangedWarning(int count) {
-    final intl.NumberFormat countNumberFormat = intl.NumberFormat.decimalPattern(localeName);
-    final String countString = countNumberFormat.format(count);
-    String _temp;
-    if (count == 0) {
-      _temp = '$countString verifizierte Schlüssel haben sich geändert';
-    } else if (count == 1) {
-      _temp = '$countString verifizierter Schlüssel hat sich geändert';
-    } else {
-      _temp = '$countString verifizierte Schlüssel haben sich geändert';
-    }
-    return '$_temp. Bitte persönlich erneut prüfen.';
+  String keyVerifyChangedWarning(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count verifizierte Schlüssel haben sich geändert',
+      one: '$count verifizierter Schlüssel hat sich geändert',
+    );
+    return '$_temp0. Bitte persönlich erneut prüfen.';
+  }
+
+  @override
+  String keyVerifyServerMismatch(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count vom Server gemeldete Fingerprints weichen vom Schlüssel ab',
+      one: '$count vom Server gemeldeter Fingerprint weicht vom Schlüssel ab',
+    );
+    return '$_temp0. Mögliche Server-Manipulation – nicht verifizieren.';
   }
 }
