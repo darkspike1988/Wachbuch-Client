@@ -1705,6 +1705,42 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Fingerprint kopiert.'**
   String get keyVerifyCopied;
+
+  /// No description provided for @keyVerifyShowQr.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code anzeigen'**
+  String get keyVerifyShowQr;
+
+  /// No description provided for @keyVerifyConfirmAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Als verifiziert markieren'**
+  String get keyVerifyConfirmAction;
+
+  /// No description provided for @keyVerifyRevoke.
+  ///
+  /// In de, this message translates to:
+  /// **'Verifizierung zurückziehen'**
+  String get keyVerifyRevoke;
+
+  /// No description provided for @keyVerifyReverified.
+  ///
+  /// In de, this message translates to:
+  /// **'Geänderter Schlüssel von {name} erneut verifiziert.'**
+  String keyVerifyReverified(String name);
+
+  /// No description provided for @keyVerifyChangedTag.
+  ///
+  /// In de, this message translates to:
+  /// **'Schlüssel geändert!'**
+  String get keyVerifyChangedTag;
+
+  /// No description provided for @keyVerifyChangedWarning.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, other {...}}'**
+  String keyVerifyChangedWarning(int count);
 }
 
 class _AppLocalizationsDelegate

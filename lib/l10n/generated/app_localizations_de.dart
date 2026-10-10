@@ -842,4 +842,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String get keyVerifyNoMatch => 'Kein Mitglied mit diesem Fingerprint gefunden.';
   @override
   String get keyVerifyCopied => 'Fingerprint kopiert.';
+  @override
+  String get keyVerifyShowQr => 'QR-Code anzeigen';
+  @override
+  String get keyVerifyConfirmAction => 'Als verifiziert markieren';
+  @override
+  String get keyVerifyRevoke => 'Verifizierung zurückziehen';
+  @override
+  String keyVerifyReverified(String name) {
+    return 'Geänderter Schlüssel von $name erneut verifiziert.';
+  }
+  @override
+  String get keyVerifyChangedTag => 'Schlüssel geändert!';
+  @override
+  String keyVerifyChangedWarning(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    String _temp;
+    if (count == 0) {
+      _temp = '$countString verifizierte Schlüssel haben sich geändert';
+    } else if (count == 1) {
+      _temp = '$countString verifizierter Schlüssel hat sich geändert';
+    } else {
+      _temp = '$countString verifizierte Schlüssel haben sich geändert';
+    }
+    return '$_temp. Bitte persönlich erneut prüfen.';
+  }
 }

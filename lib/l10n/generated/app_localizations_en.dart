@@ -839,4 +839,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyVerifyNoMatch => 'No member with this fingerprint found.';
   @override
   String get keyVerifyCopied => 'Fingerprint copied.';
+  @override
+  String get keyVerifyShowQr => 'Show QR code';
+  @override
+  String get keyVerifyConfirmAction => 'Mark as verified';
+  @override
+  String get keyVerifyRevoke => 'Revoke verification';
+  @override
+  String keyVerifyReverified(String name) {
+    return 'Changed key of $name verified again.';
+  }
+  @override
+  String get keyVerifyChangedTag => 'Key changed!';
+  @override
+  String keyVerifyChangedWarning(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    String _temp;
+    if (count == 0) {
+      _temp = '$countString verified keys have changed';
+    } else if (count == 1) {
+      _temp = '$countString verified key has changed';
+    } else {
+      _temp = '$countString verified keys have changed';
+    }
+    return '$_temp. Please compare again in person.';
+  }
 }
