@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as pcrypto;
 import 'package:pointycastle/export.dart';
 
 const String _hkdfInfo = 'wachbuch-e2ee-v1';
@@ -295,7 +296,7 @@ String? keyFingerprint(Map<String, dynamic>? publicJwk) {
   final y = publicJwk['y']?.toString() ?? '';
   if (x.isEmpty || y.isEmpty) return null;
   final canonical = utf8.encode('$crv|$x|$y');
-  final digest = sha256.convert(canonical);
+  final digest = pcrypto.sha256.convert(canonical);
   final hex = digest.toString();
   final blocks = <String>[];
   for (var i = 0; i < 32; i += 8) {
