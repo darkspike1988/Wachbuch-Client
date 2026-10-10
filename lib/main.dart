@@ -17,43 +17,10 @@ import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
 import 'package:wachbuch_mobile/services/update_service.dart';
 import 'package:wachbuch_mobile/theme/app_theme.dart';
 import 'package:wachbuch_mobile/theme/solar_theme.dart';
-import 'package:wachbuch_mobile/widgets/update_dialog.dart';
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:wachbuch_mobile/l10n/generated/app_localizations.dart';
-import 'package:wachbuch_mobile/api/client.dart';
-import 'package:wachbuch_mobile/api/server_address.dart';
-import 'package:wachbuch_mobile/api/server_links.dart';
-import 'package:wachbuch_mobile/auth/session_store.dart';
-import 'package:wachbuch_mobile/screens/home_shell.dart';
-import 'package:wachbuch_mobile/screens/login_screen.dart';
-import 'package:wachbuch_mobile/screens/server_setup_screen.dart';
-import 'package:wachbuch_mobile/theme/app_theme.dart';
 import 'package:wachbuch_mobile/theme/high_contrast_theme.dart';
-import 'package:wachbuch_mobile/theme/solar_theme.dart';
-
-/// Preload critical assets to improve app start time
-Future<void> _preloadAssets() async {
-  try {
-    // Preload theme data
-    final themeController = SolarThemeController.device();
-    await themeController.load();
-    
-    // Preload any critical images or fonts here
-    // Example: await precacheImage(AssetImage('assets/launch_image.png'), navigatorKey.currentContext!);
-  } catch (e) {
-    debugPrint('Asset preloading failed: $e');
-  }
-}
-
+import 'package:wachbuch_mobile/widgets/update_dialog.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Preload critical assets while initializing
-  await _preloadAssets();
   
   // Initialize session store
   final store = SessionStore();
@@ -167,7 +134,6 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
       debugPrint('Failed to check for updates: $e');
     }
   }
-
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
