@@ -36,7 +36,7 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
       - name: Check for outdated dependencies
-        run: flutter pub outdated --mode=null-safety
+        run: flutter pub outdated
       - name: Verify dependency versions
         run: |
           # Prüfe, dass keine 'any' Versionen mehr vorhanden sind
