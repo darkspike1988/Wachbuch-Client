@@ -782,4 +782,42 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pinboardCreated => 'Aushang wurde angelegt.';
+  @override
+  String get updateTitleAvailable => 'Neue Version verfügbar';
+  @override
+  String get updateTitleRequired => 'Wichtiges Update erforderlich';
+  @override
+  String updateCurrentVersion(String version) {
+    return 'Aktuelle Version: $version';
+  }
+  @override
+  String updateNewVersion(String version) {
+    return 'Neue Version: $version';
+  }
+  @override
+  String updateReleasedAt(String date) {
+    return 'Veröffentlicht am: $date';
+  }
+  @override
+  String get updateWhatsNew => 'Was gibt es Neues?';
+  @override
+  String get updateRequiredNotice => 'Dieses Update ist erforderlich, um die App weiter nutzen zu können.';
+  @override
+  String get updateForceExplanation => 'Um die App weiter nutzen zu können, musst du auf die neueste Version updaten.';
+  @override
+  String updateRequiredVersion(String version) {
+    return 'Erforderliche Version: $version';
+  }
+  @override
+  String get updateLater => 'Später erinnern';
+  @override
+  String get updateClose => 'Schließen';
+  @override
+  String get updateDownload => 'Update herunterladen';
+  @override
+  String get updateNow => 'Jetzt updaten';
+  @override
+  String updateVersionEntry(String version) {
+    return 'Version $version';
+  }
 }

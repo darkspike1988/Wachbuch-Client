@@ -272,5 +272,19 @@
   "pinboardCategoryImportant": "Wichtig",
   "pinboardCategoryEvent": "Termin/Hinweis",
   "pinboardLoadError": "Pinnwand konnte nicht geladen werden.",
-  "pinboardCreated": "Aushang wurde angelegt."
+  "pinboardCreated": "Aushang wurde angelegt.",
+  "updateTitleAvailable": "Neue Version verf\u00fcgbar",
+  "updateTitleRequired": "Wichtiges Update erforderlich",
+  "updateCurrentVersion": "Aktuelle Version: {version}",
+  "updateNewVersion": "Neue Version: {version}",
+  "updateReleasedAt": "Ver\u00f6ffentlicht am: {date}",
+  "updateWhatsNew": "Was gibt es Neues?",
+  "updateRequiredNotice": "Dieses Update ist erforderlich, um die App weiter nutzen zu k\u00f6nnen.",
+  "updateForceExplanation": "Um die App weiter nutzen zu k\u00f6nnen, musst du auf die neueste Version updaten.",
+  "updateRequiredVersion": "Erforderliche Version: {version}",
+  "updateLater": "Sp\u00e4ter erinnern",
+  "updateClose": "Schlie\u00dfen",
+  "updateDownload": "Update herunterladen",
+  "updateNow": "Jetzt updaten",
+  "updateVersionEntry": "Version {version}"
 }

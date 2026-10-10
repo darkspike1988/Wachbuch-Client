@@ -1561,6 +1561,90 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Aushang wurde angelegt.'**
   String get pinboardCreated;
+
+  /// No description provided for @updateTitleAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Version verfügbar'**
+  String get updateTitleAvailable;
+
+  /// No description provided for @updateTitleRequired.
+  ///
+  /// In de, this message translates to:
+  /// **'Wichtiges Update erforderlich'**
+  String get updateTitleRequired;
+
+  /// No description provided for @updateCurrentVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelle Version: {version}'**
+  String updateCurrentVersion(String version);
+
+  /// No description provided for @updateNewVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Version: {version}'**
+  String updateNewVersion(String version);
+
+  /// No description provided for @updateReleasedAt.
+  ///
+  /// In de, this message translates to:
+  /// **'Veröffentlicht am: {date}'**
+  String updateReleasedAt(String date);
+
+  /// No description provided for @updateWhatsNew.
+  ///
+  /// In de, this message translates to:
+  /// **'Was gibt es Neues?'**
+  String get updateWhatsNew;
+
+  /// No description provided for @updateRequiredNotice.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Update ist erforderlich, um die App weiter nutzen zu können.'**
+  String get updateRequiredNotice;
+
+  /// No description provided for @updateForceExplanation.
+  ///
+  /// In de, this message translates to:
+  /// **'Um die App weiter nutzen zu können, musst du auf die neueste Version updaten.'**
+  String get updateForceExplanation;
+
+  /// No description provided for @updateRequiredVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'Erforderliche Version: {version}'**
+  String updateRequiredVersion(String version);
+
+  /// No description provided for @updateLater.
+  ///
+  /// In de, this message translates to:
+  /// **'Später erinnern'**
+  String get updateLater;
+
+  /// No description provided for @updateClose.
+  ///
+  /// In de, this message translates to:
+  /// **'Schließen'**
+  String get updateClose;
+
+  /// No description provided for @updateDownload.
+  ///
+  /// In de, this message translates to:
+  /// **'Update herunterladen'**
+  String get updateDownload;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt updaten'**
+  String get updateNow;
+
+  /// No description provided for @updateVersionEntry.
+  ///
+  /// In de, this message translates to:
+  /// **'Version {version}'**
+  String updateVersionEntry(String version);
 }
 
 class _AppLocalizationsDelegate

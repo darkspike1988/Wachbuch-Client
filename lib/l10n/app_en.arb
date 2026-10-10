@@ -264,5 +264,19 @@
   "pinboardCategoryImportant": "Important",
   "pinboardCategoryEvent": "Event/Note",
   "pinboardLoadError": "Could not load the pinboard.",
-  "pinboardCreated": "Notice created."
+  "pinboardCreated": "Notice created.",
+  "updateTitleAvailable": "New version available",
+  "updateTitleRequired": "Important update required",
+  "updateCurrentVersion": "Current version: {version}",
+  "updateNewVersion": "New version: {version}",
+  "updateReleasedAt": "Released on: {date}",
+  "updateWhatsNew": "What's new?",
+  "updateRequiredNotice": "This update is required to continue using the app.",
+  "updateForceExplanation": "To continue using the app, you need to update to the latest version.",
+  "updateRequiredVersion": "Required version: {version}",
+  "updateLater": "Remind me later",
+  "updateClose": "Close",
+  "updateDownload": "Download update",
+  "updateNow": "Update now",
+  "updateVersionEntry": "Version {version}"
 }
