@@ -85,7 +85,6 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
       unawaited(themeController.refresh());
     }
     _bootstrap();
-    _checkForUpdates();
   }
 
   void _handleThemeChange() {
@@ -210,6 +209,9 @@ class _WachbuchAppState extends State<WachbuchApp> with WidgetsBindingObserver {
       _handleServerLink,
       onError: (_) {},
     );
+    if (_serverUrl != null && _serverUrl!.isNotEmpty && !DemoService.isDemoUrl(_serverUrl!)) {
+      _checkForUpdates();
+    }
   }
 
   String? _parseLink(Uri link) {
